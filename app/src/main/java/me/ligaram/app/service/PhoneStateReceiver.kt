@@ -20,7 +20,7 @@ class PhoneStateReceiver : BroadcastReceiver() {
         if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
 
         val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
-        val extraNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+        val extraNumber = intent.getStringExtra("incoming_number")
 
         Log.d("PhoneStateReceiver", "state=$state extraNumber=$extraNumber lastState=$lastState")
 
