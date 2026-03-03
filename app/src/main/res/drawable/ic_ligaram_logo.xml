@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp"
+    android:height="56dp"
+    android:viewportWidth="33.867"
+    android:viewportHeight="33.867">
+
+    <!-- Red inner circle: center (16.934,16.934) r=15.61 -->
+    <path
+        android:fillColor="#ef4444"
+        android:pathData="M16.934,1.324 A15.61,15.61 0 1 0 16.934,32.544 A15.61,15.61 0 1 0 16.934,1.324 Z" />
+
+    <!-- Phone handset in red (SVG path translated to 0,0 origin) -->
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M22.657,27.657 A2.28,2.28 0 0 1 21.573,27.375 L19.959,26.483 A32.373,32.373 0 0 1 7.383,13.907 L6.491,12.293 A2.24,2.24 0 0 1 6.864,9.628 L10.51,5.971 L15.454,10.915 L12.689,13.681 A0.294,0.294 0 0 0 12.689,14.076 L19.801,21.177 C19.936,21.313 20.049,21.313 20.185,21.177 L22.95,18.411 L27.895,23.356 L24.237,27.002 A2.23,2.23 0 0 1 22.657,27.657 Z" />
+
+</vector>
