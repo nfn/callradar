@@ -37,7 +37,7 @@ object ApiClient {
             Log.d("ApiClient", "← ${response.code} for $cleanNumber")
 
             if (response.code == 200) {
-                val body = response.body?.string()
+                val body = response.body.string()
                 Log.d("ApiClient", "Body: $body")
                 if (!body.isNullOrBlank()) {
                     val callInfo = gson.fromJson(body, CallInfo::class.java)
