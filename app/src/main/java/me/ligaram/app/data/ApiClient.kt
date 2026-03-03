@@ -21,7 +21,7 @@ object ApiClient {
     // Bearer token sent in Authorization header.
     // Never put in the URL — it would appear in server logs.
     // TODO: replace with your actual token before release.
-    private const val API_TOKEN = "YOUR_API_TOKEN_HERE"
+    private const val API_TOKEN = "lUDf9WGHuW7OMbeNvQmZ8vIAwJLvTUo5HiwcCY9cPn7"
 
     fun fetchCallInfo(number: String): ApiResult {
         return try {

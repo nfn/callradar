@@ -14,6 +14,8 @@ class PhoneStateReceiver : BroadcastReceiver() {
 
     companion object {
         private var lastState = TelephonyManager.EXTRA_STATE_IDLE
+        /** Número enviado na sessão RINGING atual; usado para detectar 2.º broadcast com número diferente (ex.: OEM envia RINGING sem extraNumber, depois RINGING com extraNumber). */
+        private var lastRingingNumber: String? = null
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -26,15 +28,26 @@ class PhoneStateReceiver : BroadcastReceiver() {
 
         when (state) {
             TelephonyManager.EXTRA_STATE_RINGING -> {
-                if (lastState == TelephonyManager.EXTRA_STATE_RINGING) return
-                lastState = state
-
                 val number = when {
                     !extraNumber.isNullOrBlank() -> extraNumber
                     else -> getLastIncomingNumberFromCallLog(context)
                 }
 
                 Log.d("PhoneStateReceiver", "Ringing - number: $number")
+
+                val alreadyRinging = lastState == TelephonyManager.EXTRA_STATE_RINGING
+                if (alreadyRinging) {
+                    // Segundo (ou posterior) broadcast RINGING: se o número mudou, é nova chamada (ex.: primeiro veio sem extraNumber e usámos CallLog antigo).
+                    if (!number.isNullOrBlank() && number != lastRingingNumber) {
+                        lastRingingNumber = number
+                        val contactName = lookupContactName(context, number)
+                        Log.d("PhoneStateReceiver", "Contact name: $contactName (updated ringing number)")
+                        sendToService(context, CallMonitorService.ACTION_INCOMING_CALL, number, contactName)
+                    }
+                    return
+                }
+                lastState = state
+                lastRingingNumber = number
 
                 if (!number.isNullOrBlank()) {
                     val contactName = lookupContactName(context, number)
@@ -47,11 +60,13 @@ class PhoneStateReceiver : BroadcastReceiver() {
             TelephonyManager.EXTRA_STATE_IDLE -> {
                 if (lastState == TelephonyManager.EXTRA_STATE_IDLE) return
                 lastState = state
+                lastRingingNumber = null
                 sendToService(context, CallMonitorService.ACTION_CALL_ENDED)
             }
             TelephonyManager.EXTRA_STATE_OFFHOOK -> {
                 if (lastState == TelephonyManager.EXTRA_STATE_OFFHOOK) return
                 lastState = state
+                lastRingingNumber = null
                 sendToService(context, CallMonitorService.ACTION_CALL_ENDED)
             }
         }

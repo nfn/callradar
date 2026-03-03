@@ -19,6 +19,8 @@ class CallMonitorService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var currentJob: Job? = null
     private var isForeground = false
+    /** Só a resposta da chamada mais recente pode mostrar overlay (evita race com jobs que terminam tarde). */
+    private var latestRequestGeneration = 0
 
     companion object {
         const val ACTION_START = "me.ligaram.app.START"
@@ -72,10 +74,16 @@ class CallMonitorService : Service() {
 
     private fun handleIncomingCall(number: String, contactName: String?) {
         currentJob?.cancel()
+        latestRequestGeneration += 1
+        val myGeneration = latestRequestGeneration
         currentJob = serviceScope.launch {
             Log.d("CallMonitorService", "Fetching info for: $number (contact: $contactName)")
             when (val result = ApiClient.fetchCallInfo(number)) {
                 is ApiResult.Success -> {
+                    if (myGeneration != latestRequestGeneration) {
+                        Log.d("CallMonitorService", "Discarding stale result for $number (newer call in progress)")
+                        return@launch
+                    }
                     Log.d("CallMonitorService", "Result: ${result.callInfo}")
                     showOverlay(
                         number = result.callInfo.number,

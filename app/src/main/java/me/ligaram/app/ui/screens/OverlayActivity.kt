@@ -37,6 +37,16 @@ import androidx.compose.ui.unit.sp
 import me.ligaram.app.ui.theme.*
 import kotlin.math.roundToInt
 
+/** Dados do overlay; atualizados quando chega um novo Intent (ex.: segunda chamada). */
+private data class OverlayData(
+    val number: String,
+    val rating: String,
+    val risk: String,
+    val category: String,
+    val subcategory: String,
+    val contactName: String?
+)
+
 class OverlayActivity : ComponentActivity() {
 
     companion object {
@@ -48,6 +58,18 @@ class OverlayActivity : ComponentActivity() {
             if (intent?.action == ACTION_DISMISS) finish()
         }
     }
+
+    /** Estado observável para que onNewIntent atualize a UI quando a mesma instância é reutilizada (singleInstance). */
+    private var overlayDataState = mutableStateOf(OverlayData("", "0", "", "", "", null))
+
+    private fun overlayDataFromIntent(intent: Intent): OverlayData = OverlayData(
+        number = intent.getStringExtra("number") ?: "",
+        rating = intent.getStringExtra("rating") ?: "0",
+        risk = intent.getStringExtra("risk") ?: "",
+        category = intent.getStringExtra("category") ?: "",
+        subcategory = intent.getStringExtra("subcategory") ?: "",
+        contactName = intent.getStringExtra("contactName")
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,12 +83,7 @@ class OverlayActivity : ComponentActivity() {
         )
         window.setBackgroundDrawableResource(android.R.color.transparent)
 
-        val number = intent.getStringExtra("number") ?: ""
-        val rating = intent.getStringExtra("rating") ?: "0"
-        val risk = intent.getStringExtra("risk") ?: ""
-        val category = intent.getStringExtra("category") ?: ""
-        val subcategory = intent.getStringExtra("subcategory") ?: ""
-        val contactName = intent.getStringExtra("contactName")
+        overlayDataState.value = overlayDataFromIntent(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(dismissReceiver, IntentFilter(ACTION_DISMISS), RECEIVER_NOT_EXPORTED)
@@ -76,18 +93,34 @@ class OverlayActivity : ComponentActivity() {
         }
 
         setContent {
+            val data = overlayDataState.value
             // Overlay is always dark — it floats above the phone dialer
             LigaramTheme(darkTheme = true) {
                 OverlayScreen(
-                    number = number,
-                    rating = rating,
-                    risk = risk,
-                    category = category,
-                    subcategory = subcategory,
-                    contactName = contactName,
+                    number = data.number,
+                    rating = data.rating,
+                    risk = data.risk,
+                    category = data.category,
+                    subcategory = data.subcategory,
+                    contactName = data.contactName,
                     onDismiss = { finish() }
                 )
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        overlayDataState.value = overlayDataFromIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Garantir que a UI reflete sempre o Intent atual (ex.: activity reutilizada sem onNewIntent ou intent atualizado pelo sistema).
+        val current = overlayDataFromIntent(intent)
+        if (current.number != overlayDataState.value.number || current.rating != overlayDataState.value.rating) {
+            overlayDataState.value = current
         }
     }
 
