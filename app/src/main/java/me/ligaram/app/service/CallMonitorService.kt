@@ -25,6 +25,7 @@ class CallMonitorService : Service() {
         const val ACTION_INCOMING_CALL = "me.ligaram.app.INCOMING_CALL"
         const val ACTION_CALL_ENDED = "me.ligaram.app.CALL_ENDED"
         const val EXTRA_NUMBER = "extra_number"
+        const val EXTRA_CONTACT_NAME = "extra_contact_name"
         const val NOTIFICATION_ID = 1001
         const val CHANNEL_ID = "ligaram_channel"
     }
@@ -42,7 +43,8 @@ class CallMonitorService : Service() {
             }
             ACTION_INCOMING_CALL -> {
                 val number = intent.getStringExtra(EXTRA_NUMBER) ?: return START_STICKY
-                handleIncomingCall(number)
+                val contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)
+                handleIncomingCall(number, contactName)
             }
             ACTION_CALL_ENDED -> {
                 dismissOverlay()
@@ -68,10 +70,10 @@ class CallMonitorService : Service() {
         }
     }
 
-    private fun handleIncomingCall(number: String) {
+    private fun handleIncomingCall(number: String, contactName: String?) {
         currentJob?.cancel()
         currentJob = serviceScope.launch {
-            Log.d("CallMonitorService", "Fetching info for: $number")
+            Log.d("CallMonitorService", "Fetching info for: $number (contact: $contactName)")
             when (val result = ApiClient.fetchCallInfo(number)) {
                 is ApiResult.Success -> {
                     Log.d("CallMonitorService", "Result: ${result.callInfo}")
@@ -80,7 +82,8 @@ class CallMonitorService : Service() {
                         rating = result.callInfo.rating,
                         risk = result.callInfo.risk,
                         category = result.callInfo.category,
-                        subcategory = result.callInfo.subcategory
+                        subcategory = result.callInfo.subcategory,
+                        contactName = contactName
                     )
                 }
                 is ApiResult.NoResult -> {
@@ -98,7 +101,8 @@ class CallMonitorService : Service() {
         rating: String,
         risk: String,
         category: String,
-        subcategory: String
+        subcategory: String,
+        contactName: String?
     ) {
         val overlayIntent = Intent(this, OverlayActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
@@ -109,6 +113,7 @@ class CallMonitorService : Service() {
             putExtra("risk", risk)
             putExtra("category", category)
             putExtra("subcategory", subcategory)
+            if (contactName != null) putExtra("contactName", contactName)
         }
         startActivity(overlayIntent)
     }

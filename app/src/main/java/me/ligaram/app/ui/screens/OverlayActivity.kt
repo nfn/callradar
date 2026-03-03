@@ -10,12 +10,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,11 +26,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.ligaram.app.ui.theme.*
+import kotlin.math.roundToInt
 
 class OverlayActivity : ComponentActivity() {
 
@@ -38,9 +45,7 @@ class OverlayActivity : ComponentActivity() {
 
     private val dismissReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == ACTION_DISMISS) {
-                finish()
-            }
+            if (intent?.action == ACTION_DISMISS) finish()
         }
     }
 
@@ -52,10 +57,12 @@ class OverlayActivity : ComponentActivity() {
         val risk = intent.getStringExtra("risk") ?: ""
         val category = intent.getStringExtra("category") ?: ""
         val subcategory = intent.getStringExtra("subcategory") ?: ""
+        val contactName = intent.getStringExtra("contactName")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(dismissReceiver, IntentFilter(ACTION_DISMISS), RECEIVER_NOT_EXPORTED)
         } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(dismissReceiver, IntentFilter(ACTION_DISMISS))
         }
 
@@ -67,6 +74,7 @@ class OverlayActivity : ComponentActivity() {
                     risk = risk,
                     category = category,
                     subcategory = subcategory,
+                    contactName = contactName,
                     onDismiss = { finish() }
                 )
             }
@@ -79,6 +87,20 @@ class OverlayActivity : ComponentActivity() {
     }
 }
 
+// ─── Risk color helper ────────────────────────────────────────────────────────
+fun riskColor(risk: String): Color = when {
+    risk.contains("Alto", ignoreCase = true) ||
+    risk.contains("Elevado", ignoreCase = true) ||
+    risk.contains("High", ignoreCase = true) -> RiskHigh
+    risk.contains("Medio", ignoreCase = true) ||
+    risk.contains("Médio", ignoreCase = true) ||
+    risk.contains("Medium", ignoreCase = true) -> RiskMedium
+    else -> RiskLow
+}
+
+// ─── Overlay selector — change OVERLAY_STYLE to 1, 2 or 3 ───────────────────
+private const val OVERLAY_STYLE = 1
+
 @Composable
 fun OverlayScreen(
     number: String,
@@ -86,194 +108,381 @@ fun OverlayScreen(
     risk: String,
     category: String,
     subcategory: String,
+    contactName: String?,
     onDismiss: () -> Unit
 ) {
-    val ratingFloat = rating.toFloatOrNull() ?: 0f
-    val riskColor = when {
-        risk.contains("Alto", ignoreCase = true) || risk.contains("Elevado", ignoreCase = true) -> RiskHigh
-        risk.contains("Medio", ignoreCase = true) || risk.contains("Médio", ignoreCase = true) -> RiskMedium
-        else -> RiskLow
-    }
-
+    val color = riskColor(risk)
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
+
+    // Drag offset — shared across all styles
+    var offsetY by remember { mutableStateOf(0f) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.55f)),
-        contentAlignment = Alignment.TopCenter
+            .background(Color.Transparent),
+        contentAlignment = Alignment.Center
     ) {
         AnimatedVisibility(
             visible = visible,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
-                animationSpec = spring(dampingRatio = 0.7f, stiffness = 400f)
-            ) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+            enter = scaleIn(spring(dampingRatio = 0.6f, stiffness = 500f)) + fadeIn(),
+            exit = scaleOut() + fadeOut()
         ) {
-            OverlayCard(
-                number = number,
-                rating = ratingFloat,
-                ratingStr = rating,
-                risk = risk,
-                riskColor = riskColor,
-                category = category,
-                subcategory = subcategory,
-                onDismiss = onDismiss
-            )
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(0, offsetY.roundToInt()) }
+                    .pointerInput(Unit) {
+                        detectDragGestures { _, dragAmount ->
+                            offsetY += dragAmount.y
+                        }
+                    }
+            ) {
+                when (OVERLAY_STYLE) {
+                    1 -> StylePill(number, rating, risk, color, category, subcategory, contactName, onDismiss)
+                    2 -> StyleCard(number, rating, risk, color, category, subcategory, contactName, onDismiss)
+                    else -> StyleBanner(number, rating, risk, color, category, subcategory, contactName, onDismiss)
+                }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STYLE 1 — Pill / Chip compacto
+// Mostra risco + categoria numa cápsula. Toca para expandir detalhes.
+// ═══════════════════════════════════════════════════════════════════════════════
+@Composable
+fun StylePill(
+    number: String,
+    rating: String,
+    risk: String,
+    color: Color,
+    category: String,
+    subcategory: String,
+    contactName: String?,
+    onDismiss: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 24.dp)
+    ) {
+        // Collapsed pill
+        Surface(
+            shape = RoundedCornerShape(50.dp),
+            color = NavyMid,
+            shadowElevation = 16.dp,
+            modifier = Modifier
+                .clickable { expanded = !expanded }
+                .border(1.5.dp, color.copy(alpha = 0.6f), RoundedCornerShape(50.dp))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Risk dot
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                )
+                // Name or number
+                Text(
+                    text = contactName ?: number,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 160.dp)
+                )
+                // Risk label
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = color.copy(alpha = 0.18f)
+                ) {
+                    Text(
+                        risk,
+                        color = color,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+                // Rating
+                Text(
+                    "★ $rating",
+                    color = color,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                // Close
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable { onDismiss() }
+                )
+            }
+        }
+
+        // Expanded detail panel
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(spring(dampingRatio = 0.7f)) + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Spacer(Modifier.height(6.dp))
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = NavyMid,
+                shadowElevation = 12.dp,
+                modifier = Modifier
+                    .widthIn(max = 320.dp)
+                    .border(1.dp, NavyLight, RoundedCornerShape(16.dp))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (contactName != null) {
+                        PillDetailRow(Icons.Default.Person, "Contacto", contactName, AccentGreen)
+                        PillDetailRow(Icons.Default.Phone, "Número", number, TextSecondary)
+                    } else {
+                        PillDetailRow(Icons.Default.Phone, "Número", number, TextSecondary)
+                    }
+                    PillDetailRow(Icons.Default.Category, "Categoria", category, AccentBlue)
+                    PillDetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
+                    Text(
+                        "ligaram.me",
+                        color = TextSecondary.copy(alpha = 0.4f),
+                        fontSize = 10.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun OverlayCard(
+fun PillDetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, tint: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(16.dp))
+        Column {
+            Text(label, color = TextSecondary, fontSize = 10.sp)
+            Text(value, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STYLE 2 — Card flutuante compacto com gradiente lateral
+// ═══════════════════════════════════════════════════════════════════════════════
+@Composable
+fun StyleCard(
     number: String,
-    rating: Float,
-    ratingStr: String,
+    rating: String,
     risk: String,
-    riskColor: Color,
+    color: Color,
     category: String,
     subcategory: String,
+    contactName: String?,
     onDismiss: () -> Unit
 ) {
-    Card(
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = NavyMid,
+        shadowElevation = 20.dp,
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 48.dp)
-            .shadow(24.dp, RoundedCornerShape(24.dp)),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = NavyMid)
+            .widthIn(max = 300.dp)
+            .padding(horizontal = 24.dp)
     ) {
-        Column(modifier = Modifier.padding(0.dp)) {
-
-            // Header gradient bar
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+            // Colored left bar
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .width(5.dp)
+                    .fillMaxHeight()
                     .background(
-                        Brush.horizontalGradient(listOf(riskColor.copy(alpha = 0.8f), riskColor.copy(alpha = 0.3f)))
+                        Brush.verticalGradient(listOf(color, color.copy(alpha = 0.3f)))
                     )
-                    .padding(horizontal = 20.dp, vertical = 14.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Chamada Identificada",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        )
-                    }
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = "Fechar", tint = Color.White.copy(alpha = 0.8f))
-                    }
-                }
-            }
-
-            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
-
-                // Number & Rating row
+            )
+            Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 12.dp)) {
+                // Header row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Column {
-                        Text("Número", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                        Text(
-                            number,
-                            color = TextPrimary,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (contactName != null) {
+                            Text(contactName, color = AccentGreen, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(number, color = TextSecondary, fontSize = 11.sp)
+                        } else {
+                            Text(number, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        }
                     }
-                    // Rating circle
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                            .background(riskColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                ratingStr,
-                                color = riskColor,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                            Text("/ 5", color = TextSecondary, fontSize = 10.sp)
+                    Spacer(Modifier.width(8.dp))
+                    // Rating badge
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("★ $rating", color = color, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(20.dp)) {
+                            Icon(Icons.Default.Close, null, tint = TextSecondary, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Risk badge
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(riskColor.copy(alpha = 0.12f))
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Spacer(Modifier.height(8.dp))
+                // Risk chip
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = color.copy(alpha = 0.15f)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(riskColor)
+                    Text(
+                        risk,
+                        color = color,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text("Nível de Risco:", color = TextSecondary, fontSize = 13.sp)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(risk, color = riskColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
+                Spacer(Modifier.height(6.dp))
+                Text(category, color = TextSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (subcategory.isNotBlank()) {
+                    Text(subcategory, color = TextSecondary.copy(alpha = 0.6f), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Spacer(Modifier.height(6.dp))
+                Text("ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp)
+            }
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(12.dp))
+// ═══════════════════════════════════════════════════════════════════════════════
+// STYLE 3 — Banner horizontal ultra-compacto (1 linha + ícone)
+// Ideal se quiseres o mínimo de intrusão possível
+// ═══════════════════════════════════════════════════════════════════════════════
+@Composable
+fun StyleBanner(
+    number: String,
+    rating: String,
+    risk: String,
+    color: Color,
+    category: String,
+    subcategory: String,
+    contactName: String?,
+    onDismiss: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
 
-                // Category & Subcategory
-                InfoRow(label = "Categoria", value = category, icon = Icons.Default.Category)
-                Spacer(modifier = Modifier.height(8.dp))
-                InfoRow(label = "Subcategoria", value = subcategory, icon = Icons.Default.Info)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Powered by
-                Text(
-                    "Identificado por ligaram.me",
-                    color = TextSecondary.copy(alpha = 0.6f),
-                    fontSize = 11.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = NavyDeep.copy(alpha = 0.97f),
+            shadowElevation = 16.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Risk icon
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(color.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Warning, null, tint = color, modifier = Modifier.size(18.dp))
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        contactName ?: number,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(color)
+                        )
+                        Text(
+                            "$risk · $category",
+                            color = TextSecondary,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                Spacer(Modifier.width(8.dp))
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("★ $rating", color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Icon(
+                        if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        null, tint = TextSecondary, modifier = Modifier.size(16.dp)
+                    )
+                }
+                Spacer(Modifier.width(6.dp))
+                Icon(
+                    Icons.Default.Close, null,
+                    tint = TextSecondary,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .clickable { onDismiss() }
                 )
+            }
+        }
 
-                Spacer(modifier = Modifier.height(4.dp))
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(spring(dampingRatio = 0.7f)) + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Surface(
+                shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp),
+                color = NavyMid,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, NavyLight, RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (contactName != null) {
+                        BannerDetailRow(Icons.Default.Person, "Contacto", contactName, AccentGreen)
+                        BannerDetailRow(Icons.Default.Phone, "Número", number, TextSecondary)
+                    }
+                    BannerDetailRow(Icons.Default.Category, "Categoria", category, AccentBlue)
+                    if (subcategory.isNotBlank()) {
+                        BannerDetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun InfoRow(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(NavyLight.copy(alpha = 0.5f))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(icon, contentDescription = null, tint = AccentBlue, modifier = Modifier.size(18.dp))
-        Spacer(modifier = Modifier.width(10.dp))
-        Column {
-            Text(label, color = TextSecondary, fontSize = 11.sp)
-            Text(value, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        }
+fun BannerDetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, tint: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(14.dp))
+        Text(label, color = TextSecondary, fontSize = 11.sp, modifier = Modifier.width(72.dp))
+        Text(value, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

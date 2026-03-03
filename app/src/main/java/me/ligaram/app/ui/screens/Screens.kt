@@ -210,7 +210,11 @@ fun PermissionScreenLayout(
 @Composable
 fun PermPhoneScreen(navController: NavController) {
     val phonePermission = rememberMultiplePermissionsState(
-        listOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG)
+        listOf(
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.READ_CONTACTS
+        )
     )
 
     PermissionScreenLayout(
@@ -223,6 +227,7 @@ fun PermPhoneScreen(navController: NavController) {
         detailPoints = listOf(
             "Detetamos chamadas recebidas em tempo real",
             "O número é consultado na base de dados do ligaram.me",
+            "O nome do contacto é mostrado no overlay (se existir)",
             "Nunca armazenamos chamadas ou contactos pessoais",
             "O acesso é utilizado exclusivamente para identificação"
         ),
