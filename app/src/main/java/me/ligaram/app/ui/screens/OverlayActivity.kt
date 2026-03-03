@@ -52,6 +52,15 @@ class OverlayActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Keep this activity in its own visual layer so the dialer remains visible.
+        // FLAG_NOT_TOUCH_MODAL: touches outside the overlay card pass through to dialer.
+        // FLAG_LAYOUT_IN_SCREEN: fills screen without pushing dialer away.
+        window.addFlags(
+            android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+            android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+        )
+        window.setBackgroundDrawableResource(android.R.color.transparent)
+
         val number = intent.getStringExtra("number") ?: ""
         val rating = intent.getStringExtra("rating") ?: "0"
         val risk = intent.getStringExtra("risk") ?: ""
@@ -67,7 +76,8 @@ class OverlayActivity : ComponentActivity() {
         }
 
         setContent {
-            LigaramTheme {
+            // Overlay is always dark — it floats above the phone dialer
+            LigaramTheme(darkTheme = true) {
                 OverlayScreen(
                     number = number,
                     rating = rating,
@@ -94,7 +104,7 @@ fun riskColor(risk: String): Color = when {
     risk.contains("High", ignoreCase = true) -> RiskHigh
     risk.contains("Medio", ignoreCase = true) ||
     risk.contains("Médio", ignoreCase = true) ||
-    risk.contains("Medium", ignoreCase = true) -> RiskMedium
+    risk.contains("Moderado", ignoreCase = true) -> RiskMedium
     else -> RiskLow
 }
 

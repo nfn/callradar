@@ -34,6 +34,8 @@
             android:name=".ui.screens.OverlayActivity"
             android:exported="false"
             android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
             android:theme="@style/Theme.Transparent"
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />

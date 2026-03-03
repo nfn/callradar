@@ -80,24 +80,24 @@ class PhoneStateReceiver : BroadcastReceiver() {
     }
 
     private fun getLastIncomingNumberFromCallLog(context: Context): String? {
+        // Brief pause: some OEMs write to CallLog slightly after the RINGING broadcast
+        Thread.sleep(300)
         return try {
-            val cursor: Cursor? = context.contentResolver.query(
+            val cursor = context.contentResolver.query(
                 CallLog.Calls.CONTENT_URI,
-                arrayOf(CallLog.Calls.NUMBER, CallLog.Calls.TYPE, CallLog.Calls.DATE),
-                "${CallLog.Calls.TYPE} = ? OR ${CallLog.Calls.TYPE} = ?",
-                arrayOf(
-                    CallLog.Calls.INCOMING_TYPE.toString(),
-                    CallLog.Calls.MISSED_TYPE.toString()
-                ),
-                "${CallLog.Calls.DATE} DESC"
+                arrayOf(CallLog.Calls.NUMBER, CallLog.Calls.DATE),
+                null, null,
+                CallLog.Calls.DATE + " DESC"
             )
             cursor?.use {
-                if (it.moveToFirst())
-                    it.getString(it.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
-                else null
+                if (it.moveToFirst()) {
+                    val number = it.getString(it.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
+                    Log.d("PhoneStateReceiver", "CallLog fallback: " + number)
+                    number
+                } else null
             }
         } catch (e: Exception) {
-            Log.e("PhoneStateReceiver", "CallLog query failed: ${e.message}")
+            Log.e("PhoneStateReceiver", "CallLog query failed: " + e.message)
             null
         }
     }

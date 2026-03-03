@@ -18,6 +18,11 @@ object ApiClient {
     // Base URL — swap between ngrok (dev) and production
     private const val BASE_URL = "https://ligaram.me/api/v1/mobile/overlay"
 
+    // Bearer token sent in Authorization header.
+    // Never put in the URL — it would appear in server logs.
+    // TODO: replace with your actual token before release.
+    private const val API_TOKEN = "YOUR_API_TOKEN_HERE"
+
     fun fetchCallInfo(number: String): ApiResult {
         return try {
             val cleanNumber = number.replace(Regex("[^0-9+]"), "")
@@ -28,7 +33,7 @@ object ApiClient {
             val request = Request.Builder()
                 .url(url)
                 // Bypass ngrok browser-warning interstitial when testing with ngrok
-                .addHeader("ngrok-skip-browser-warning", "true")
+                .addHeader("Authorization", "Bearer $API_TOKEN")
                 .addHeader("Accept", "application/json")
                 .get()
                 .build()
@@ -39,7 +44,7 @@ object ApiClient {
             if (response.code == 200) {
                 val body = response.body.string()
                 Log.d("ApiClient", "Body: $body")
-                if (!body.isNullOrBlank()) {
+                if (body.isNotBlank()) {
                     val callInfo = gson.fromJson(body, CallInfo::class.java)
                     ApiResult.Success(callInfo)
                 } else {

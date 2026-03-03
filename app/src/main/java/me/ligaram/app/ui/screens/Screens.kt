@@ -2,6 +2,7 @@ package me.ligaram.app.ui.screens
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.animation.*
@@ -11,14 +12,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -43,11 +45,33 @@ object Routes {
     const val ABOUT = "about"
 }
 
+// ─── Permission helpers ───────────────────────────────────────────────────────
+fun hasPhonePermissions(context: android.content.Context): Boolean {
+    val perms = listOf(
+        Manifest.permission.READ_PHONE_STATE,
+        Manifest.permission.READ_CALL_LOG,
+        Manifest.permission.READ_CONTACTS
+    )
+    return perms.all {
+        context.checkSelfPermission(it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+}
+
+fun hasOverlayPermission(context: android.content.Context): Boolean =
+    Settings.canDrawOverlays(context)
+
+fun allPermissionsGranted(context: android.content.Context): Boolean =
+    hasPhonePermissions(context) && hasOverlayPermission(context)
+
 // ─── Main Nav Host ────────────────────────────────────────────────────────────
 @Composable
 fun AppNavigation() {
+    val context = LocalContext.current
+    // Skip onboarding entirely if all permissions already granted
+    val startDestination = if (allPermissionsGranted(context)) Routes.HOME else Routes.PERM_PHONE
+
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Routes.PERM_PHONE) {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.PERM_PHONE,
             enterTransition = { fadeIn() + slideInHorizontally() },
             exitTransition = { fadeOut() + slideOutHorizontally { -it } }
@@ -73,14 +97,11 @@ fun AppNavigation() {
 // ─── Shared background ────────────────────────────────────────────────────────
 @Composable
 fun AppBackground(content: @Composable () -> Unit) {
+    val c = ligaramColors
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(NavyDeep, Color(0xFF0A1628))
-                )
-            )
+            .background(Brush.verticalGradient(colors = listOf(c.bgPrimary, c.bgSecondary)))
     ) { content() }
 }
 
@@ -95,8 +116,8 @@ fun StepDots(total: Int, current: Int) {
                     .height(6.dp)
                     .width(if (active) 24.dp else 6.dp)
                     .clip(CircleShape)
-                    .background(if (active) AccentBlue else NavyLight)
-                    .animateContentSize()
+                    .background(if (active) AccentBlue else MaterialTheme.colorScheme.outline)
+                    
             )
         }
     }
@@ -151,9 +172,9 @@ fun PermissionScreenLayout(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text(title, color = TextPrimary, fontSize = 24.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text(title, color = MaterialTheme.colorScheme.onBackground, fontSize = 24.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(modifier = Modifier.height(12.dp))
-            Text(description, color = TextSecondary, fontSize = 15.sp, textAlign = TextAlign.Center, lineHeight = 22.sp)
+            Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp, textAlign = TextAlign.Center, lineHeight = 22.sp)
 
             Spacer(modifier = Modifier.height(28.dp))
 
@@ -162,7 +183,7 @@ fun PermissionScreenLayout(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(SurfaceCard)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -171,7 +192,7 @@ fun PermissionScreenLayout(
                         Icon(Icons.Default.Circle, null, tint = AccentBlue,
                             modifier = Modifier.size(8.dp).padding(top = 6.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(point, color = TextSecondary, fontSize = 14.sp, lineHeight = 20.sp)
+                        Text(point, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
                     }
                 }
             }
@@ -185,7 +206,7 @@ fun PermissionScreenLayout(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentGreen)
                 ) {
-                    Icon(Icons.Default.ArrowForward, null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Continuar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
@@ -289,12 +310,28 @@ fun PermOverlayScreen(navController: NavController) {
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
-    val phoneGranted = remember {
-        context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) ==
-                android.content.pm.PackageManager.PERMISSION_GRANTED
-    }
-    val overlayGranted = remember { Settings.canDrawOverlays(context) }
+    var phoneGranted by remember { mutableStateOf(hasPhonePermissions(context)) }
+    var overlayGranted by remember { mutableStateOf(hasOverlayPermission(context)) }
     val allGood = phoneGranted && overlayGranted
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(500)
+            phoneGranted = hasPhonePermissions(context)
+            overlayGranted = hasOverlayPermission(context)
+        }
+    }
+
+    LaunchedEffect(allGood) {
+        if (allGood) {
+            try {
+                val svc = Intent(context, CallMonitorService::class.java).apply {
+                    action = CallMonitorService.ACTION_START
+                }
+                context.startForegroundService(svc)
+            } catch (e: Exception) {}
+        }
+    }
 
     AppBackground {
         Column(
@@ -304,20 +341,12 @@ fun HomeScreen(navController: NavController) {
                 .padding(horizontal = 24.dp, vertical = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo/Brand
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(AccentBlue.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.PhoneEnabled, null, tint = AccentBlue, modifier = Modifier.size(42.dp))
-            }
+            // Logo
+            LigaramLogo(size = 72.dp)
 
             Spacer(modifier = Modifier.height(20.dp))
-            Text("ligaram.me", color = TextPrimary, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Proteção contra chamadas indesejadas", color = TextSecondary, fontSize = 14.sp, textAlign = TextAlign.Center)
+            Text("ligaram.me", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Proteção contra chamadas indesejadas", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, textAlign = TextAlign.Center)
 
             Spacer(modifier = Modifier.height(36.dp))
 
@@ -350,7 +379,7 @@ fun HomeScreen(navController: NavController) {
                         Text(
                             if (allGood) "Chamadas recebidas serão identificadas automaticamente"
                             else "Algumas permissões estão em falta",
-                            color = TextSecondary, fontSize = 13.sp
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp
                         )
                     }
                 }
@@ -359,7 +388,7 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(24.dp))
 
             // How it works section
-            Text("Como funciona", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+            Text("Como funciona", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -380,9 +409,9 @@ fun HomeScreen(navController: NavController) {
                 onClick = { navController.navigate(Routes.ABOUT) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.dp, NavyLight)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
-                Icon(Icons.Default.Info, null, tint = TextSecondary, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Sobre a aplicação", color = TextSecondary)
             }
@@ -396,7 +425,7 @@ fun HowItWorksStep(step: Int, icon: ImageVector, title: String, description: Str
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(SurfaceCard)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -411,8 +440,8 @@ fun HowItWorksStep(step: Int, icon: ImageVector, title: String, description: Str
         }
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            Text(description, color = TextSecondary, fontSize = 12.sp, lineHeight = 17.sp)
+            Text(title, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 17.sp)
         }
     }
 }
@@ -441,21 +470,20 @@ fun AboutScreen(navController: NavController) {
                         onClick = { navController.popBackStack() },
                         modifier = Modifier.align(Alignment.Start)
                     ) {
-                        Icon(Icons.Default.ArrowBack, null, tint = TextSecondary)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = TextSecondary)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Box(
                         modifier = Modifier
                             .size(72.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(AccentBlue.copy(alpha = 0.2f)),
+                            .clip(RoundedCornerShape(18.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.PhoneEnabled, null, tint = AccentBlue, modifier = Modifier.size(38.dp))
+                        LigaramLogo(size = 56.dp)
                     }
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("ligaram.me", color = TextPrimary, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
-                    Text("v1.0.0", color = TextSecondary, fontSize = 13.sp)
+                    Text("ligaram.me", color = MaterialTheme.colorScheme.onBackground, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("v1.0.0", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 }
             }
 
@@ -476,7 +504,7 @@ fun AboutScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Features
-                Text("Funcionalidades", color = TextPrimary, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text("Funcionalidades", color = MaterialTheme.colorScheme.onBackground, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(10.dp))
                 listOf(
                     Icons.Default.Bolt to "Identificação em tempo real",
@@ -494,7 +522,7 @@ fun AboutScreen(navController: NavController) {
                     ) {
                         Icon(icon, null, tint = AccentBlue, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(text, color = TextSecondary, fontSize = 14.sp)
+                        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                     }
                 }
 
@@ -504,7 +532,7 @@ fun AboutScreen(navController: NavController) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -515,7 +543,7 @@ fun AboutScreen(navController: NavController) {
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             "A aplicação envia apenas o número da chamada recebida à API do ligaram.me para consulta. Nenhum dado pessoal, histórico de chamadas ou informação de contacto é armazenado ou transmitido.",
-                            color = TextSecondary, fontSize = 13.sp, lineHeight = 20.sp
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, lineHeight = 20.sp
                         )
                     }
                 }
@@ -525,7 +553,7 @@ fun AboutScreen(navController: NavController) {
                 // Footer
                 Text(
                     "© 2024 ligaram.me · Todos os direitos reservados",
-                    color = TextSecondary.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     fontSize = 12.sp,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -539,8 +567,8 @@ fun AboutScreen(navController: NavController) {
 @Composable
 fun AboutSection(title: String, content: String) {
     Column {
-        Text(title, color = TextPrimary, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Text(title, color = MaterialTheme.colorScheme.onBackground, fontSize = 17.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(content, color = TextSecondary, fontSize = 14.sp, lineHeight = 22.sp)
+        Text(content, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 22.sp)
     }
 }
