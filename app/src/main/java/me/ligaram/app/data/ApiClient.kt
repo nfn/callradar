@@ -16,7 +16,7 @@ object ApiClient {
     private val gson = Gson()
 
     // Base URL — swap between ngrok (dev) and production
-    private const val BASE_URL = "https://ligaram.me/api/v1/mobile/overlay"
+    private const val BASE_URL = "https://api.ligaram.me/api/v1/overlay"
 
     // Bearer token sent in Authorization header.
     // Never put in the URL — it would appear in server logs.
