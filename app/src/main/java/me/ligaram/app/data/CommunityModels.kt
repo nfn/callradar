@@ -79,6 +79,14 @@ data class PostCommentResponse(
     @SerializedName("message") val message: String
 )
 
+// ── Like toggle ───────────────────────────────────────────────────────────────
+// POST /api/v1/comments/:comment_id/like
+// Resposta: { "liked": true, "likes": 42 }
+data class LikeResponse(
+    @SerializedName("liked") val liked: Boolean,  // true=adicionado, false=removido
+    @SerializedName("likes") val likes: Int        // contagem actual
+)
+
 // ── Generic result ────────────────────────────────────────────────────────────
 sealed class CommunityResult<out T> {
     data class Success<T>(val data: T) : CommunityResult<T>()

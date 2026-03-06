@@ -118,6 +118,27 @@ object CommunityApi {
         }
     }
 
+    // ── POST /comments/:comment_id/like ──────────────────────────────────────
+    // Toggle: se o IP já tem like → remove; caso contrário → adiciona.
+    // Sem body — o IP é lido no servidor via request.ip
+    fun toggleLike(commentId: Int): CommunityResult<LikeResponse> {
+        return try {
+            val url = "$BASE/comments/$commentId/like"
+            Log.d("CommunityApi", "POST $url")
+            val resp = post(url, emptyMap<String, Any>())
+            val body = resp.body.string()
+            if (resp.isSuccessful) {
+                val parsed = gson.fromJson(body, LikeResponse::class.java)
+                CommunityResult.Success(parsed)
+            } else {
+                CommunityResult.Error("Erro ${resp.code}")
+            }
+        } catch (e: Exception) {
+            Log.e("CommunityApi", "toggleLike: ${e.message}")
+            CommunityResult.Error(e.message ?: "Erro de rede")
+        }
+    }
+
     // ── GET /entities?q=X ────────────────────────────────────────────────────
     // Endpoint: GET /api/v1/entities?q={string}  → { data: [{id, entity}] }
     // Usado no autocomplete do formulário — não é obrigatório, o utilizador pode escrever livremente.

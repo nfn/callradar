@@ -1,8 +1,21 @@
 package me.ligaram.app.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -10,11 +23,42 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AddComment
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.WarningAmber
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,7 +75,11 @@ import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.NumberAnalysis
 import me.ligaram.app.data.NumberComment
-import me.ligaram.app.ui.theme.*
+import me.ligaram.app.ui.theme.AccentBlue
+import me.ligaram.app.ui.theme.AccentBlue
+import me.ligaram.app.ui.theme.AccentOrange
+import me.ligaram.app.ui.theme.RiskHigh
+import me.ligaram.app.ui.theme.RiskLow
 
 // ─── Navegar sempre para a community home ─────────────────────────────────────
 private fun NavController.backToCommunity() {
@@ -208,7 +256,15 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                 }
 
                                 items(comments, key = { it.id }) { comment ->
-                                    NumberCommentCard(comment = comment)
+                                    NumberCommentCard(
+                                        comment        = comment,
+                                        onLikeToggled  = { id, liked, newCount ->
+                                            // Actualiza o item na lista para manter consistência
+                                            comments = comments.map {
+                                                if (it.id == id) it.copy(likes = newCount) else it
+                                            }
+                                        }
+                                    )
                                 }
 
                                 item {
@@ -240,9 +296,11 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     }
 }
 
-// ─── Analysis card ────────────────────────────────────────────────────────────
+// ─── Analysis card (colapsável) ───────────────────────────────────────────────
 @Composable
 fun NumberAnalysisCard(analysis: NumberAnalysis) {
+    var expanded by remember { mutableStateOf(false) }
+
     val riskColor = when {
         analysis.riskLevel?.contains("Alto",    ignoreCase = true) == true ||
         analysis.riskLevel?.contains("Elevado", ignoreCase = true) == true -> RiskHigh
@@ -256,23 +314,31 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
         modifier = Modifier.fillMaxWidth(),
         shape    = RoundedCornerShape(16.dp),
         colors   = CardDefaults.cardColors(containerColor = riskColor.copy(alpha = 0.06f)),
-        border   = androidx.compose.foundation.BorderStroke(1.dp, riskColor.copy(alpha = 0.3f))
+        border   = androidx.compose.foundation.BorderStroke(1.dp, riskColor.copy(alpha = 0.3f)),
+        onClick  = { expanded = !expanded }
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
 
-            // Cabeçalho: nível de risco
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // ── Cabeçalho sempre visível ──────────────────────────────────────
+            Row(
+                verticalAlignment   = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Box(
-                    modifier = Modifier.size(36.dp).clip(CircleShape).background(riskColor.copy(alpha = 0.15f)),
+                    modifier         = Modifier.size(36.dp).clip(CircleShape)
+                                           .background(riskColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) { Icon(Icons.Default.Analytics, null, tint = riskColor, modifier = Modifier.size(18.dp)) }
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Análise", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                     if (!analysis.riskLevel.isNullOrBlank()) {
-                        Text(analysis.riskLevel, color = riskColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(analysis.riskLevel, color = riskColor,
+                            fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
-                // Categoria como chip
+
+                // Chip de categoria
                 if (!analysis.category.isNullOrBlank()) {
                     Surface(shape = RoundedCornerShape(8.dp), color = riskColor.copy(alpha = 0.12f)) {
                         Text(analysis.category, color = riskColor, fontSize = 11.sp,
@@ -280,32 +346,92 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
                     }
                 }
+
+                // Chevron animado
+                Icon(
+                    if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Colapsar" else "Expandir",
+                    tint     = riskColor,
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
-            // Subcategoria
-            if (!analysis.subcategory.isNullOrBlank()) {
-                Text(analysis.subcategory, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp, fontWeight = FontWeight.Medium)
-            }
+            // ── Conteúdo expandido ────────────────────────────────────────────
+            androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier            = Modifier.padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Subcategoria
+                    if (!analysis.subcategory.isNullOrBlank()) {
+                        Text(analysis.subcategory,
+                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize   = 12.sp,
+                            fontWeight = FontWeight.Medium)
+                    }
 
-            // Mensagem de recomendação (advice)
-            if (!analysis.advice.isNullOrBlank()) {
-                HorizontalDivider(color = riskColor.copy(alpha = 0.2f))
-                Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.Info, null, tint = riskColor, modifier = Modifier.size(14.dp).padding(top = 1.dp))
-                    Text(analysis.advice, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp, lineHeight = 18.sp)
+                    // seoSummary
+                    if (!analysis.seoSummary.isNullOrBlank()) {
+                        HorizontalDivider(color = riskColor.copy(alpha = 0.2f))
+                        Row(
+                            verticalAlignment     = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.Info, null,
+                                tint     = riskColor,
+                                modifier = Modifier.size(14.dp).padding(top = 1.dp))
+                            Text(analysis.seoSummary,
+                                color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize   = 12.sp,
+                                lineHeight = 18.sp)
+                        }
+                    }
+
+                    // advice
+                    if (!analysis.advice.isNullOrBlank()) {
+                        Row(
+                            verticalAlignment     = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.Warning, null,
+                                tint     = riskColor,
+                                modifier = Modifier.size(14.dp).padding(top = 1.dp))
+                            Text(analysis.advice,
+                                color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize   = 12.sp,
+                                lineHeight = 18.sp)
+                        }
+                    }
                 }
+            }
+
+            // Dica "toque para ver análise" apenas quando colapsado
+            if (!expanded) {
+                Text(
+                    "Toque para ver a análise completa",
+                    color    = riskColor.copy(alpha = 0.7f),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
             }
         }
     }
 }
 
-// ─── Comment card ─────────────────────────────────────────────────────────────
+// ─── Comment card com like interactivo ───────────────────────────────────────
 @Composable
-fun NumberCommentCard(comment: NumberComment) {
+fun NumberCommentCard(
+    comment: NumberComment,
+    onLikeToggled: (commentId: Int, liked: Boolean, newCount: Int) -> Unit
+) {
+    val scope      = rememberCoroutineScope()
     val classColor = classificationColor(comment.classification)
     val starsColor = comment.rating?.let { starColor(it) } ?: AccentOrange
+
+    // Estado local optimista — actualiza imediatamente sem esperar pela API
+    var localLikes  by remember(comment.id) { mutableStateOf(comment.likes) }
+    var localLiked  by remember(comment.id) { mutableStateOf(false) }
+    var likeLoading by remember(comment.id) { mutableStateOf(false) }
 
     Card(
         modifier  = Modifier.fillMaxWidth(),
@@ -316,7 +442,8 @@ fun NumberCommentCard(comment: NumberComment) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
+                    modifier         = Modifier.size(36.dp).clip(CircleShape)
+                                           .background(classColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     val initial = comment.name?.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
@@ -327,15 +454,12 @@ fun NumberCommentCard(comment: NumberComment) {
                     Text(comment.name?.ifBlank { "Anónimo" } ?: "Anónimo",
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                    if (!comment.entity.isNullOrBlank()) {
-                        Text(comment.entity, color = AccentBlue, fontSize = 11.sp)
-                    }
                 }
                 if (!comment.classification.isNullOrBlank()) {
                     Surface(shape = RoundedCornerShape(8.dp), color = classColor.copy(alpha = 0.12f)) {
                         Text(comment.classification, color = classColor, fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                            modifier   = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
                     }
                 }
             }
@@ -349,24 +473,80 @@ fun NumberCommentCard(comment: NumberComment) {
 
             Spacer(Modifier.height(10.dp))
 
-            // Footer: estrelas+data à esquerda, likes à direita
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Footer
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically
+            ) {
+                // Estrelas + data
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (comment.rating != null) {
                         Row {
                             repeat(5) { idx ->
                                 Icon(
-                                    if (idx < comment.rating) Icons.Default.Star else Icons.Default.StarBorder,
+                                    if (idx < comment.rating) Icons.Default.Star
+                                    else Icons.Default.StarBorder,
                                     null, tint = starsColor, modifier = Modifier.size(14.dp)
                                 )
                             }
                         }
                     }
-                    Text(timeAgo(comment.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                    Text(timeAgo(comment.createdAt),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Icon(Icons.Default.ThumbUp, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
-                    Text("${comment.likes}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+
+                // Botão de like
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick  = {
+                            if (likeLoading) return@IconButton
+                            // Actualização optimista imediata
+                            val wasLiked = localLiked
+                            localLiked = !wasLiked
+                            localLikes = if (!wasLiked) localLikes + 1 else (localLikes - 1).coerceAtLeast(0)
+                            likeLoading = true
+                            scope.launch {
+                                val result = withContext(Dispatchers.IO) {
+                                    CommunityApi.toggleLike(comment.id)
+                                }
+                                likeLoading = false
+                                when (result) {
+                                    is CommunityResult.Success -> {
+                                        // Confirmar com os valores reais da API
+                                        localLiked = result.data.liked
+                                        localLikes = result.data.likes
+                                        onLikeToggled(comment.id, result.data.liked, result.data.likes)
+                                    }
+                                    is CommunityResult.Error -> {
+                                        // Reverter se falhou
+                                        localLiked = wasLiked
+                                        localLikes = if (wasLiked) localLikes + 1 else (localLikes - 1).coerceAtLeast(0)
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            if (localLiked) Icons.Default.ThumbUp else Icons.Default.ThumbUp,
+                            contentDescription = if (localLiked) "Remover gosto" else "Gostar",
+                            tint     = if (localLiked) AccentBlue
+                                       else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(
+                        "$localLikes",
+                        color    = if (localLiked) AccentBlue
+                                   else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        fontWeight = if (localLiked) FontWeight.SemiBold else FontWeight.Normal
+                    )
                 }
             }
         }
