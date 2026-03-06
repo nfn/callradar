@@ -5,6 +5,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -68,7 +70,15 @@ class CallMonitorService : Service() {
     private fun promoteToForegroundSafe() {
         if (!isForeground) {
             try {
-                startForeground(NOTIFICATION_ID, buildNotification())
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    startForeground(
+                        NOTIFICATION_ID,
+                        buildNotification(),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+                    )
+                } else {
+                    startForeground(NOTIFICATION_ID, buildNotification())
+                }
                 isForeground = true
                 Log.d("CallMonitorService", "Promoted to foreground service")
             } catch (e: Exception) {
