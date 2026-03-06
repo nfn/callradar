@@ -295,7 +295,7 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
                 if (item.rating != null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(1.dp)) {
                         Icon(Icons.Default.Star, null, tint = ratingColor, modifier = Modifier.size(14.dp))
-                        Text("${item.rating}", color = ratingColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("%.1f".format(item.rating.toFloat()), color = ratingColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
