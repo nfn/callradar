@@ -33,7 +33,7 @@ data class NumberAnalysis(
     @SerializedName("subcategory")     val subcategory: String?,
     @SerializedName("risk_level")      val riskLevel: String?,
     @SerializedName("seo_summary")     val seoSummary: String?,
-    @SerializedName("warning_message") val warningMessage: String?
+    @SerializedName("advice")          val advice: String?
 )
 
 // ── Comments for a number ─────────────────────────────────────────────────────

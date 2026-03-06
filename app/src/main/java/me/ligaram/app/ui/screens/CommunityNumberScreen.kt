@@ -288,12 +288,12 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                     fontSize = 12.sp, fontWeight = FontWeight.Medium)
             }
 
-            // Mensagem de aviso (warning_message)
-            if (!analysis.warningMessage.isNullOrBlank()) {
+            // Mensagem de recomendação (advice)
+            if (!analysis.advice.isNullOrBlank()) {
                 HorizontalDivider(color = riskColor.copy(alpha = 0.2f))
                 Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Default.Info, null, tint = riskColor, modifier = Modifier.size(14.dp).padding(top = 1.dp))
-                    Text(analysis.warningMessage, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Text(analysis.advice, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp, lineHeight = 18.sp)
                 }
             }
