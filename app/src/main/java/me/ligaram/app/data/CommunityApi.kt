@@ -1,5 +1,6 @@
 package me.ligaram.app.data
 
+import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaType
@@ -18,28 +19,37 @@ object CommunityApi {
     private val gson = Gson()
     private val JSON = "application/json; charset=utf-8".toMediaType()
 
-    private const val BASE = "https://api.ligaram.me/api/v1"
+    private const val BASE  = "https://api.ligaram.me/api/v1"
     private const val TOKEN = "lUDf9WGHuW7OMbeNvQmZ8vIAwJLvTUo5HiwcCY9cPn7"
 
+    // Context guardado na primeira chamada a init() — chamada na MainActivity
+    private var appContext: Context? = null
+
+    fun init(context: Context) {
+        appContext = context.applicationContext
+    }
+
+    private fun deviceHeaders(): Map<String, String> =
+        appContext?.let { DeviceHeaders.build(it) } ?: emptyMap()
+
     private fun get(url: String): okhttp3.Response {
-        val req = Request.Builder()
+        val builder = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Bearer $TOKEN")
             .addHeader("Accept", "application/json")
-            .get()
-            .build()
-        return client.newCall(req).execute()
+        deviceHeaders().forEach { (k, v) -> builder.addHeader(k, v) }
+        return client.newCall(builder.get().build()).execute()
     }
 
     private fun post(url: String, body: Any): okhttp3.Response {
         val json = gson.toJson(body)
-        val req = Request.Builder()
+        val builder = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Bearer $TOKEN")
             .addHeader("Accept", "application/json")
             .post(json.toRequestBody(JSON))
-            .build()
-        return client.newCall(req).execute()
+        deviceHeaders().forEach { (k, v) -> builder.addHeader(k, v) }
+        return client.newCall(builder.build()).execute()
     }
 
     // ── GET /home?limit=20&cursor=X ───────────────────────────────────────────

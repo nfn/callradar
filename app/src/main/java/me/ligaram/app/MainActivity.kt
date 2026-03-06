@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import me.ligaram.app.data.ApiClient
+import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.service.CallMonitorService
 import me.ligaram.app.ui.screens.AppNavigation
 import me.ligaram.app.ui.screens.allPermissionsGranted
@@ -16,8 +18,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        // enableEdgeToEdge() deixa a app desenhar edge-to-edge mas delega as cores
-        // da status bar ao tema do sistema (dark/light via MaterialTheme).
+        // Inicializar clientes com context para os headers de diagnóstico
+        ApiClient.init(this)
+        CommunityApi.init(this)
         enableEdgeToEdge()
         setContent {
             LigaramTheme {

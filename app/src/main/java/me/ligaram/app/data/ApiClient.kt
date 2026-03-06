@@ -1,5 +1,6 @@
 package me.ligaram.app.data
 
+import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
 import okhttp3.OkHttpClient
@@ -15,13 +16,14 @@ object ApiClient {
 
     private val gson = Gson()
 
-    // Base URL — swap between ngrok (dev) and production
-    private const val BASE_URL = "https://api.ligaram.me/api/v1/overlay"
-
-    // Bearer token sent in Authorization header.
-    // Never put in the URL — it would appear in server logs.
-    // TODO: replace with your actual token before release.
+    private const val BASE_URL  = "https://api.ligaram.me/api/v1/overlay"
     private const val API_TOKEN = "lUDf9WGHuW7OMbeNvQmZ8vIAwJLvTUo5HiwcCY9cPn7"
+
+    private var appContext: Context? = null
+
+    fun init(context: Context) {
+        appContext = context.applicationContext
+    }
 
     fun fetchCallInfo(number: String): ApiResult {
         return try {
@@ -30,15 +32,16 @@ object ApiClient {
 
             Log.d("ApiClient", "→ GET $url")
 
-            val request = Request.Builder()
+            val builder = Request.Builder()
                 .url(url)
-                // Bypass ngrok browser-warning interstitial when testing with ngrok
                 .addHeader("Authorization", "Bearer $API_TOKEN")
                 .addHeader("Accept", "application/json")
-                .get()
-                .build()
 
-            val response = client.newCall(request).execute()
+            appContext?.let { ctx ->
+                DeviceHeaders.build(ctx).forEach { (k, v) -> builder.addHeader(k, v) }
+            }
+
+            val response = client.newCall(builder.get().build()).execute()
             Log.d("ApiClient", "← ${response.code} for $cleanNumber")
 
             if (response.code == 200) {

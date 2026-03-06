@@ -255,6 +255,34 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                     }
                                 }
 
+                                // ── Separador "Comentários" ────────────────────
+                                if (comments.isNotEmpty()) {
+                                    item(key = "comments_header") {
+                                        Row(
+                                            modifier          = Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 2.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Text(
+                                                "Comentários",
+                                                color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontSize   = 12.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                letterSpacing = 0.8.sp
+                                            )
+                                            HorizontalDivider(
+                                                modifier = Modifier.weight(1f),
+                                                color    = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                            )
+                                            Text(
+                                                "${comments.size}",
+                                                color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+                                }
+
                                 items(comments, key = { it.id }) { comment ->
                                     NumberCommentCard(
                                         comment        = comment,
