@@ -2,9 +2,7 @@ package me.ligaram.app.ui.screens
 
 import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.provider.Settings
-import androidx.core.net.toUri
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -82,6 +80,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -216,7 +215,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { selectedTab = 1 },
+                    onClick  = { selectedTab = 1; Unit },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -479,7 +478,7 @@ fun HomeScreen(navController: NavController) {
         PermissionDialog(
             phoneGranted   = phoneGranted,
             overlayGranted = overlayGranted,
-            onDismiss      = { showPermDialog = false }
+            onDismiss      = { showPermDialog = false; Unit }
         )
     }
 
@@ -508,7 +507,7 @@ fun HomeScreen(navController: NavController) {
                     containerColor = if (allGood) AccentGreen.copy(alpha = 0.1f) else AccentOrange.copy(alpha = 0.1f)
                 ),
                 border = BorderStroke(1.dp, if (allGood) AccentGreen.copy(alpha = 0.4f) else AccentOrange.copy(alpha = 0.4f)),
-                onClick = { if (!allGood) showPermDialog = true }
+                onClick = { if (!allGood) showPermDialog = true; Unit }
             ) {
                 Row(
                     modifier          = Modifier.padding(18.dp),
@@ -556,7 +555,7 @@ fun HomeScreen(navController: NavController) {
                 Triple(Icons.Default.Layers,       "Overlay apresentado",    "Se houver resultado, mostramos risco e categoria sobre o ecrã"),
                 Triple(Icons.Default.Block,        "Proteja-se",             "Decida com informação se atende ou rejeita a chamada")
             ).forEachIndexed { idx, (icon, title, desc) ->
-                HowItWorksStep(_step = idx + 1, icon = icon, title = title, description = desc)
+                HowItWorksStep(icon = icon, title = title, description = desc)
                 if (idx < 3) Spacer(modifier = Modifier.height(8.dp))
             }
 
@@ -707,7 +706,7 @@ fun PermissionRow(
 }
 
 @Composable
-fun HowItWorksStep(_step: Int, icon: ImageVector, title: String, description: String) {
+fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
