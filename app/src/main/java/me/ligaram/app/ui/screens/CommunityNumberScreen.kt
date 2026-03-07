@@ -168,7 +168,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null,
                         tint = MaterialTheme.colorScheme.onBackground)
                 }
-                Text(formatPhoneNumber(number),
+                Text("Número - ${formatPhoneNumber(number)}",
                     color    = MaterialTheme.colorScheme.onBackground,
                     fontSize = 20.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f))

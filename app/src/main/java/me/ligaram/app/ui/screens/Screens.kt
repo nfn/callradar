@@ -166,30 +166,28 @@ fun AppNavigation() {
 
         // Página de detalhe de número
         composable("${Routes.COMMUNITY_NUMBER}/{number}",
-            enterTransition = { fadeIn() + slideInHorizontally { it } },
-            exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
+            enterTransition    = { fadeIn() + slideInHorizontally { it } },
+            exitTransition     = { fadeOut() + slideOutHorizontally { -it } },
+            popEnterTransition = { fadeIn() + slideInHorizontally { -it } },
+            popExitTransition  = { fadeOut() + slideOutHorizontally { it } }
         ) { back ->
             val number = back.arguments?.getString("number") ?: ""
             CommunityNumberScreen(navController, number)
         }
 
-        // Screen para adicionar comentário — entra de baixo, sai para baixo
+        // Screen para adicionar comentário — slide horizontal suave, sem fade
         composable("${Routes.ADD_COMMENT}/{number}",
             enterTransition    = {
-                fadeIn(animationSpec = tween(300)) +
-                slideInVertically(animationSpec = tween(350, easing = EaseOutCubic)) { it / 2 }
+                slideInHorizontally(animationSpec = tween(550, easing = EaseOutCubic)) { it }
             },
             exitTransition     = {
-                fadeOut(animationSpec = tween(250)) +
-                slideOutVertically(animationSpec = tween(300, easing = EaseInCubic)) { it / 2 }
+                slideOutHorizontally(animationSpec = tween(480, easing = EaseInCubic)) { it }
             },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(300)) +
-                slideInVertically(animationSpec = tween(350, easing = EaseOutCubic)) { it / 2 }
+                slideInHorizontally(animationSpec = tween(550, easing = EaseOutCubic)) { -it }
             },
             popExitTransition  = {
-                fadeOut(animationSpec = tween(250)) +
-                slideOutVertically(animationSpec = tween(300, easing = EaseInCubic)) { it / 2 }
+                slideOutHorizontally(animationSpec = tween(480, easing = EaseInCubic)) { it }
             }
         ) { back ->
             val number = back.arguments?.getString("number") ?: ""

@@ -52,6 +52,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -247,7 +248,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                                 }
                             },
                             modifier    = Modifier.fillMaxWidth(),
-                            placeholder = { Text("NOS, EDP, Banco… (ou escreve livremente)",
+                            placeholder = { Text("NOS, EDP... (ou escreve livremente)",
                                 fontSize = 13.sp) },
                             leadingIcon  = {
                                 Icon(Icons.Default.Business, null,
@@ -444,8 +445,6 @@ fun AddCommentScreen(navController: NavController, number: String) {
                         }
                     }
                 }
-
-                Spacer(Modifier.height(8.dp))
             }
 
             // ── Botão submeter ────────────────────────────────────────────────
@@ -485,3 +484,20 @@ fun AddCommentScreen(navController: NavController, number: String) {
         }
     }
 }
+@Composable
+fun SheetSection(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(title, color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        content()
+    }
+}
+
+@Composable
+fun sheetFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor      = AccentBlue,
+    unfocusedBorderColor    = MaterialTheme.colorScheme.outline,
+    focusedContainerColor   = MaterialTheme.colorScheme.surfaceVariant,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+    errorBorderColor        = RiskHigh
+)
