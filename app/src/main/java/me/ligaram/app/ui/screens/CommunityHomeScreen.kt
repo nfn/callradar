@@ -137,7 +137,7 @@ fun PhoneSearchBar(onSearch: (String) -> Unit, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         placeholder   = {
-            Text("Pesquisar número — ex: 912345678",
+            Text("Pesquisar número - ex: 912345678",
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 fontSize = 14.sp)
         },

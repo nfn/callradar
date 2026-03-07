@@ -274,11 +274,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                                 modifier = Modifier.weight(1f),
                                                 color    = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                                             )
-                                            Text(
-                                                "${comments.size}",
-                                                color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                                fontSize = 11.sp
-                                            )
                                         }
                                     }
                                 }
@@ -347,100 +342,159 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // ── Cabeçalho sempre visível ──────────────────────────────────────
+            // ── Linha 1: ícone + "Análise"  |  badge de risco ────────────────
             Row(
-                verticalAlignment   = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                modifier              = Modifier.fillMaxWidth(),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier         = Modifier.size(36.dp).clip(CircleShape)
-                                           .background(riskColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) { Icon(Icons.Default.Analytics, null, tint = riskColor, modifier = Modifier.size(18.dp)) }
+                // Esquerda — ícone + label
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier         = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(riskColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Analytics, null,
+                            tint     = riskColor,
+                            modifier = Modifier.size(16.dp))
+                    }
+                    Text("Análise",
+                        color      = MaterialTheme.colorScheme.onBackground,
+                        fontSize   = 14.sp,
+                        fontWeight = FontWeight.Bold)
+                }
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Análise", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                // Direita — badge de risco pill + chevron
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     if (!analysis.riskLevel.isNullOrBlank()) {
-                        Text(analysis.riskLevel, color = riskColor,
-                            fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = riskColor.copy(alpha = 0.15f)
+                        ) {
+                            Row(
+                                modifier              = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment     = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(riskColor)
+                                )
+                                Text(analysis.riskLevel,
+                                    color      = riskColor,
+                                    fontSize   = 12.sp,
+                                    fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    Icon(
+                        if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (expanded) "Colapsar" else "Expandir",
+                        tint     = riskColor.copy(alpha = 0.7f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            // ── Linha 2: Categoria · Subcategoria ────────────────────────────
+            val hasCat    = !analysis.category.isNullOrBlank()
+            val hasSubCat = !analysis.subcategory.isNullOrBlank()
+            if (hasCat || hasSubCat) {
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (hasCat) {
+                        Text(analysis.category,
+                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize   = 12.sp,
+                            fontWeight = FontWeight.SemiBold)
+                    }
+                    if (hasCat && hasSubCat) {
+                        Text("·",
+                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold)
+                    }
+                    if (hasSubCat) {
+                        Text(analysis.subcategory,
+                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold)
                     }
                 }
-
-                // Chip de categoria
-                if (!analysis.category.isNullOrBlank()) {
-                    Surface(shape = RoundedCornerShape(8.dp), color = riskColor.copy(alpha = 0.12f)) {
-                        Text(analysis.category, color = riskColor, fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
-                    }
-                }
-
-                // Chevron animado
-                Icon(
-                    if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Colapsar" else "Expandir",
-                    tint     = riskColor,
-                    modifier = Modifier.size(20.dp)
-                )
             }
 
             // ── Conteúdo expandido ────────────────────────────────────────────
-            androidx.compose.animation.AnimatedVisibility(visible = expanded) {
-                Column(
-                    modifier            = Modifier.padding(top = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // Subcategoria
-                    if (!analysis.subcategory.isNullOrBlank()) {
-                        Text(analysis.subcategory,
-                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize   = 12.sp,
-                            fontWeight = FontWeight.Medium)
-                    }
+            AnimatedVisibility(visible = expanded) {
+                Column(modifier = Modifier.padding(top = 14.dp)) {
 
-                    // seoSummary
+                    HorizontalDivider(color = riskColor.copy(alpha = 0.2f))
+
+                    // Sobre este número — seoSummary
                     if (!analysis.seoSummary.isNullOrBlank()) {
-                        HorizontalDivider(color = riskColor.copy(alpha = 0.2f))
-                        Row(
-                            verticalAlignment     = Alignment.Top,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(Icons.Default.Info, null,
-                                tint     = riskColor,
-                                modifier = Modifier.size(14.dp).padding(top = 1.dp))
-                            Text(analysis.seoSummary,
-                                color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize   = 12.sp,
-                                lineHeight = 18.sp)
-                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text(analysis.seoSummary,
+                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize   = 13.sp,
+                            lineHeight  = 19.sp)
                     }
 
-                    // advice
+                    // Recomendação — advice
                     if (!analysis.advice.isNullOrBlank()) {
-                        Row(
-                            verticalAlignment     = Alignment.Top,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Spacer(Modifier.height(12.dp))
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = riskColor.copy(alpha = 0.10f)
                         ) {
-                            Icon(Icons.Default.Warning, null,
-                                tint     = riskColor,
-                                modifier = Modifier.size(14.dp).padding(top = 1.dp))
-                            Text(analysis.advice,
-                                color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize   = 12.sp,
-                                lineHeight = 18.sp)
+                            Column(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment     = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Icon(Icons.Default.Warning, null,
+                                        tint     = riskColor,
+                                        modifier = Modifier.size(12.dp))
+                                    Text("RECOMENDAÇÃO",
+                                        color         = riskColor,
+                                        fontSize      = 10.sp,
+                                        fontWeight    = FontWeight.Bold,
+                                        letterSpacing = 0.6.sp)
+                                }
+                                Spacer(Modifier.height(5.dp))
+                                Text(analysis.advice,
+                                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize   = 13.sp,
+                                    lineHeight  = 19.sp,
+                                    fontWeight = FontWeight.Medium)
+                            }
                         }
+                        Spacer(Modifier.height(2.dp))
                     }
                 }
             }
 
-            // Dica "toque para ver análise" apenas quando colapsado
+            // Dica apenas quando colapsado
             if (!expanded) {
-                Text(
-                    "Toque para ver a análise completa",
-                    color    = riskColor.copy(alpha = 0.7f),
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(top = 6.dp)
-                )
+                Spacer(Modifier.height(6.dp))
+                Text("Toque para ver a análise completa",
+                    color    = riskColor.copy(alpha = 0.6f),
+                    fontSize = 11.sp)
             }
         }
     }

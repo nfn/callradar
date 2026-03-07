@@ -129,7 +129,7 @@ fun allPermissionsGranted(context: android.content.Context): Boolean =
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // A app arranca sempre no HOME — as permissões são opcionais e activadas
+    // A app arranca sempre no HOME - as permissões são opcionais e activadas
     // a partir do status card da tab Proteção.
     NavHost(navController = navController, startDestination = Routes.HOME) {
         composable(Routes.PERM_PHONE,
@@ -142,7 +142,7 @@ fun AppNavigation() {
             exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
         ) { PermOverlayScreen(navController) }
 
-        // HOME e COMMUNITY_HOME são o mesmo shell — apenas diferem no tab inicial
+        // HOME e COMMUNITY_HOME são o mesmo shell - apenas diferem no tab inicial
         composable(Routes.HOME,
             enterTransition = { fadeIn() + slideInHorizontally { it } },
             exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
@@ -158,7 +158,7 @@ fun AppNavigation() {
             exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
         ) { AboutScreen(navController) }
 
-        // Página de detalhe de número — o formulário é agora um BottomSheet interno
+        // Página de detalhe de número - o formulário é agora um BottomSheet interno
         composable("${Routes.COMMUNITY_NUMBER}/{number}",
             enterTransition = { fadeIn() + slideInHorizontally { it } },
             exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
@@ -425,7 +425,7 @@ fun PermOverlayScreen(navController: NavController) {
         },
         granted = canDraw.value,
         onNext = {
-            // App is in foreground here — startForegroundService is safe
+            // App is in foreground here - startForegroundService is safe
             val serviceIntent = Intent(context, CallMonitorService::class.java).apply {
                 action = CallMonitorService.ACTION_START
             }
@@ -487,12 +487,14 @@ fun HomeScreen(navController: NavController) {
         ) {
             LigaramLogo(size = 72.dp)
             Spacer(modifier = Modifier.height(20.dp))
-            Text("ligaram.me", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Proteção contra chamadas indesejadas", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, textAlign = TextAlign.Center)
+            Text("CallGuard", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+            Text("por ligaram.me", color = AccentBlue, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Proteção contra chamadas indesejadas", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, textAlign = TextAlign.Center)
 
             Spacer(modifier = Modifier.height(36.dp))
 
-            // ── Status card — clicável quando as permissões não estão completas ──
+            // ── Status card - clicável quando as permissões não estão completas ──
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape    = RoundedCornerShape(18.dp),
@@ -731,6 +733,13 @@ fun HowItWorksStep(step: Int, icon: ImageVector, title: String, description: Str
 // ─── About Screen ──────────────────────────────────────────────────────────────
 @Composable
 fun AboutScreen(navController: NavController) {
+    val context = LocalContext.current
+
+    fun openSite() {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ligaram.me"))
+        context.startActivity(intent)
+    }
+
     AppBackground {
         Column(
             modifier = Modifier
@@ -768,16 +777,38 @@ fun AboutScreen(navController: NavController) {
                         LigaramLogo(size = 56.dp)
                     }
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("ligaram.me", color = MaterialTheme.colorScheme.onBackground, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
-                    Text("v1.0.0", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                    Text("CallGuard",
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("por ligaram.me",
+                        color = AccentBlue,
+                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("v1.0.0",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    // Link para o site
+                    OutlinedButton(
+                        onClick = ::openSite,
+                        shape   = RoundedCornerShape(10.dp),
+                        border  = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.6f))
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, null,
+                            tint     = AccentBlue,
+                            modifier = Modifier.size(15.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("ligaram.me", color = AccentBlue,
+                            fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
 
             Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
 
                 AboutSection(
-                    title = "O que é?",
-                    content = "O ligaram.me é uma aplicação de proteção contra chamadas indesejadas. Quando recebe uma chamada, a app consulta automaticamente a nossa base de dados e apresenta informação sobre o número - incluindo nível de risco, categoria e avaliação da comunidade."
+                    title = "O que é o CallGuard?",
+                    content = "O CallGuard é uma aplicação de proteção contra chamadas indesejadas desenvolvida pelo ligaram.me. Quando recebe uma chamada, a app consulta automaticamente a base de dados e apresenta informação sobre o número - incluindo nível de risco, categoria e avaliação da comunidade."
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -789,16 +820,60 @@ fun AboutScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // ── Comunidade ligaram.me ─────────────────────────────────────
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape    = RoundedCornerShape(16.dp),
+                    colors   = CardDefaults.cardColors(
+                        containerColor = AccentBlue.copy(alpha = 0.07f)),
+                    border   = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.25f)),
+                    onClick  = ::openSite
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Forum, null,
+                                tint     = AccentBlue,
+                                modifier = Modifier.size(22.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Comunidade ligaram.me",
+                                color = AccentBlue,
+                                fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            "O CallGuard é também a aplicação oficial da comunidade de visitantes do ligaram.me. Pesquise números, consulte comentários de outros utilizadores, reporte chamadas suspeitas e ajude a proteger mais pessoas.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 13.sp, lineHeight = 20.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text("Visitar ligaram.me",
+                                color      = AccentBlue,
+                                fontSize   = 13.sp,
+                                fontWeight = FontWeight.SemiBold)
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, null,
+                                tint     = AccentBlue,
+                                modifier = Modifier.size(14.dp))
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 // Features
                 Text("Funcionalidades", color = MaterialTheme.colorScheme.onBackground, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(10.dp))
                 listOf(
-                    Icons.Default.Bolt to "Identificação em tempo real",
-                    Icons.Default.Shield to "Base de dados comunitária",
+                    Icons.Default.Bolt       to "Identificação em tempo real",
+                    Icons.Default.Shield     to "Base de dados comunitária",
+                    Icons.Default.Forum      to "Comunidade de reporte",
                     Icons.Default.Visibility to "Overlay não intrusivo",
                     Icons.Default.BatteryFull to "Baixo consumo de bateria",
-                    Icons.Default.Lock to "Sem armazenamento de dados pessoais",
-                    Icons.Default.Update to "Base de dados sempre atualizada"
+                    Icons.Default.Lock       to "Sem armazenamento de dados pessoais",
+                    Icons.Default.Update     to "Base de dados sempre atualizada"
                 ).forEach { (icon, text) ->
                     Row(
                         modifier = Modifier
@@ -823,7 +898,7 @@ fun AboutScreen(navController: NavController) {
                     Triple(Icons.Default.Phone, "READ_PHONE_STATE",
                         "Permite detetar quando uma chamada é recebida, para que a identificação ocorra em tempo real sem necessidade de interação do utilizador."),
                     Triple(Icons.Default.History, "READ_CALL_LOG",
-                        "Permite ler o número de telefone da chamada recebida. Este número é enviado à API do ligaram.me apenas para consulta de risco — nunca é armazenado localmente."),
+                        "Permite ler o número de telefone da chamada recebida. Este número é enviado à API do ligaram.me apenas para consulta de risco - nunca é armazenado localmente."),
                     Triple(Icons.Default.Contacts, "READ_CONTACTS",
                         "Utilizado para mostrar o nome do contacto no overlay, caso o número já exista na agenda. Nenhum dado de contacto é transmitido ou armazenado."),
                     Triple(Icons.Default.Layers, "SYSTEM_ALERT_WINDOW",
@@ -881,14 +956,24 @@ fun AboutScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Footer
-                Text(
-                    "© 2026 ligaram.me · Todos os direitos reservados",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    fontSize = 12.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
+                // Footer com link
+                Column(
+                    modifier            = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    TextButton(onClick = ::openSite) {
+                        Text("ligaram.me",
+                            color      = AccentBlue,
+                            fontSize   = 13.sp,
+                            fontWeight = FontWeight.SemiBold)
+                    }
+                    Text(
+                        "© 2026 CallGuard · ligaram.me · Todos os direitos reservados",
+                        color     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        fontSize  = 11.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }

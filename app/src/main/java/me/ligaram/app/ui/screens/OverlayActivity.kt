@@ -555,7 +555,7 @@ fun StyleBannerFullTap(
                 DetailRow(Icons.Default.Category, "Categoria", category, AccentBlue)
                 if (subcategory.isNotBlank())
                     DetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
-                Text("toque para fechar · ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp,
+                Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp,
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             }
         }
