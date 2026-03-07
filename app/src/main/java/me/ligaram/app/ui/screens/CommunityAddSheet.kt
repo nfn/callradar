@@ -194,8 +194,6 @@ fun CommunityAddSheet(
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Novo comentário", color = MaterialTheme.colorScheme.onBackground,
                             fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(number, color = AccentBlue,
-                            fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, null,
@@ -223,118 +221,24 @@ fun CommunityAddSheet(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
 
-                // Classificação *
-                SheetSection("Classificação *") {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        SHEET_CLASSIFICATIONS.chunked(3).forEach { row ->
-                            Row(
-                                modifier              = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                row.forEach { cls ->
-                                    val selected = classification == cls
-                                    val clsColor = classificationColor(cls)
-                                    Surface(
-                                        onClick  = { classification = cls },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .border(1.5.dp,
-                                                if (selected) clsColor
-                                                else MaterialTheme.colorScheme.outline,
-                                                RoundedCornerShape(10.dp)),
-                                        shape = RoundedCornerShape(10.dp),
-                                        color = if (selected) clsColor.copy(alpha = 0.12f)
-                                                else MaterialTheme.colorScheme.surfaceVariant
-                                    ) {
-                                        Column(
-                                            modifier            = Modifier.padding(8.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                                        ) {
-                                            Icon(SHEET_CLASS_ICONS[cls] ?: Icons.Default.Circle,
-                                                null,
-                                                tint     = if (selected) clsColor
-                                                           else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.size(18.dp))
-                                            Text(cls,
-                                                color      = if (selected) clsColor
-                                                             else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                fontSize   = 11.sp,
-                                                fontWeight = if (selected) FontWeight.Bold
-                                                             else FontWeight.Normal,
-                                                textAlign  = TextAlign.Center)
-                                        }
-                                    }
-                                }
-                                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-                            }
-                        }
-                    }
-                }
-
-                // Avaliação *
-                SheetSection("Avaliação *") {
-                    Row(
-                        modifier              = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment     = Alignment.CenterVertically
-                    ) {
-                        repeat(5) { idx ->
-                            val star = idx + 1
-                            IconButton(onClick = { rating = star },
-                                modifier = Modifier.size(44.dp)) {
-                                Icon(
-                                    if (star <= rating) Icons.Default.Star
-                                    else Icons.Default.StarBorder,
-                                    "$star estrelas",
-                                    tint     = if (rating > 0) starColor(rating)
-                                               else MaterialTheme.colorScheme.outline,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        }
-                        if (rating > 0) {
-                            Text(when (rating) {
-                                1 -> "Muito mau"; 2 -> "Mau"; 3 -> "Neutro"
-                                4 -> "Bom";       else -> "Excelente"
-                            }, color = starColor(rating),
-                                fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-                }
-
-                // Comentário *
-                SheetSection("Comentário *") {
-                    OutlinedTextField(
-                        value          = commentText,
-                        onValueChange  = { commentText = it.take(2000) },
-                        modifier       = Modifier.fillMaxWidth().heightIn(min = 88.dp),
-                        placeholder    = { Text("Descreve a tua experiência com este número…",
-                            fontSize = 13.sp) },
-                        shape          = RoundedCornerShape(12.dp),
-                        colors         = sheetFieldColors(),
-                        supportingText = {
-                            Text("${commentText.length}/2000",
-                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp)
-                        }
-                    )
-                }
-
                 // Nome (opcional)
                 SheetSection("Nome (opcional)") {
                     OutlinedTextField(
-                        value         = name,
-                        onValueChange = { name = it.take(128) },
-                        modifier      = Modifier.fillMaxWidth(),
-                        placeholder   = { Text("O teu nome ou alcunha", fontSize = 13.sp) },
-                        leadingIcon   = {
+                        value           = name,
+                        onValueChange   = { name = it.take(128) },
+                        modifier        = Modifier.fillMaxWidth(),
+                        placeholder     = { Text("O teu nome ou alcunha", fontSize = 13.sp) },
+                        leadingIcon     = {
                             Icon(Icons.Default.Person, null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         },
-                        singleLine = true,
-                        shape      = RoundedCornerShape(12.dp),
-                        colors     = sheetFieldColors()
+                        singleLine      = true,
+                        shape           = RoundedCornerShape(12.dp),
+                        colors          = sheetFieldColors(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType   = KeyboardType.Text,
+                            capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Words
+                        )
                     )
                 }
 
@@ -396,7 +300,6 @@ fun CommunityAddSheet(
                         )
 
                         // Dropdown para CIMA
-                        // Usa clickable nativo — tem prioridade sobre o pointerInput do pai
                         androidx.compose.animation.AnimatedVisibility(
                             visible  = showSuggestions && entitySuggestions.isNotEmpty(),
                             enter    = expandVertically(
@@ -419,9 +322,6 @@ fun CommunityAddSheet(
                                         RoundedCornerShape(12.dp))
                             ) {
                                 Column {
-                                    // Capturar a lista actual num snapshot imutável
-                                    // para evitar que o reset do pai destrua a referência
-                                    // antes do clickable completar
                                     val snapshot = remember(entitySuggestions) {
                                         entitySuggestions.toList()
                                     }
@@ -429,9 +329,6 @@ fun CommunityAddSheet(
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                // clickable é processado ANTES do
-                                                // pointerInput do pai — garante que
-                                                // entity = item.entity corre primeiro
                                                 .clickable(
                                                     interactionSource = remember {
                                                         MutableInteractionSource()
@@ -463,6 +360,98 @@ fun CommunityAddSheet(
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+
+                // Comentário *
+                SheetSection("Comentário *") {
+                    OutlinedTextField(
+                        value          = commentText,
+                        onValueChange  = { commentText = it.take(2000) },
+                        modifier       = Modifier.fillMaxWidth().heightIn(min = 88.dp),
+                        placeholder    = { Text("Descreve a tua experiência com este número…",
+                            fontSize = 13.sp) },
+                        shape          = RoundedCornerShape(12.dp),
+                        colors         = sheetFieldColors(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType   = KeyboardType.Text,
+                            capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Sentences
+                        ),
+                        supportingText = {
+                            Text("${commentText.length}/2000",
+                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.sp)
+                        }
+                    )
+                }
+
+                // Classificação *
+                SheetSection("Classificação *") {
+                    androidx.compose.foundation.layout.FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement   = Arrangement.spacedBy(6.dp)
+                    ) {
+                        SHEET_CLASSIFICATIONS.forEach { cls ->
+                            val selected = classification == cls
+                            val clsColor = classificationColor(cls)
+                            androidx.compose.material3.FilterChip(
+                                selected = selected,
+                                onClick  = { classification = cls },
+                                label    = { Text(cls, fontSize = 13.sp) },
+                                leadingIcon = {
+                                    Icon(
+                                        SHEET_CLASS_ICONS[cls] ?: Icons.Default.Circle,
+                                        null,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                },
+                                colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor   = clsColor.copy(alpha = 0.15f),
+                                    selectedLabelColor       = clsColor,
+                                    selectedLeadingIconColor = clsColor,
+                                    containerColor           = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor               = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    iconColor                = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+                                    enabled             = true,
+                                    selected            = selected,
+                                    borderColor         = MaterialTheme.colorScheme.outline,
+                                    selectedBorderColor = clsColor
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Avaliação *
+                SheetSection("Avaliação *") {
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment     = Alignment.CenterVertically
+                    ) {
+                        repeat(5) { idx ->
+                            val star = idx + 1
+                            IconButton(onClick = { rating = star },
+                                modifier = Modifier.size(44.dp)) {
+                                Icon(
+                                    if (star <= rating) Icons.Default.Star
+                                    else Icons.Default.StarBorder,
+                                    "$star estrelas",
+                                    tint     = if (rating > 0) starColor(rating)
+                                    else MaterialTheme.colorScheme.outline,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+                        if (rating > 0) {
+                            Text(when (rating) {
+                                1 -> "Muito mau"; 2 -> "Mau"; 3 -> "Neutro"
+                                4 -> "Bom";       else -> "Excelente"
+                            }, color = starColor(rating),
+                                fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }

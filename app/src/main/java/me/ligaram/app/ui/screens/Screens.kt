@@ -487,7 +487,7 @@ fun HomeScreen(navController: NavController) {
         ) {
             LigaramLogo(size = 72.dp)
             Spacer(modifier = Modifier.height(20.dp))
-            Text("CallGuard", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+            Text("CallRadar", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
             Text("por ligaram.me", color = AccentBlue, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(4.dp))
             Text("Proteção contra chamadas indesejadas", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, textAlign = TextAlign.Center)
@@ -777,7 +777,7 @@ fun AboutScreen(navController: NavController) {
                         LigaramLogo(size = 56.dp)
                     }
                     Spacer(modifier = Modifier.height(14.dp))
-                    Text("CallGuard",
+                    Text("CallRadar",
                         color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
                     Text("por ligaram.me",
@@ -807,8 +807,8 @@ fun AboutScreen(navController: NavController) {
             Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
 
                 AboutSection(
-                    title = "O que é o CallGuard?",
-                    content = "O CallGuard é uma aplicação de proteção contra chamadas indesejadas desenvolvida pelo ligaram.me. Quando recebe uma chamada, a app consulta automaticamente a base de dados e apresenta informação sobre o número - incluindo nível de risco, categoria e avaliação da comunidade."
+                    title = "O que é o CallRadar?",
+                    content = "O CallRadar é uma aplicação de proteção contra chamadas indesejadas desenvolvida pelo ligaram.me. Quando recebe uma chamada, a app consulta automaticamente a base de dados e apresenta informação sobre o número - incluindo nível de risco, categoria e avaliação da comunidade."
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -841,7 +841,7 @@ fun AboutScreen(navController: NavController) {
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            "O CallGuard é também a aplicação oficial da comunidade de visitantes do ligaram.me. Pesquise números, consulte comentários de outros utilizadores, reporte chamadas suspeitas e ajude a proteger mais pessoas.",
+                            "O CallRadar é também a aplicação oficial da comunidade de visitantes do ligaram.me. Pesquise números, consulte comentários de outros utilizadores, reporte chamadas suspeitas e ajude a proteger mais pessoas.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp, lineHeight = 20.sp
                         )
@@ -968,7 +968,7 @@ fun AboutScreen(navController: NavController) {
                             fontWeight = FontWeight.SemiBold)
                     }
                     Text(
-                        "© 2026 CallGuard · ligaram.me · Todos os direitos reservados",
+                        "© 2026 CallRadar · ligaram.me · Todos os direitos reservados",
                         color     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         fontSize  = 11.sp,
                         textAlign = TextAlign.Center
