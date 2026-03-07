@@ -104,6 +104,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     var hasMore      by remember { mutableStateOf(true) }
     var nextCursor   by remember { mutableStateOf<Int?>(null) }
     var notFound     by remember { mutableStateOf(false) }
+    var errorMsg     by remember { mutableStateOf<String?>(null) }
 
     // Estado para o BottomSheet do formulário
     var showAddSheet by remember { mutableStateOf(false) }
@@ -111,6 +112,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     fun loadPage(cursor: Int? = null) {
         if (isLoading) return
         isLoading = true
+        if (cursor == null) errorMsg = null
         scope.launch {
             val result = withContext(Dispatchers.IO) {
                 CommunityApi.fetchComments(number, cursor = cursor)
@@ -124,9 +126,11 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     hasMore      = page.pagination.hasMore
                     nextCursor   = page.pagination.nextCursor
                     notFound     = false
+                    errorMsg     = null
                 }
                 is CommunityResult.Error -> {
-                    notFound = result.message.contains("404")
+                    if (result.message.contains("404")) notFound = true
+                    else errorMsg = result.message
                 }
             }
             isLoading    = false
@@ -141,7 +145,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = listState.layoutInfo.totalItemsCount
-            hasMore && !isLoading && total > 0 && last >= total - 3
+            hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
@@ -160,9 +164,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 
             // ── Top bar ───────────────────────────────────────────────────────
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 4.dp, end = 12.dp, top = 48.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 48.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.backToCommunity() }) {
@@ -222,6 +224,12 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = AccentBlue)
                         }
+                    }
+                    comments.isEmpty() && errorMsg != null -> {
+                        CommunityErrorState(message = errorMsg!!, onRetry = {
+                            errorMsg = null
+                            loadPage()
+                        })
                     }
                     notFound || (comments.isEmpty() && !isLoading) -> {
                         EmptyCommentsState(number = number, onAdd = { showAddSheet = true })
@@ -288,13 +296,33 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                 }
 
                                 item {
-                                    if (isLoading) {
-                                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
+                                    when {
+                                        errorMsg != null && comments.isNotEmpty() -> {
+                                            Row(
+                                                modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                                                verticalAlignment     = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text("Erro ao carregar mais",
+                                                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    fontSize = 12.sp)
+                                                androidx.compose.material3.TextButton(onClick = {
+                                                    errorMsg = null
+                                                    loadPage(nextCursor)
+                                                }) {
+                                                    Text("Tentar", color = AccentBlue, fontSize = 12.sp)
+                                                }
+                                            }
                                         }
-                                    } else if (!hasMore) {
-                                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                            Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                        isLoading -> {
+                                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
+                                            }
+                                        }
+                                        !hasMore -> {
+                                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                                Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                            }
                                         }
                                     }
                                 }
@@ -463,7 +491,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                                     verticalAlignment     = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                                 ) {
-                                    Icon(Icons.Default.Warning, null,
+                                    Icon(Icons.Default.Info, null,
                                         tint     = riskColor,
                                         modifier = Modifier.size(12.dp))
                                     Text("RECOMENDAÇÃO",
@@ -521,19 +549,31 @@ fun NumberCommentCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Row 1: nome | classification
+            // Row 1: badge inicial + nome (esq) | classification (dir)
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    comment.name?.ifBlank { "Anónimo" } ?: "Anónimo",
-                    color      = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize   = 14.sp,
-                    modifier   = Modifier.weight(1f)
-                )
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier              = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier         = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val initial = comment.name?.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+                        Text(initial, color = classColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                    Text(
+                        comment.name?.ifBlank { "Anónimo" } ?: "Anónimo",
+                        color      = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize   = 14.sp
+                    )
+                }
                 if (!comment.classification.isNullOrBlank()) {
                     Surface(shape = RoundedCornerShape(8.dp), color = classColor.copy(alpha = 0.12f)) {
                         Text(

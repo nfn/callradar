@@ -1,5 +1,6 @@
 package me.ligaram.app.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,17 +16,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,6 +59,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -187,7 +194,7 @@ fun CommunityHomeScreen(navController: NavController) {
     fun loadPage(cursor: Int? = null) {
         if (isLoading) return
         isLoading = true
-        errorMsg  = null
+        if (cursor == null) errorMsg = null
         scope.launch {
             val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
             when (result) {
@@ -210,7 +217,7 @@ fun CommunityHomeScreen(navController: NavController) {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = listState.layoutInfo.totalItemsCount
-            hasMore && !isLoading && total > 0 && last >= total - 3
+            hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
@@ -218,10 +225,10 @@ fun CommunityHomeScreen(navController: NavController) {
     AppBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 52.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Números",
+                Text("Comentários",
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 20.sp, fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.weight(1f))
@@ -258,13 +265,33 @@ fun CommunityHomeScreen(navController: NavController) {
                                 })
                             }
                             item {
-                                if (isLoading && items.isNotEmpty()) {
-                                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
+                                when {
+                                    errorMsg != null && items.isNotEmpty() -> {
+                                        Row(
+                                            modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                                            verticalAlignment     = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text("Erro ao carregar mais",
+                                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontSize = 12.sp)
+                                            androidx.compose.material3.TextButton(onClick = {
+                                                errorMsg = null
+                                                loadPage(nextCursor)
+                                            }) {
+                                                Text("Tentar", color = AccentBlue, fontSize = 12.sp)
+                                            }
+                                        }
                                     }
-                                } else if (!hasMore && items.isNotEmpty()) {
-                                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                        Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                    isLoading && items.isNotEmpty() -> {
+                                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
+                                        }
+                                    }
+                                    !hasMore && items.isNotEmpty() -> {
+                                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                            Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                        }
                                     }
                                 }
                             }
@@ -296,7 +323,23 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
 
             // Row 1
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(formatPhoneNumber(item.number), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier         = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            when (item.classification) {
+                                "Perigoso" -> Icons.Default.Warning
+                                "Suspeito" -> Icons.AutoMirrored.Filled.Help
+                                "Seguro"   -> Icons.Default.CheckCircle
+                                else       -> Icons.Default.Phone
+                            },
+                            null, tint = classColor, modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Text(formatPhoneNumber(item.number), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
                 if (item.rating != null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         Icon(Icons.Default.Star, null, tint = ratingColor, modifier = Modifier.size(14.dp))
@@ -321,14 +364,12 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
                 Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     Text(timeAgo(item.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                     if (!item.name.isNullOrBlank()) {
-                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), fontSize = 11.sp)
-                        Text(item.name, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), fontSize = 16.sp)
+                        Text(item.name, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     if (!item.classification.isNullOrBlank()) {
-                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), fontSize = 11.sp)
-                        Surface(shape = RoundedCornerShape(5.dp), color = classColor.copy(alpha = 0.12f)) {
-                            Text(item.classification, color = classColor, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp))
-                        }
+                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), fontSize = 16.sp)
+                        Text(item.classification, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
                 Spacer(Modifier.width(8.dp))
