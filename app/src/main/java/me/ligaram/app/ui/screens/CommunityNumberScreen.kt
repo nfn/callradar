@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WarningAmber
@@ -54,7 +53,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,7 +73,6 @@ import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.NumberAnalysis
 import me.ligaram.app.data.NumberComment
-import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentOrange
 import me.ligaram.app.ui.theme.RiskHigh
@@ -107,6 +104,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     var hasMore      by remember { mutableStateOf(true) }
     var nextCursor   by remember { mutableStateOf<Int?>(null) }
     var notFound     by remember { mutableStateOf(false) }
+    var errorMsg     by remember { mutableStateOf<String?>(null) }
 
     // Estado para o BottomSheet do formulário
     var showAddSheet by remember { mutableStateOf(false) }
@@ -114,6 +112,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     fun loadPage(cursor: Int? = null) {
         if (isLoading) return
         isLoading = true
+        if (cursor == null) errorMsg = null
         scope.launch {
             val result = withContext(Dispatchers.IO) {
                 CommunityApi.fetchComments(number, cursor = cursor)
@@ -129,7 +128,8 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     notFound     = false
                 }
                 is CommunityResult.Error -> {
-                    notFound = result.message.contains("404")
+                    if (result.message.contains("404")) notFound = true
+                    else errorMsg = result.message
                 }
             }
             isLoading    = false
@@ -144,7 +144,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = listState.layoutInfo.totalItemsCount
-            hasMore && !isLoading && total > 0 && last >= total - 3
+            hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
@@ -172,8 +172,8 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null,
                         tint = MaterialTheme.colorScheme.onBackground)
                 }
-                Text(number,
-                    color = MaterialTheme.colorScheme.onBackground,
+                Text(formatPhoneNumber(number),
+                    color    = MaterialTheme.colorScheme.onBackground,
                     fontSize = 20.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f))
                 /*
@@ -203,7 +203,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     ) { Icon(Icons.Default.Phone, null, tint = AccentBlue, modifier = Modifier.size(22.dp)) }
                     Spacer(Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(number, color = MaterialTheme.colorScheme.onBackground,
+                        Text(formatPhoneNumber(number), color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
                         Text("${comments.size} comentário${if (comments.size != 1) "s" else ""}",
                             color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
@@ -225,6 +225,12 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = AccentBlue)
                         }
+                    }
+                    comments.isEmpty() && errorMsg != null -> {
+                        CommunityErrorState(message = errorMsg!!, onRetry = {
+                            errorMsg = null
+                            loadPage()
+                        })
                     }
                     notFound || (comments.isEmpty() && !isLoading) -> {
                         EmptyCommentsState(number = number, onAdd = { showAddSheet = true })
@@ -324,13 +330,12 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 fun NumberAnalysisCard(analysis: NumberAnalysis) {
     var expanded by remember { mutableStateOf(false) }
 
-    val riskColor = when {
-        analysis.riskLevel?.contains("Alto",    ignoreCase = true) == true ||
-        analysis.riskLevel?.contains("Elevado", ignoreCase = true) == true -> RiskHigh
-        analysis.riskLevel?.contains("Médio",   ignoreCase = true) == true ||
-        analysis.riskLevel?.contains("Medio",   ignoreCase = true) == true -> AccentOrange
-        analysis.riskLevel?.contains("Baixo",   ignoreCase = true) == true -> RiskLow
-        else -> Color(0xFF94A3B8)
+    val riskColor = when (analysis.riskLevel) {
+        "Risco Alto"        -> RiskHigh
+        "Risco Médio"       -> AccentOrange
+        "Risco Baixo"       -> RiskLow
+        "Risco Desconhecido" -> Color(0xFF94A3B8)
+        else                -> Color(0xFF94A3B8)
     }
 
     Card(
@@ -501,6 +506,10 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
 }
 
 // ─── Comment card com like interactivo ───────────────────────────────────────
+// Row 1: nome (esq) | classification (dir)
+// Row 2: separador
+// Row 3: comentário
+// Row 4: hora (esq) | like (dir)
 @Composable
 fun NumberCommentCard(
     comment: NumberComment,
@@ -508,9 +517,7 @@ fun NumberCommentCard(
 ) {
     val scope      = rememberCoroutineScope()
     val classColor = classificationColor(comment.classification)
-    val starsColor = comment.rating?.let { starColor(it) } ?: AccentOrange
 
-    // Estado local optimista — actualiza imediatamente sem esperar pela API
     var localLikes  by remember(comment.id) { mutableStateOf(comment.likes) }
     var localLiked  by remember(comment.id) { mutableStateOf(false) }
     var likeLoading by remember(comment.id) { mutableStateOf(false) }
@@ -522,63 +529,72 @@ fun NumberCommentCard(
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier         = Modifier.size(36.dp).clip(CircleShape)
-                                           .background(classColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
+
+            // Row 1: badge inicial + nome (esq) | classification (dir)
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier              = Modifier.weight(1f)
                 ) {
-                    val initial = comment.name?.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
-                    Text(initial, color = classColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
-                Spacer(Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(comment.name?.ifBlank { "Anónimo" } ?: "Anónimo",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Box(
+                        modifier         = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val initial = comment.name?.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+                        Text(initial, color = classColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                    Text(
+                        comment.name?.ifBlank { "Anónimo" } ?: "Anónimo",
+                        color      = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize   = 14.sp
+                    )
                 }
                 if (!comment.classification.isNullOrBlank()) {
                     Surface(shape = RoundedCornerShape(8.dp), color = classColor.copy(alpha = 0.12f)) {
-                        Text(comment.classification, color = classColor, fontSize = 11.sp,
+                        Text(
+                            comment.classification,
+                            color      = classColor,
+                            fontSize   = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            modifier   = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                            modifier   = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
                     }
                 }
             }
 
+            // Row 2: separador
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
             Spacer(Modifier.height(10.dp))
 
+            // Row 3: comentário
             if (!comment.comment.isNullOrBlank()) {
-                Text(comment.comment, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp, lineHeight = 20.sp)
+                Text(
+                    comment.comment,
+                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize   = 14.sp,
+                    lineHeight = 20.sp
+                )
+                Spacer(Modifier.height(10.dp))
             }
 
-            Spacer(Modifier.height(10.dp))
-
-            // Footer
+            // Row 4: hora (esq) | like (dir)
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment     = Alignment.CenterVertically
             ) {
-                // Estrelas + data
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (comment.rating != null) {
-                        Row {
-                            repeat(5) { idx ->
-                                Icon(
-                                    if (idx < comment.rating) Icons.Default.Star
-                                    else Icons.Default.StarBorder,
-                                    null, tint = starsColor, modifier = Modifier.size(14.dp)
-                                )
-                            }
-                        }
-                    }
-                    Text(timeAgo(comment.createdAt),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
-                }
-
+                Text(
+                    timeAgo(comment.createdAt),
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp
+                )
                 // Botão de like
                 Row(
                     verticalAlignment     = Alignment.CenterVertically,
@@ -587,25 +603,20 @@ fun NumberCommentCard(
                     IconButton(
                         onClick  = {
                             if (likeLoading) return@IconButton
-                            // Actualização optimista imediata
                             val wasLiked = localLiked
                             localLiked = !wasLiked
                             localLikes = if (!wasLiked) localLikes + 1 else (localLikes - 1).coerceAtLeast(0)
                             likeLoading = true
                             scope.launch {
-                                val result = withContext(Dispatchers.IO) {
-                                    CommunityApi.toggleLike(comment.id)
-                                }
+                                val result = withContext(Dispatchers.IO) { CommunityApi.toggleLike(comment.id) }
                                 likeLoading = false
                                 when (result) {
                                     is CommunityResult.Success -> {
-                                        // Confirmar com os valores reais da API
                                         localLiked = result.data.liked
                                         localLikes = result.data.likes
                                         onLikeToggled(comment.id, result.data.liked, result.data.likes)
                                     }
                                     is CommunityResult.Error -> {
-                                        // Reverter se falhou
                                         localLiked = wasLiked
                                         localLikes = if (wasLiked) localLikes + 1 else (localLikes - 1).coerceAtLeast(0)
                                     }
@@ -615,18 +626,16 @@ fun NumberCommentCard(
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            if (localLiked) Icons.Default.ThumbUp else Icons.Default.ThumbUp,
+                            Icons.Default.ThumbUp,
                             contentDescription = if (localLiked) "Remover gosto" else "Gostar",
-                            tint     = if (localLiked) AccentBlue
-                                       else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint     = if (localLiked) AccentBlue else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(16.dp)
                         )
                     }
                     Text(
                         "$localLikes",
-                        color    = if (localLiked) AccentBlue
-                                   else MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp,
+                        color      = if (localLiked) AccentBlue else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize   = 12.sp,
                         fontWeight = if (localLiked) FontWeight.SemiBold else FontWeight.Normal
                     )
                 }

@@ -25,7 +25,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
@@ -43,6 +45,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -62,6 +65,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,7 +83,6 @@ import me.ligaram.app.ui.theme.RiskLow
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-// ─── Time ago helper ──────────────────────────────────────────────────────────
 fun timeAgo(isoDate: String): String {
     return try {
         val instant = Instant.parse(isoDate)
@@ -88,22 +91,21 @@ fun timeAgo(isoDate: String): String {
         val hours   = ChronoUnit.HOURS.between(instant, now)
         val days    = ChronoUnit.DAYS.between(instant, now)
         when {
-            minutes < 1  -> "agora mesmo"
-            minutes < 60 -> "há ${minutes}min"
-            hours < 24   -> "há ${hours}h"
-            days == 1L   -> "ontem"
-            days < 7     -> "há ${days} dias"
-            days / 7 == 1L -> "há 1 semana"
-            days / 7 < 5   -> "há ${days / 7} semanas"
-            days / 30 == 1L -> "há 1 mês"
-            days / 30 < 12  -> "há ${days / 30} meses"
+            minutes < 1      -> "agora mesmo"
+            minutes < 60     -> "há ${minutes}min"
+            hours < 24       -> "há ${hours}h"
+            days == 1L       -> "ontem"
+            days < 7         -> "há ${days} dias"
+            days / 7 == 1L   -> "há 1 semana"
+            days / 7 < 5     -> "há ${days / 7} semanas"
+            days / 30 == 1L  -> "há 1 mês"
+            days / 30 < 12   -> "há ${days / 30} meses"
             days / 365 == 1L -> "há 1 ano"
             else             -> "há ${days / 365} anos"
         }
     } catch (_: Exception) { "" }
 }
 
-// ─── Classification color ─────────────────────────────────────────────────────
 fun classificationColor(c: String?): Color = when (c) {
     "Perigoso" -> RiskHigh
     "Suspeito" -> AccentOrange
@@ -113,7 +115,6 @@ fun classificationColor(c: String?): Color = when (c) {
     else       -> Color(0xFF94A3B8)
 }
 
-// ─── Star color: 1=vermelho → 5=verde ────────────────────────────────────────
 fun starColor(rating: Int): Color = when (rating) {
     1    -> Color(0xFFEF4444)
     2    -> Color(0xFFF97316)
@@ -123,23 +124,27 @@ fun starColor(rating: Int): Color = when (rating) {
     else -> Color(0xFF94A3B8)
 }
 
-// ─── Phone search bar ─────────────────────────────────────────────────────────
+// Formatar número PT nacional (9 dígitos) → XXX XXX XXX
+fun formatPhoneNumber(number: String): String {
+    val digits = number.replace(Regex("[^0-9]"), "")
+    return if (digits.length == 9)
+        "${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6, 9)}"
+    else number
+}
+
 @Composable
 fun PhoneSearchBar(onSearch: (String) -> Unit, modifier: Modifier = Modifier) {
     var query by remember { mutableStateOf("") }
     val focus   = LocalFocusManager.current
-    val isValid = query.matches(Regex("^[239][0-9]{8}$"))
+    val isValid = query.matches(Regex("^[23789][0-9]{8}$"))
 
     OutlinedTextField(
         value         = query,
         onValueChange = { query = it.filter { c -> c.isDigit() }.take(9) },
-        modifier      = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier      = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         placeholder   = {
             Text("Pesquisar número - ex: 912345678",
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                fontSize = 14.sp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), fontSize = 14.sp)
         },
         leadingIcon  = {
             Icon(Icons.Default.Search, null,
@@ -172,7 +177,6 @@ fun PhoneSearchBar(onSearch: (String) -> Unit, modifier: Modifier = Modifier) {
     )
 }
 
-// ─── Community Home Screen ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityHomeScreen(navController: NavController) {
@@ -190,7 +194,7 @@ fun CommunityHomeScreen(navController: NavController) {
     fun loadPage(cursor: Int? = null) {
         if (isLoading) return
         isLoading = true
-        errorMsg  = null
+        if (cursor == null) errorMsg = null
         scope.launch {
             val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
             when (result) {
@@ -199,6 +203,7 @@ fun CommunityHomeScreen(navController: NavController) {
                     items      = if (cursor == null) page.data else items + page.data
                     hasMore    = page.pagination.hasMore
                     nextCursor = page.pagination.nextCursor
+                    errorMsg   = null
                 }
                 is CommunityResult.Error -> errorMsg = result.message
             }
@@ -209,37 +214,28 @@ fun CommunityHomeScreen(navController: NavController) {
 
     LaunchedEffect(Unit) { loadPage() }
 
-    // Infinite scroll
     val shouldLoadMore by remember {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = listState.layoutInfo.totalItemsCount
-            hasMore && !isLoading && total > 0 && last >= total - 3
+            hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
 
     AppBackground {
         Column(modifier = Modifier.fillMaxSize()) {
-
-            // Top bar
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 52.dp, bottom = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 52.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // LigaramLogo(size = 28.dp)
-                // Spacer(Modifier.width(10.dp))
-                Text("Comunidade",
+                Text("Números",
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 20.sp, fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.weight(1f))
             }
 
-            PhoneSearchBar(onSearch = { n ->
-                navController.navigate("${Routes.COMMUNITY_NUMBER}/$n")
-            })
+            PhoneSearchBar(onSearch = { n -> navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") })
 
             when {
                 items.isEmpty() && isLoading && !isRefreshing -> {
@@ -255,18 +251,13 @@ fun CommunityHomeScreen(navController: NavController) {
                         state        = ptrState,
                         isRefreshing = isRefreshing,
                         onRefresh    = {
-                            if (!isRefreshing) {
-                                isRefreshing = true
-                                nextCursor   = null
-                                hasMore      = true
-                                loadPage(null)
-                            }
+                            if (!isRefreshing) { isRefreshing = true; nextCursor = null; hasMore = true; loadPage(null) }
                         },
                         modifier = Modifier.fillMaxSize()
                     ) {
                         LazyColumn(
-                            state          = listState,
-                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
+                            state               = listState,
+                            contentPadding      = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(items, key = { it.id }) { item ->
@@ -275,13 +266,39 @@ fun CommunityHomeScreen(navController: NavController) {
                                 })
                             }
                             item {
-                                if (isLoading && items.isNotEmpty()) {
-                                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
+                                when {
+                                    errorMsg != null -> {
+                                        // Erro durante paginação — mostrar inline com retry
+                                        Column(
+                                            modifier            = Modifier.fillMaxWidth().padding(16.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                "Não foi possível carregar mais comentários.",
+                                                color     = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontSize  = 13.sp,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
+                                            Spacer(Modifier.height(8.dp))
+                                            androidx.compose.material3.TextButton(onClick = {
+                                                errorMsg = null
+                                                loadPage(nextCursor)
+                                            }) {
+                                                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(15.dp), tint = AccentBlue)
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("Tentar novamente", color = AccentBlue, fontSize = 13.sp)
+                                            }
+                                        }
                                     }
-                                } else if (!hasMore && items.isNotEmpty()) {
-                                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                        Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                    isLoading && items.isNotEmpty() -> {
+                                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
+                                        }
+                                    }
+                                    !hasMore && items.isNotEmpty() -> {
+                                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                            Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                        }
                                     }
                                 }
                             }
@@ -293,10 +310,13 @@ fun CommunityHomeScreen(navController: NavController) {
     }
 }
 
-// ─── Home comment card ────────────────────────────────────────────────────────
+// Row 1: número (esq) | rating (dir)
+// Row 2: separador
+// Row 3: comentário
+// Row 4: hora · autor · classification (esq) | like (dir)
 @Composable
 fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
-    val classColor = classificationColor(item.classification)
+    val classColor  = classificationColor(item.classification)
     val ratingColor = item.rating?.let { starColor(it) } ?: MaterialTheme.colorScheme.onSurfaceVariant
 
     Card(
@@ -307,55 +327,61 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        when (item.classification) {
-                            "Perigoso" -> Icons.Default.Warning
-                            "Suspeito" -> Icons.AutoMirrored.Filled.Help
-                            "Seguro"   -> Icons.Default.CheckCircle
-                            else       -> Icons.Default.Phone
-                        },
-                        null, tint = classColor, modifier = Modifier.size(18.dp)
-                    )
-                }
-                Spacer(Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(item.number, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    if (!item.classification.isNullOrBlank()) {
-                        Text(item.classification, color = classColor, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+
+            // Row 1
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier         = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            when (item.classification) {
+                                "Perigoso" -> Icons.Default.Warning
+                                "Suspeito" -> Icons.AutoMirrored.Filled.Help
+                                "Seguro"   -> Icons.Default.CheckCircle
+                                else       -> Icons.Default.Phone
+                            },
+                            null, tint = classColor, modifier = Modifier.size(18.dp)
+                        )
                     }
+                    Text(formatPhoneNumber(item.number), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
-                // Rating com cor gradiente vermelho→verde
                 if (item.rating != null) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         Icon(Icons.Default.Star, null, tint = ratingColor, modifier = Modifier.size(14.dp))
                         Text("%.1f".format(item.rating.toFloat()), color = ratingColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
+            // Row 2
             Spacer(Modifier.height(10.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             Spacer(Modifier.height(10.dp))
 
-            if (!item.name.isNullOrBlank()) {
-                Text(item.name, color = AccentBlue, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(2.dp))
-            }
+            // Row 3
             if (!item.comment.isNullOrBlank()) {
-                Text(item.comment, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp, lineHeight = 19.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Text(item.comment, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, lineHeight = 19.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(10.dp))
             }
 
-            Spacer(Modifier.height(10.dp))
-
-            // Footer: data à esquerda, likes à direita
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(timeAgo(item.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+            // Row 4
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text(timeAgo(item.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                    if (!item.name.isNullOrBlank()) {
+                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), fontSize = 11.sp)
+                        Text(item.name, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    if (!item.classification.isNullOrBlank()) {
+                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), fontSize = 11.sp)
+                        Surface(shape = RoundedCornerShape(5.dp), color = classColor.copy(alpha = 0.12f)) {
+                            Text(item.classification, color = classColor, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp))
+                        }
+                    }
+                }
+                Spacer(Modifier.width(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Default.ThumbUp, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
                     Text("${item.likes}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
@@ -365,17 +391,36 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
     }
 }
 
-// ─── Error state ──────────────────────────────────────────────────────────────
 @Composable
 fun CommunityErrorState(message: String, onRetry: () -> Unit) {
+    val isNetwork = message.contains("network", ignoreCase = true)
+                || message.contains("connect", ignoreCase = true)
+                || message.contains("rede",    ignoreCase = true)
+                || message.contains("timeout", ignoreCase = true)
+                || message.contains("Unable",  ignoreCase = true)
+
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
-            Icon(Icons.Default.WifiOff, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
-            Spacer(Modifier.height(12.dp))
-            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(40.dp)) {
+            Icon(
+                if (isNetwork) Icons.Default.WifiOff else Icons.Default.ErrorOutline,
+                null,
+                tint     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                modifier = Modifier.size(52.dp)
+            )
             Spacer(Modifier.height(16.dp))
-            Button(onClick = onRetry, shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)) {
+            Text(
+                if (isNetwork) "Sem ligação à internet" else "Não foi possível carregar",
+                color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (isNetwork) "Verifica a tua ligação e tenta novamente." else "O servidor pode estar temporariamente indisponível.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 19.sp
+            )
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = onRetry, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)) {
+                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
                 Text("Tentar novamente")
             }
         }
