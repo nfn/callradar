@@ -102,9 +102,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     var notFound     by remember { mutableStateOf(false) }
     var errorMsg     by remember { mutableStateOf<String?>(null) }
 
-    // Estado para o BottomSheet do formulário
-    var showAddSheet by remember { mutableStateOf(false) }
-
     fun loadPage(cursor: Int? = null) {
         if (isLoading) return
         isLoading = true
@@ -136,6 +133,19 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 
     LaunchedEffect(number) { loadPage() }
 
+    // Refresh quando volta do AddCommentScreen
+    val refreshSignal = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow("refresh", false)
+    LaunchedEffect(refreshSignal) {
+        refreshSignal?.collect { shouldRefresh ->
+            if (shouldRefresh) {
+                navController.currentBackStackEntry?.savedStateHandle?.set("refresh", false)
+                loadPage()
+            }
+        }
+    }
+
     // Infinite scroll
     val shouldLoadMore by remember {
         derivedStateOf {
@@ -145,15 +155,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
-
-    // BottomSheet para adicionar comentário
-    if (showAddSheet) {
-        CommunityAddSheet(
-            number    = number,
-            onDismiss = { showAddSheet = false },
-            onSuccess = { showAddSheet = false; loadPage() }
-        )
-    }
 
     AppBackground {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -223,7 +224,9 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                         })
                     }
                     notFound || (comments.isEmpty() && !isLoading) -> {
-                        EmptyCommentsState(number = number, onAdd = { showAddSheet = true })
+                        EmptyCommentsState(number = number, onAdd = {
+                            navController.navigate("${Routes.ADD_COMMENT}/$number")
+                        })
                     }
                     else -> {
                         PullToRefreshBox(
@@ -324,7 +327,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 
                 // FAB sobre a lista
                 FloatingActionButton(
-                    onClick        = { showAddSheet = true },
+                    onClick        = { navController.navigate("${Routes.ADD_COMMENT}/$number") },
                     modifier       = Modifier.align(Alignment.BottomEnd).padding(20.dp),
                     containerColor = AccentBlue,
                     contentColor   = Color.White,

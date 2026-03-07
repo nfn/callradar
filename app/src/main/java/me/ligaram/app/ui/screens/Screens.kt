@@ -4,12 +4,17 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -104,6 +109,7 @@ object Routes {
     const val ABOUT            = "about"
     const val COMMUNITY_HOME   = "community_home"
     const val COMMUNITY_NUMBER = "community_number"
+    const val ADD_COMMENT      = "add_comment"
 }
 
 // ─── Permission helpers ───────────────────────────────────────────────────────
@@ -158,13 +164,36 @@ fun AppNavigation() {
             exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
         ) { AboutScreen(navController) }
 
-        // Página de detalhe de número - o formulário é agora um BottomSheet interno
+        // Página de detalhe de número
         composable("${Routes.COMMUNITY_NUMBER}/{number}",
             enterTransition = { fadeIn() + slideInHorizontally { it } },
             exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
         ) { back ->
             val number = back.arguments?.getString("number") ?: ""
             CommunityNumberScreen(navController, number)
+        }
+
+        // Screen para adicionar comentário — entra de baixo, sai para baixo
+        composable("${Routes.ADD_COMMENT}/{number}",
+            enterTransition    = {
+                fadeIn(animationSpec = tween(300)) +
+                slideInVertically(animationSpec = tween(350, easing = EaseOutCubic)) { it / 2 }
+            },
+            exitTransition     = {
+                fadeOut(animationSpec = tween(250)) +
+                slideOutVertically(animationSpec = tween(300, easing = EaseInCubic)) { it / 2 }
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(300)) +
+                slideInVertically(animationSpec = tween(350, easing = EaseOutCubic)) { it / 2 }
+            },
+            popExitTransition  = {
+                fadeOut(animationSpec = tween(250)) +
+                slideOutVertically(animationSpec = tween(300, easing = EaseInCubic)) { it / 2 }
+            }
+        ) { back ->
+            val number = back.arguments?.getString("number") ?: ""
+            AddCommentScreen(navController, number)
         }
     }
 }
