@@ -280,7 +280,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                 items(comments, key = { it.id }) { comment ->
                                     NumberCommentCard(
                                         comment        = comment,
-                                        onLikeToggled  = { id, liked, newCount ->
+                                        onLikeToggled  = { id, _, newCount ->
                                             // Actualiza o item na lista para manter consistência
                                             comments = comments.map {
                                                 if (it.id == id) it.copy(likes = newCount) else it

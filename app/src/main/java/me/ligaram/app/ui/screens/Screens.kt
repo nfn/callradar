@@ -4,18 +4,11 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.animation.core.EaseInCubic
-import androidx.compose.animation.core.EaseOutCubic
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
+import androidx.core.net.toUri
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -249,11 +242,10 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
 // ─── Shared background ────────────────────────────────────────────────────────
 @Composable
 fun AppBackground(content: @Composable () -> Unit) {
-    val c = ligaramColors
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(c.bgPrimary, c.bgSecondary)))
+            .background(Brush.verticalGradient(colors = listOf(ligaramColors.bgPrimary, ligaramColors.bgSecondary)))
     ) { content() }
 }
 
@@ -302,11 +294,7 @@ fun PermissionScreenLayout(
             StepDots(total, step)
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Animated icon
-            val scale by animateFloatAsState(
-                targetValue = if (granted) 1.1f else 1f,
-                animationSpec = spring(dampingRatio = 0.4f), label = "scale"
-            )
+            // Ícone de estado
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -440,17 +428,14 @@ fun PermOverlayScreen(navController: NavController) {
         ),
         buttonLabel = "Ativar Sobreposição",
         onButtonClick = {
-            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:${context.packageName}"))
-            context.startActivity(intent)
+            context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()))
         },
         granted = canDraw.value,
         onNext = {
             // App is in foreground here - startForegroundService is safe
-            val serviceIntent = Intent(context, CallMonitorService::class.java).apply {
+            context.startForegroundService(Intent(context, CallMonitorService::class.java).apply {
                 action = CallMonitorService.ACTION_START
-            }
-            context.startForegroundService(serviceIntent)
+            })
             navController.navigate(Routes.HOME) {
                 popUpTo(Routes.PERM_PHONE) { inclusive = true }
             }
@@ -571,7 +556,7 @@ fun HomeScreen(navController: NavController) {
                 Triple(Icons.Default.Layers,       "Overlay apresentado",    "Se houver resultado, mostramos risco e categoria sobre o ecrã"),
                 Triple(Icons.Default.Block,        "Proteja-se",             "Decida com informação se atende ou rejeita a chamada")
             ).forEachIndexed { idx, (icon, title, desc) ->
-                HowItWorksStep(step = idx + 1, icon = icon, title = title, description = desc)
+                HowItWorksStep(_step = idx + 1, icon = icon, title = title, description = desc)
                 if (idx < 3) Spacer(modifier = Modifier.height(8.dp))
             }
 
@@ -651,10 +636,7 @@ fun PermissionDialog(
                     granted = overlayGranted,
                     buttonLabel = "Ativar",
                     onAction    = {
-                        context.startActivity(
-                            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                Uri.parse("package:${context.packageName}"))
-                        )
+                        context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()))
                     }
                 )
             }
@@ -725,7 +707,7 @@ fun PermissionRow(
 }
 
 @Composable
-fun HowItWorksStep(step: Int, icon: ImageVector, title: String, description: String) {
+fun HowItWorksStep(_step: Int, icon: ImageVector, title: String, description: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -757,8 +739,7 @@ fun AboutScreen(navController: NavController) {
     val context = LocalContext.current
 
     fun openSite() {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ligaram.me"))
-        context.startActivity(intent)
+        context.startActivity(Intent(Intent.ACTION_VIEW, "https://ligaram.me".toUri()))
     }
 
     AppBackground {
