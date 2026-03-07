@@ -3,7 +3,6 @@ package me.ligaram.app.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,10 +29,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -175,11 +171,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     color    = MaterialTheme.colorScheme.onBackground,
                     fontSize = 20.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f))
-                /*
-                IconButton(onClick = { showAddSheet = true }) {
-                    Icon(Icons.Default.AddComment, null, tint = AccentBlue)
-                }
-                 */
             }
 
             // ── Search bar ────────────────────────────────────────────────────
