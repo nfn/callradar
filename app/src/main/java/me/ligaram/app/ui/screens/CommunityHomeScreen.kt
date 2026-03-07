@@ -1,6 +1,5 @@
 package me.ligaram.app.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,22 +15,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.Help
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,7 +53,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -194,7 +187,7 @@ fun CommunityHomeScreen(navController: NavController) {
     fun loadPage(cursor: Int? = null) {
         if (isLoading) return
         isLoading = true
-        if (cursor == null) errorMsg = null
+        errorMsg  = null
         scope.launch {
             val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
             when (result) {
@@ -203,7 +196,6 @@ fun CommunityHomeScreen(navController: NavController) {
                     items      = if (cursor == null) page.data else items + page.data
                     hasMore    = page.pagination.hasMore
                     nextCursor = page.pagination.nextCursor
-                    errorMsg   = null
                 }
                 is CommunityResult.Error -> errorMsg = result.message
             }
@@ -218,7 +210,7 @@ fun CommunityHomeScreen(navController: NavController) {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = listState.layoutInfo.totalItemsCount
-            hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
+            hasMore && !isLoading && total > 0 && last >= total - 3
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
@@ -266,39 +258,13 @@ fun CommunityHomeScreen(navController: NavController) {
                                 })
                             }
                             item {
-                                when {
-                                    errorMsg != null -> {
-                                        // Erro durante paginação — mostrar inline com retry
-                                        Column(
-                                            modifier            = Modifier.fillMaxWidth().padding(16.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Text(
-                                                "Não foi possível carregar mais comentários.",
-                                                color     = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                fontSize  = 13.sp,
-                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                            )
-                                            Spacer(Modifier.height(8.dp))
-                                            androidx.compose.material3.TextButton(onClick = {
-                                                errorMsg = null
-                                                loadPage(nextCursor)
-                                            }) {
-                                                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(15.dp), tint = AccentBlue)
-                                                Spacer(Modifier.width(4.dp))
-                                                Text("Tentar novamente", color = AccentBlue, fontSize = 13.sp)
-                                            }
-                                        }
+                                if (isLoading && items.isNotEmpty()) {
+                                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
                                     }
-                                    isLoading && items.isNotEmpty() -> {
-                                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
-                                        }
-                                    }
-                                    !hasMore && items.isNotEmpty() -> {
-                                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                            Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
-                                        }
+                                } else if (!hasMore && items.isNotEmpty()) {
+                                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                        Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                                     }
                                 }
                             }
@@ -330,23 +296,7 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
 
             // Row 1
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
-                    Box(
-                        modifier         = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            when (item.classification) {
-                                "Perigoso" -> Icons.Default.Warning
-                                "Suspeito" -> Icons.AutoMirrored.Filled.Help
-                                "Seguro"   -> Icons.Default.CheckCircle
-                                else       -> Icons.Default.Phone
-                            },
-                            null, tint = classColor, modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    Text(formatPhoneNumber(item.number), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
+                Text(formatPhoneNumber(item.number), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 if (item.rating != null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         Icon(Icons.Default.Star, null, tint = ratingColor, modifier = Modifier.size(14.dp))

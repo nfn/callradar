@@ -104,7 +104,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     var hasMore      by remember { mutableStateOf(true) }
     var nextCursor   by remember { mutableStateOf<Int?>(null) }
     var notFound     by remember { mutableStateOf(false) }
-    var errorMsg     by remember { mutableStateOf<String?>(null) }
 
     // Estado para o BottomSheet do formulário
     var showAddSheet by remember { mutableStateOf(false) }
@@ -112,7 +111,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     fun loadPage(cursor: Int? = null) {
         if (isLoading) return
         isLoading = true
-        if (cursor == null) errorMsg = null
         scope.launch {
             val result = withContext(Dispatchers.IO) {
                 CommunityApi.fetchComments(number, cursor = cursor)
@@ -128,8 +126,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     notFound     = false
                 }
                 is CommunityResult.Error -> {
-                    if (result.message.contains("404")) notFound = true
-                    else errorMsg = result.message
+                    notFound = result.message.contains("404")
                 }
             }
             isLoading    = false
@@ -144,7 +141,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = listState.layoutInfo.totalItemsCount
-            hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
+            hasMore && !isLoading && total > 0 && last >= total - 3
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
@@ -225,12 +222,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = AccentBlue)
                         }
-                    }
-                    comments.isEmpty() && errorMsg != null -> {
-                        CommunityErrorState(message = errorMsg!!, onRetry = {
-                            errorMsg = null
-                            loadPage()
-                        })
                     }
                     notFound || (comments.isEmpty() && !isLoading) -> {
                         EmptyCommentsState(number = number, onAdd = { showAddSheet = true })
@@ -530,31 +521,19 @@ fun NumberCommentCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Row 1: badge inicial + nome (esq) | classification (dir)
+            // Row 1: nome | classification
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier              = Modifier.weight(1f)
-                ) {
-                    Box(
-                        modifier         = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        val initial = comment.name?.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
-                        Text(initial, color = classColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    }
-                    Text(
-                        comment.name?.ifBlank { "Anónimo" } ?: "Anónimo",
-                        color      = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize   = 14.sp
-                    )
-                }
+                Text(
+                    comment.name?.ifBlank { "Anónimo" } ?: "Anónimo",
+                    color      = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize   = 14.sp,
+                    modifier   = Modifier.weight(1f)
+                )
                 if (!comment.classification.isNullOrBlank()) {
                     Surface(shape = RoundedCornerShape(8.dp), color = classColor.copy(alpha = 0.12f)) {
                         Text(
