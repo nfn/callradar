@@ -8,7 +8,6 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -224,7 +222,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
 
                 // Entidade (autocomplete)
                 SheetSection("Entidade (opcional)") {
-                    Box(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value         = entity,
                             onValueChange = { value ->
@@ -278,15 +276,14 @@ fun AddCommentScreen(navController: NavController, number: String) {
                             )
                         )
 
-                        // Dropdown autocomplete para CIMA
+                        // Dropdown autocomplete por baixo do campo
                         androidx.compose.animation.AnimatedVisibility(
                             visible  = showSuggestions && entitySuggestions.isNotEmpty(),
-                            enter    = expandVertically(expandFrom = Alignment.Bottom),
-                            exit     = shrinkVertically(shrinkTowards = Alignment.Bottom),
+                            enter    = expandVertically(expandFrom = Alignment.Top),
+                            exit     = shrinkVertically(shrinkTowards = Alignment.Top),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .align(Alignment.BottomStart)
-                                .offset(y = (-64).dp)
+                                .padding(top = 4.dp)
                         ) {
                             Surface(
                                 shape           = RoundedCornerShape(12.dp),
