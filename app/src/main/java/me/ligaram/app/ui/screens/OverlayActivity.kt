@@ -762,11 +762,10 @@ fun StyleFloatingChip(
             exit  = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
         ) {
             Surface(
-                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp),
-                color = NavyMid, shadowElevation = 16.dp,
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp),
+                color = NavyMid, shadowElevation = 0.dp,
                 modifier = Modifier.widthIn(max = 260.dp)
-                    .border(1.dp, NavyLight, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp))
-                    .padding(bottom = 4.dp)
+                    .border(1.dp, NavyLight, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 16.dp))
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                     if (contactName != null) {
