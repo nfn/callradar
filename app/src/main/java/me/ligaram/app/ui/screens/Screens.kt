@@ -103,6 +103,7 @@ object Routes {
     const val COMMUNITY_HOME   = "community_home"
     const val COMMUNITY_NUMBER = "community_number"
     const val ADD_COMMENT      = "add_comment"
+    const val OVERLAY_STYLE    = "overlay_style"
 }
 
 // ─── Permission helpers ───────────────────────────────────────────────────────
@@ -157,6 +158,11 @@ fun AppNavigation() {
             exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
         ) { AboutScreen(navController) }
 
+        composable(Routes.OVERLAY_STYLE,
+            enterTransition = { fadeIn() + slideInHorizontally { it } },
+            exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
+        ) { OverlayStyleScreen(navController) }
+
         // Página de detalhe de número
         composable("${Routes.COMMUNITY_NUMBER}/{number}",
             enterTransition    = { fadeIn() + slideInHorizontally { it } },
@@ -168,8 +174,8 @@ fun AppNavigation() {
             CommunityNumberScreen(navController, number)
         }
 
-        // Screen para adicionar comentário — slide + fade bem suave
-        // Screen para adicionar comentário — mesmos tempos e suavidade que CommunityNumberScreen
+        // Screen para adicionar comentário - slide + fade bem suave
+        // Screen para adicionar comentário - mesmos tempos e suavidade que CommunityNumberScreen
         composable("${Routes.ADD_COMMENT}/{number}",
             enterTransition    = { fadeIn() + slideInHorizontally { it } },
             exitTransition     = { fadeOut() + slideOutHorizontally { -it } },
@@ -560,6 +566,19 @@ fun HomeScreen(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+
+            OutlinedButton(
+                onClick  = { navController.navigate(Routes.OVERLAY_STYLE) },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape    = RoundedCornerShape(14.dp),
+                border   = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            ) {
+                Icon(Icons.Default.Layers, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Estilo do overlay", color = TextSecondary)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedButton(
                 onClick  = { navController.navigate(Routes.ABOUT) },

@@ -54,7 +54,7 @@ object ApiClient {
                     ApiResult.NoResult
                 }
             } else {
-                Log.d("ApiClient", "Non-200 (${response.code}) — overlay suppressed")
+                Log.d("ApiClient", "Non-200 (${response.code}) - overlay suppressed")
                 ApiResult.NoResult
             }
         } catch (e: Exception) {

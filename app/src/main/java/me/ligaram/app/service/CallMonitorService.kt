@@ -47,7 +47,7 @@ class CallMonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
-                // Only called from MainActivity (app visible) — safe to promote to foreground
+                // Only called from MainActivity (app visible) - safe to promote to foreground
                 promoteToForegroundSafe()
             }
             ACTION_INCOMING_CALL -> {
@@ -110,7 +110,7 @@ class CallMonitorService : Service() {
                     )
                 }
                 is ApiResult.NoResult -> {
-                    Log.d("CallMonitorService", "No result for $number — overlay suppressed")
+                    Log.d("CallMonitorService", "No result for $number - overlay suppressed")
                 }
                 is ApiResult.Error -> {
                     Log.e("CallMonitorService", "API error: ${result.message}")

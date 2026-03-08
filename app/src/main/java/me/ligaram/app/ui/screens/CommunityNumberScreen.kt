@@ -366,7 +366,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Esquerda — ícone + label
+                // Esquerda - ícone + label
                 Row(
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -388,7 +388,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                         fontWeight = FontWeight.Bold)
                 }
 
-                // Direita — badge de risco pill + chevron
+                // Direita - badge de risco pill + chevron
                 Row(
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -461,7 +461,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
 
                     HorizontalDivider(color = riskColor.copy(alpha = 0.2f))
 
-                    // Sobre este número — seoSummary
+                    // Sobre este número - seoSummary
                     if (!analysis.seoSummary.isNullOrBlank()) {
                         Spacer(Modifier.height(12.dp))
                         Text(analysis.seoSummary,
@@ -470,7 +470,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                             lineHeight  = 19.sp)
                     }
 
-                    // Recomendação — advice
+                    // Recomendação - advice
                     if (!analysis.advice.isNullOrBlank()) {
                         Spacer(Modifier.height(12.dp))
                         Surface(

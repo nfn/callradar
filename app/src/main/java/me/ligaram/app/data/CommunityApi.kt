@@ -22,7 +22,7 @@ object CommunityApi {
     private const val BASE  = "https://api.ligaram.me/api/v1"
     private const val TOKEN = "lUDf9WGHuW7OMbeNvQmZ8vIAwJLvTUo5HiwcCY9cPn7"
 
-    // Context guardado na primeira chamada a init() — chamada na MainActivity
+    // Context guardado na primeira chamada a init() - chamada na MainActivity
     private var appContext: Context? = null
 
     fun init(context: Context) {
@@ -130,7 +130,7 @@ object CommunityApi {
 
     // ── POST /comments/:comment_id/like ──────────────────────────────────────
     // Toggle: se o IP já tem like → remove; caso contrário → adiciona.
-    // Sem body — o IP é lido no servidor via request.ip
+    // Sem body - o IP é lido no servidor via request.ip
     fun toggleLike(commentId: Int): CommunityResult<LikeResponse> {
         return try {
             val url = "$BASE/comments/$commentId/like"
@@ -151,7 +151,7 @@ object CommunityApi {
 
     // ── GET /entities?q=X ────────────────────────────────────────────────────
     // Endpoint: GET /api/v1/entities?q={string}  → { data: [{id, entity}] }
-    // Usado no autocomplete do formulário — não é obrigatório, o utilizador pode escrever livremente.
+    // Usado no autocomplete do formulário - não é obrigatório, o utilizador pode escrever livremente.
     fun searchEntities(query: String): CommunityResult<List<EntityItem>> {
         return try {
             val encoded = java.net.URLEncoder.encode(query.trim(), "UTF-8")

@@ -67,9 +67,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import me.ligaram.app.data.OverlayPreferences
+import me.ligaram.app.data.OverlayStyle as OStyle
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
 import me.ligaram.app.ui.theme.LigaramTheme
@@ -181,20 +184,7 @@ fun riskColor(risk: String): Color = when {
     else -> RiskLow
 }
 
-// ─── Overlay selector ────────────────────────────────────────────────────────
-// Muda este valor para testar cada estilo: 1 a 10
-// 1  — Pill expansível (compacto, toca para ver detalhes)
-// 2  — Banner expansível (linha + painel ao clicar)
-// 3  — Banner completo (tudo visível, botão X)
-// 4  — Banner completo tap-to-dismiss (fecha ao tocar, sem botão X)
-// 5  — Card com barra lateral colorida
-// 6  — Split: identidade à esquerda, risco à direita
-// 7  — Score card com barra de risco
-// 8  — Chip flutuante no canto inferior (expande para cima)
-// 9  — Minimal pill sem expansão
-// 10 — Banner topo com linha de cor
-private const val OVERLAY_STYLE = 4
-
+// ─── Overlay screen ───────────────────────────────────────────────────────────
 @Composable
 fun OverlayScreen(
     number: String,
@@ -204,49 +194,61 @@ fun OverlayScreen(
     contactName: String?,
     onDismiss: () -> Unit
 ) {
-    val color = riskColor(risk)
+    val context = LocalContext.current
+    val style   = remember { OverlayPreferences.getStyle(context) }
+    val color   = riskColor(risk)
+
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
 
-    // Estilos que gerem o seu próprio drag internamente (4, 8, 11)
-    // não devem receber o drag do OverlayScreen — ficam sem offset externo.
-    val selfManagesDrag = OVERLAY_STYLE == 4 || OVERLAY_STYLE == 8
-
+    val selfManagesDrag = style == OStyle.BANNER_FULL || style == OStyle.FLOATING
     var offsetY by remember { mutableStateOf(0f) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Transparent),
-        contentAlignment = if (OVERLAY_STYLE == 8) Alignment.BottomEnd else Alignment.Center
-    ) {
-        AnimatedVisibility(
-            visible = visible,
-            enter = scaleIn(spring(dampingRatio = 0.6f, stiffness = 500f)) + fadeIn(),
-            exit  = scaleOut() + fadeOut()
+    // Camada transparente de dismiss - cobre todo o ecrã por baixo do overlay
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        // Tap fora → fecha
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication        = null
+                ) { onDismiss() }
+        )
+
+        // Overlay por cima, centrado (ou no canto para FLOATING)
+        Box(
+            modifier         = Modifier.fillMaxSize(),
+            contentAlignment = if (style == OStyle.FLOATING) Alignment.BottomEnd else Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(0, offsetY.roundToInt()) }
-                    .then(
-                        if (!selfManagesDrag)
-                            Modifier.pointerInput(Unit) {
-                                detectDragGestures { _, dragAmount -> offsetY += dragAmount.y }
-                            }
-                        else Modifier
-                    )
+            AnimatedVisibility(
+                visible = visible,
+                enter   = scaleIn(spring(dampingRatio = 0.6f, stiffness = 500f)) + fadeIn(),
+                exit    = scaleOut() + fadeOut()
             ) {
-                when (OVERLAY_STYLE) {
-                    1  -> StylePill(number, risk, color, category, subcategory, contactName, onDismiss)
-                    2  -> StyleBanner(number, risk, color, category, subcategory, contactName, onDismiss)
-                    3  -> StyleBannerFull(number, risk, color, category, subcategory, contactName, onDismiss)
-                    4  -> StyleBannerFullTap(number, risk, color, category, subcategory, contactName, onDismiss)
-                    5  -> StyleCard(number, risk, color, category, subcategory, contactName, onDismiss)
-                    6  -> StyleSplit(number, risk, color, category, subcategory, contactName, onDismiss)
-                    7  -> StyleScore(number, risk, color, category, subcategory, contactName, onDismiss)
-                    8  -> StyleFloatingChip(number, risk, color, category, subcategory, contactName, onDismiss)
-                    9  -> StyleMinimal(number, risk, color, category, subcategory, contactName, onDismiss)
-                    else -> StyleBannerTop(number, risk, color, category, subcategory, contactName, onDismiss)
+                Box(
+                    modifier = Modifier
+                        .offset { IntOffset(0, offsetY.roundToInt()) }
+                        .then(
+                            if (!selfManagesDrag)
+                                Modifier.pointerInput(Unit) {
+                                    detectDragGestures { _, d -> offsetY += d.y }
+                                }
+                            else Modifier
+                        )
+                ) {
+                    when (style) {
+                        OStyle.PILL        -> StylePill(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.BANNER      -> StyleBanner(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.BANNER_FULL -> StyleBannerFull(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.CARD        -> StyleCard(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.SPLIT       -> StyleSplit(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.SCORE       -> StyleScore(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.FLOATING    -> StyleFloatingChip(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.MINIMAL     -> StyleMinimal(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.BANNER_TOP  -> StyleBannerTop(number, risk, color, category, subcategory, contactName, onDismiss)
+                    }
                 }
             }
         }
@@ -275,7 +277,7 @@ fun RiskChip(risk: String, color: Color) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 1 — Pill expansível
+// STYLE 1 - Pill expansível
 // Cápsula compacta com dot de risco. Toca para expandir detalhes.
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
@@ -312,8 +314,6 @@ fun StylePill(
                     modifier = Modifier.widthIn(max = 160.dp)
                 )
                 RiskChip(risk, color)
-                Icon(Icons.Default.Close, null, tint = TextSecondary,
-                    modifier = Modifier.size(16.dp).clickable { onDismiss() })
             }
         }
 
@@ -336,7 +336,7 @@ fun StylePill(
                     DetailRow(Icons.Default.Category, "Categoria",   category,    AccentBlue)
                     if (subcategory.isNotBlank())
                         DetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
-                    Text("ligaram.me", color = TextSecondary.copy(alpha = 0.4f), fontSize = 10.sp,
+                    Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.4f), fontSize = 10.sp,
                         modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 }
             }
@@ -345,7 +345,7 @@ fun StylePill(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 2 — Banner expansível
+// STYLE 2 - Banner expansível
 // Linha compacta com ícone de risco. Toca para ver detalhes.
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
@@ -386,9 +386,6 @@ fun StyleBanner(
                 Spacer(Modifier.width(8.dp))
                 Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     null, tint = TextSecondary, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-                Icon(Icons.Default.Close, null, tint = TextSecondary,
-                    modifier = Modifier.size(18.dp).clickable { onDismiss() })
             }
         }
 
@@ -409,6 +406,8 @@ fun StyleBanner(
                     DetailRow(Icons.Default.Category, "Categoria",   category,    AccentBlue)
                     if (subcategory.isNotBlank())
                         DetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
+                    Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.4f), fontSize = 10.sp,
+                        modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 }
             }
         }
@@ -416,7 +415,7 @@ fun StyleBanner(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 3 — Banner completo (toda a informação visível, botão X)
+// STYLE 3 - Banner completo (toda a informação visível, botão X)
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun StyleBannerFull(
@@ -454,8 +453,6 @@ fun StyleBannerFull(
                         }
                     }
                 }
-                Icon(Icons.Default.Close, null, tint = TextSecondary,
-                    modifier = Modifier.size(18.dp).clickable { onDismiss() })
             }
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(NavyLight))
             Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -464,7 +461,7 @@ fun StyleBannerFull(
                 DetailRow(Icons.Default.Category, "Categoria", category, AccentBlue)
                 if (subcategory.isNotBlank())
                     DetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
-                Text("ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp,
+                Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp,
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             }
         }
@@ -472,9 +469,9 @@ fun StyleBannerFull(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 4 — Banner completo tap-to-dismiss
+// STYLE 4 - Banner completo tap-to-dismiss
 // Igual ao 3 mas fecha ao tocar. Drag também funciona: distingue tap de drag
-// medindo o deslocamento total — se for pequeno é tap, caso contrário é drag.
+// medindo o deslocamento total - se for pequeno é tap, caso contrário é drag.
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun StyleBannerFullTap(
@@ -512,7 +509,7 @@ fun StyleBannerFullTap(
                             val event = awaitPointerEvent()
                             val change = event.changes.firstOrNull() ?: break
                             if (!change.pressed) {
-                                // Dedo levantou — se não arrastou muito, é tap → dismiss
+                                // Dedo levantou - se não arrastou muito, é tap → dismiss
                                 if (!dragging) onDismiss()
                                 break
                             }
@@ -563,7 +560,7 @@ fun StyleBannerFullTap(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 5 — Card com barra lateral colorida
+// STYLE 5 - Card com barra lateral colorida
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun StyleCard(
@@ -593,9 +590,6 @@ fun StyleCard(
                         }
                     }
                     Spacer(Modifier.width(8.dp))
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(20.dp)) {
-                        Icon(Icons.Default.Close, null, tint = TextSecondary, modifier = Modifier.size(14.dp))
-                    }
                 }
                 Spacer(Modifier.height(8.dp))
                 RiskChip(risk, color)
@@ -604,14 +598,14 @@ fun StyleCard(
                 if (subcategory.isNotBlank())
                     Text(subcategory, color = TextSecondary.copy(alpha = 0.6f), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(6.dp))
-                Text("ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp)
+                Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp)
             }
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 6 — Split: identidade à esquerda, risco à direita
+// STYLE 6 - Split: identidade à esquerda, risco à direita
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun StyleSplit(
@@ -641,7 +635,7 @@ fun StyleSplit(
                 if (subcategory.isNotBlank())
                     Text(subcategory, color = TextSecondary.copy(alpha = 0.7f), fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.weight(1f))
-                Text("ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp)
+                Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp)
             }
             Box(modifier = Modifier.width(1.dp).fillMaxHeight().background(NavyLight))
             Box(
@@ -653,9 +647,6 @@ fun StyleSplit(
                         Text(risk, color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), textAlign = TextAlign.Center)
                     }
-                    Spacer(Modifier.height(8.dp))
-                    Icon(Icons.Default.Close, null, tint = TextSecondary.copy(alpha = 0.6f),
-                        modifier = Modifier.size(18.dp).clickable { onDismiss() })
                 }
             }
         }
@@ -663,7 +654,7 @@ fun StyleSplit(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 7 — Score card com barra visual de risco
+// STYLE 7 - Score card com barra visual de risco
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun StyleScore(
@@ -702,8 +693,6 @@ fun StyleScore(
                     Text(contactName ?: number, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (contactName != null) Text(number, color = TextSecondary, fontSize = 11.sp)
                 }
-                Icon(Icons.Default.Close, null, tint = TextSecondary,
-                    modifier = Modifier.size(18.dp).clickable { onDismiss() })
             }
             Spacer(Modifier.height(16.dp))
             Text("Nível de risco", color = TextSecondary, fontSize = 10.sp, fontWeight = FontWeight.Medium)
@@ -732,13 +721,13 @@ fun StyleScore(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Text("ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp)
+            Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp)
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 8 — Chip flutuante no canto inferior direito
+// STYLE 8 - Chip flutuante no canto inferior direito
 // Toca na seta para expandir painel completo. Drag no chip.
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
@@ -784,7 +773,7 @@ fun StyleFloatingChip(
                     DetailRow(Icons.Default.Category, "Categoria",   category,    AccentBlue)
                     if (subcategory.isNotBlank())
                         DetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
-                    Text("ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp,
+                    Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp,
                         modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 }
             }
@@ -794,7 +783,9 @@ fun StyleFloatingChip(
 
         Surface(
             shape = RoundedCornerShape(50.dp), color = NavyDeep, shadowElevation = 12.dp,
-            modifier = Modifier.border(1.5.dp, color, RoundedCornerShape(50.dp))
+            modifier = Modifier
+                .border(1.5.dp, color, RoundedCornerShape(50.dp))
+                .clickable { expanded = !expanded }
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -806,17 +797,14 @@ fun StyleFloatingChip(
                 }
                 Text(risk, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Icon(if (expanded) Icons.Default.ExpandMore else Icons.Default.ExpandLess,
-                    null, tint = TextSecondary, modifier = Modifier.size(16.dp).clickable { expanded = !expanded })
-                Box(modifier = Modifier.width(1.dp).height(16.dp).background(NavyLight))
-                Icon(Icons.Default.Close, null, tint = TextSecondary,
-                    modifier = Modifier.size(16.dp).clickable { onDismiss() })
+                    null, tint = TextSecondary.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
             }
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 9 — Minimal pill sem expansão
+// STYLE 9 - Minimal pill sem expansão
 // Ultra-compacto: só risco + nome + fechar. Zero clutter.
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
@@ -843,14 +831,12 @@ fun StyleMinimal(
                 maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 140.dp))
             Box(modifier = Modifier.width(1.dp).height(14.dp).background(NavyLight))
             Text(risk, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Icon(Icons.Default.Close, null, tint = TextSecondary,
-                modifier = Modifier.size(15.dp).clickable { onDismiss() })
         }
     }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 10 — Banner topo com linha de cor e detalhes visíveis
+// STYLE 10 - Banner topo com linha de cor e detalhes visíveis
 // ═══════════════════════════════════════════════════════════════════════════════
 @Composable
 fun StyleBannerTop(
@@ -879,8 +865,6 @@ fun StyleBannerTop(
                         Text(contactName ?: number, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(risk, color = color, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
-                    Icon(Icons.Default.Close, null, tint = TextSecondary,
-                        modifier = Modifier.size(18.dp).clickable { onDismiss() })
                 }
                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(NavyLight))
                 Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -888,7 +872,7 @@ fun StyleBannerTop(
                     DetailRow(Icons.Default.Category, "Categoria", category, AccentBlue)
                     if (subcategory.isNotBlank())
                         DetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
-                    Text("ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp,
+                    Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.35f), fontSize = 9.sp,
                         modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 }
             }

@@ -10,14 +10,14 @@ import android.telephony.TelephonyManager
  * Constrói os headers de diagnóstico enviados em todos os pedidos à API.
  *
  * Campos:
- *   X-App-Version    — versionName do APK  (ex: "1.0")
- *   X-Android-SDK    — API level           (ex: "34")
- *   X-Android-Version— versão legível      (ex: "14")
- *   X-Device-Brand   — fabricante          (ex: "samsung")
- *   X-Device-Model   — modelo              (ex: "SM-S721B")
- *   X-Network-Type   — tipo de ligação     (ex: "wifi" | "lte" | "5g" | "4g" | "3g" | "2g" | "none" | "unknown")
- *   X-Device-Locale  — locale do sistema   (ex: "pt-PT")  ← útil para debug de i18n
- *   X-Screen-DPI     — densidade do ecrã   (ex: "420")    ← útil para debug de layout
+ *   X-App-Version    - versionName do APK  (ex: "1.0")
+ *   X-Android-SDK    - API level           (ex: "34")
+ *   X-Android-Version- versão legível      (ex: "14")
+ *   X-Device-Brand   - fabricante          (ex: "samsung")
+ *   X-Device-Model   - modelo              (ex: "SM-S721B")
+ *   X-Network-Type   - tipo de ligação     (ex: "wifi" | "lte" | "5g" | "4g" | "3g" | "2g" | "none" | "unknown")
+ *   X-Device-Locale  - locale do sistema   (ex: "pt-PT")  ← útil para debug de i18n
+ *   X-Screen-DPI     - densidade do ecrã   (ex: "420")    ← útil para debug de layout
  */
 object DeviceHeaders {
 
@@ -80,7 +80,7 @@ object DeviceHeaders {
                 else                                                       -> "cellular"
             }
         } catch (_: SecurityException) {
-            // READ_PHONE_STATE pode não estar concedida — devolve valor genérico
+            // READ_PHONE_STATE pode não estar concedida - devolve valor genérico
             "cellular"
         }
     }
