@@ -55,7 +55,7 @@ import me.ligaram.app.ui.theme.NavyDeep
 import me.ligaram.app.ui.theme.RiskHigh
 
 // Dados fictícios para o preview
-private const val PREVIEW_NUMBER      = "912 345 678"
+private const val PREVIEW_NUMBER      = "987 654 321"
 private const val PREVIEW_RISK        = "Risco Alto"
 private const val PREVIEW_CATEGORY    = "Fraude"
 private const val PREVIEW_SUBCATEGORY = "Falso investimento"
