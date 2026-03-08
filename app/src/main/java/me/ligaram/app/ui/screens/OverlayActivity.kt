@@ -278,6 +278,7 @@ fun RiskChip(risk: String, color: Color) {
 // STYLE 1 - Pill expansível
 // Cápsula compacta com dot de risco. Toca para expandir detalhes.
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StylePill(
     number: String,
@@ -346,6 +347,7 @@ fun StylePill(
 // STYLE 2 - Banner expansível
 // Linha compacta com ícone de risco. Toca para ver detalhes.
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StyleBanner(
     number: String,
@@ -415,6 +417,7 @@ fun StyleBanner(
 // ═══════════════════════════════════════════════════════════════════════════════
 // STYLE 3 - Banner completo (toda a informação visível, botão X)
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StyleBannerFull(
     number: String,
@@ -561,6 +564,7 @@ fun StyleBannerFullTap(
 // ═══════════════════════════════════════════════════════════════════════════════
 // STYLE 5 - Card com barra lateral colorida
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StyleCard(
     number: String,
@@ -606,6 +610,7 @@ fun StyleCard(
 // ═══════════════════════════════════════════════════════════════════════════════
 // STYLE 6 - Split: identidade à esquerda, risco à direita
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StyleSplit(
     number: String,
@@ -655,6 +660,7 @@ fun StyleSplit(
 // ═══════════════════════════════════════════════════════════════════════════════
 // STYLE 7 - Score card com barra visual de risco
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StyleScore(
     number: String,
@@ -729,6 +735,7 @@ fun StyleScore(
 // STYLE 8 - Chip flutuante no canto inferior direito
 // Toca na seta para expandir painel completo. Drag no chip.
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StyleFloatingChip(
     number: String,
@@ -806,6 +813,7 @@ fun StyleFloatingChip(
 // STYLE 9 - Minimal pill sem expansão
 // Ultra-compacto: só risco + nome + fechar. Zero clutter.
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StyleMinimal(
     number: String,
@@ -837,6 +845,7 @@ fun StyleMinimal(
 // ═══════════════════════════════════════════════════════════════════════════════
 // STYLE 10 - Banner topo com linha de cor e detalhes visíveis
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StyleBannerTop(
     number: String,
