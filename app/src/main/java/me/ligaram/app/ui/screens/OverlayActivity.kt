@@ -321,6 +321,8 @@ fun StylePill(
             }
         }
 
+        Spacer(Modifier.height(2.dp))
+
         AnimatedVisibility(visible = expanded,
             enter = expandVertically(spring(dampingRatio = 0.7f)) + fadeIn(),
             exit  = shrinkVertically() + fadeOut()
@@ -394,12 +396,14 @@ fun StyleBanner(
             }
         }
 
+        Spacer(Modifier.height(2.dp))
+
         AnimatedVisibility(visible = expanded,
             enter = expandVertically(spring(dampingRatio = 0.7f)) + fadeIn(),
             exit  = shrinkVertically() + fadeOut()
         ) {
             Surface(
-                shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp),
+                shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 12.dp, bottomEnd = 12.dp),
                 color = NavyMid,
                 modifier = Modifier.fillMaxWidth().border(1.dp, NavyLight, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 12.dp, bottomEnd = 12.dp))
             ) {
@@ -789,7 +793,7 @@ fun StyleFloatingChip(
             }
         }
 
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(2.dp))
 
         Surface(
             shape = RoundedCornerShape(50.dp), color = NavyDeep, shadowElevation = 12.dp,
