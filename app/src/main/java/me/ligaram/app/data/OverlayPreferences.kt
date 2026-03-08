@@ -22,7 +22,7 @@ enum class OverlayStyle(val id: Int, val label: String, val description: String)
 object OverlayPreferences {
     private const val PREFS_NAME  = "overlay_prefs"
     private const val KEY_STYLE   = "overlay_style"
-    private const val DEFAULT_STYLE = 3
+    private const val DEFAULT_STYLE = 1
 
     fun getStyle(context: Context): OverlayStyle =
         OverlayStyle.fromId(

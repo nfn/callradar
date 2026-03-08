@@ -142,7 +142,7 @@ fun PhoneSearchBar(onSearch: (String) -> Unit, modifier: Modifier = Modifier) {
         onValueChange = { query = it.filter { c -> c.isDigit() }.take(9) },
         modifier      = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         placeholder   = {
-            Text("Pesquisar número - ex: 987 654 321",
+            Text("Pesquisar número",
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), fontSize = 14.sp)
         },
         leadingIcon  = {

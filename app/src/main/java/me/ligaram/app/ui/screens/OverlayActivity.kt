@@ -39,7 +39,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Info
@@ -49,7 +48,6 @@ import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,15 +62,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.ligaram.app.data.OverlayPreferences
-import me.ligaram.app.data.OverlayStyle as OStyle
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
 import me.ligaram.app.ui.theme.LigaramTheme
@@ -86,6 +83,7 @@ import me.ligaram.app.ui.theme.TextPrimary
 import me.ligaram.app.ui.theme.TextSecondary
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import me.ligaram.app.data.OverlayStyle as OStyle
 
 /** Dados do overlay; atualizados quando chega um novo Intent (ex.: segunda chamada). */
 private data class OverlayData(
@@ -288,7 +286,7 @@ fun StylePill(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -356,7 +354,7 @@ fun StyleBanner(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -425,7 +423,7 @@ fun StyleBannerFull(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(12.dp),
@@ -473,6 +471,7 @@ fun StyleBannerFull(
 // Igual ao 3 mas fecha ao tocar. Drag também funciona: distingue tap de drag
 // medindo o deslocamento total - se for pequeno é tap, caso contrário é drag.
 // ═══════════════════════════════════════════════════════════════════════════════
+@Suppress("unused")
 @Composable
 fun StyleBannerFullTap(
     number: String,
@@ -481,7 +480,7 @@ fun StyleBannerFullTap(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     // O drag é gerido aqui dentro (não no OverlayScreen) para poder distinguir tap de drag.
     var offsetY by remember { mutableStateOf(0f) }
@@ -497,7 +496,7 @@ fun StyleBannerFullTap(
             .offset { IntOffset(0, offsetY.roundToInt()) }
             .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
             // Um único pointerInput que trata drag E tap sem conflito
-            .pointerInput(onDismiss) {
+            .pointerInput(_onDismiss) {
                 awaitPointerEventScope {
                     while (true) {
                         val down = awaitPointerEvent().changes.firstOrNull() ?: continue
@@ -510,7 +509,7 @@ fun StyleBannerFullTap(
                             val change = event.changes.firstOrNull() ?: break
                             if (!change.pressed) {
                                 // Dedo levantou - se não arrastou muito, é tap → dismiss
-                                if (!dragging) onDismiss()
+                                if (!dragging) _onDismiss()
                                 break
                             }
                             val dy = change.position.y - change.previousPosition.y
@@ -570,7 +569,7 @@ fun StyleCard(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(20.dp), color = NavyMid, shadowElevation = 20.dp,
@@ -615,7 +614,7 @@ fun StyleSplit(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(16.dp), color = NavyMid, shadowElevation = 18.dp,
@@ -664,7 +663,7 @@ fun StyleScore(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     // Mapeamento de risco para fracção da barra (sem depender do rating)
     val barFraction = when {
@@ -738,7 +737,7 @@ fun StyleFloatingChip(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     var offsetY by remember { mutableStateOf(0f) }
@@ -812,10 +811,10 @@ fun StyleMinimal(
     number: String,
     risk: String,
     color: Color,
-    category: String,
-    subcategory: String,
+    _category: String,
+    _subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(50.dp), color = NavyDeep.copy(alpha = 0.95f), shadowElevation = 12.dp,
@@ -846,7 +845,7 @@ fun StyleBannerTop(
     category: String,
     subcategory: String,
     contactName: String?,
-    onDismiss: () -> Unit
+    _onDismiss: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
         Surface(

@@ -221,7 +221,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { Unit.apply { selectedTab = 1 } },
+                    onClick  = { selectedTab = 1 },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -484,7 +484,7 @@ fun HomeScreen(navController: NavController) {
         PermissionDialog(
             phoneGranted   = phoneGranted,
             overlayGranted = overlayGranted,
-            onDismiss      = { Unit.apply { showPermDialog = false } }
+            onDismiss      = { showPermDialog = false }
         )
     }
 
@@ -513,7 +513,7 @@ fun HomeScreen(navController: NavController) {
                     containerColor = if (allGood) AccentGreen.copy(alpha = 0.1f) else AccentOrange.copy(alpha = 0.1f)
                 ),
                 border = BorderStroke(1.dp, if (allGood) AccentGreen.copy(alpha = 0.4f) else AccentOrange.copy(alpha = 0.4f)),
-                onClick = { Unit.apply { if (!allGood) showPermDialog = true } }
+                onClick = { if (!allGood) showPermDialog = true }
             ) {
                 Row(
                     modifier          = Modifier.padding(18.dp),
@@ -783,7 +783,7 @@ fun AboutScreen(navController: NavController) {
                                 popUpTo(Routes.HOME) { inclusive = false }
                             }
                         },
-                        modifier = Modifier.align(Alignment.Start)
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = TextSecondary)
                     }
