@@ -313,6 +313,11 @@ fun StylePill(
                     modifier = Modifier.widthIn(max = 160.dp)
                 )
                 RiskChip(risk, color)
+                Icon(
+                    if (expanded) Icons.Default.ExpandMore else Icons.Default.ExpandLess,
+                    null, tint = TextSecondary.copy(alpha = 0.5f),
+                    modifier = Modifier.size(14.dp)
+                )
             }
         }
 
@@ -385,7 +390,7 @@ fun StyleBanner(
                 }
                 Spacer(Modifier.width(8.dp))
                 Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                    null, tint = TextSecondary.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
             }
         }
 
