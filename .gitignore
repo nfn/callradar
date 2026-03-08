@@ -85,4 +85,4 @@ ehthumbs.db
 Thumbs.db
 
 # App-specific cases
-app/release/output.json   
+app/release/
