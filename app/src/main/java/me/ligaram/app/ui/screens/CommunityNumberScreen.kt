@@ -339,6 +339,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 }
 
 // ─── Analysis card (colapsável) ───────────────────────────────────────────────
+@Suppress("ASSIGNED_VALUE_IS_NEVER_READ")
 @Composable
 fun NumberAnalysisCard(analysis: NumberAnalysis) {
     var expanded by remember { mutableStateOf(false) }
@@ -356,7 +357,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
         shape    = RoundedCornerShape(16.dp),
         colors   = CardDefaults.cardColors(containerColor = riskColor.copy(alpha = 0.06f)),
         border   = androidx.compose.foundation.BorderStroke(1.dp, riskColor.copy(alpha = 0.3f)),
-        onClick  = { expanded = !expanded; Unit }
+        onClick  = { expanded = !expanded }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 

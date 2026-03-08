@@ -189,6 +189,7 @@ fun AppNavigation() {
 }
 
 // ─── Main shell com Bottom Navigation ────────────────────────────────────────
+@Suppress("ASSIGNED_VALUE_IS_NEVER_READ")
 @Composable
 fun MainShell(rootNav: NavController, startTab: Int = 0) {
     var selectedTab by remember { mutableStateOf(startTab) }
@@ -221,7 +222,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { selectedTab = 1; Unit },
+                    onClick  = { selectedTab = 1 },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -450,6 +451,7 @@ fun PermOverlayScreen(navController: NavController) {
 
 // ─── Home Screen ───────────────────────────────────────────────────────────────
 @OptIn(ExperimentalPermissionsApi::class)
+@Suppress("ASSIGNED_VALUE_IS_NEVER_READ")
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
@@ -484,7 +486,7 @@ fun HomeScreen(navController: NavController) {
         PermissionDialog(
             phoneGranted   = phoneGranted,
             overlayGranted = overlayGranted,
-            onDismiss      = { showPermDialog = false; Unit }
+            onDismiss      = { showPermDialog = false }
         )
     }
 
@@ -513,7 +515,7 @@ fun HomeScreen(navController: NavController) {
                     containerColor = if (allGood) AccentGreen.copy(alpha = 0.1f) else AccentOrange.copy(alpha = 0.1f)
                 ),
                 border = BorderStroke(1.dp, if (allGood) AccentGreen.copy(alpha = 0.4f) else AccentOrange.copy(alpha = 0.4f)),
-                onClick = { if (!allGood) showPermDialog = true; Unit }
+                onClick = { if (!allGood) showPermDialog = true }
             ) {
                 Row(
                     modifier          = Modifier.padding(18.dp),

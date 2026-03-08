@@ -396,7 +396,7 @@ fun StyleBanner(
             Surface(
                 shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp),
                 color = NavyMid,
-                modifier = Modifier.fillMaxWidth().border(1.dp, NavyLight, RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+                modifier = Modifier.fillMaxWidth().border(1.dp, NavyLight, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 12.dp, bottomEnd = 12.dp))
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (contactName != null) {
