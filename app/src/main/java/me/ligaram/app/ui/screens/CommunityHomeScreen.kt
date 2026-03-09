@@ -218,6 +218,20 @@ fun CommunityHomeScreen(navController: NavController) {
 
     LaunchedEffect(Unit) { loadPage() }
 
+    // Refresca quando volta de qualquer screen filho (ex: AddCommentScreen via CommunityNumber)
+    val refreshSignal = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow("refresh_home", false)
+    LaunchedEffect(refreshSignal) {
+        refreshSignal?.collect { shouldRefresh ->
+            if (shouldRefresh) {
+                navController.currentBackStackEntry?.savedStateHandle?.set("refresh_home", false)
+                isRefreshing = true
+                loadPage(null)
+            }
+        }
+    }
+
     val shouldLoadMore by remember {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0

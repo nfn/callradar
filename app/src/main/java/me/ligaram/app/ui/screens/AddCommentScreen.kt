@@ -145,10 +145,14 @@ fun AddCommentScreen(navController: NavController, number: String) {
             when (result) {
                 is CommunityResult.Success -> {
                     delay(400)
-                    // Volta ao screen do número e força reload
+                    // Sinaliza CommunityNumberScreen (entry imediatamente anterior) → reload local
                     navController.previousBackStackEntry
                         ?.savedStateHandle
                         ?.set("refresh", true)
+                    // Sinaliza CommunityHomeScreen (MainShell entry no backstack) → reload lista global
+                    val communityHomeEntry = navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("refresh_home", true)
                     navController.popBackStack()
                 }
                 is CommunityResult.Error -> {

@@ -568,7 +568,11 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(32.dp))
 
             OutlinedButton(
-                onClick  = { navController.navigate(Routes.OVERLAY_STYLE) },
+                onClick  = {
+                    navController.navigate(Routes.OVERLAY_STYLE) {
+                        popUpTo(Routes.HOME) { inclusive = false }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape    = RoundedCornerShape(14.dp),
                 border   = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
@@ -581,7 +585,13 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedButton(
-                onClick  = { navController.navigate(Routes.ABOUT) },
+                onClick  = {
+                    navController.navigate(Routes.ABOUT) {
+                        // Remove COMMUNITY_HOME do backstack se estiver lá,
+                        // garantindo que o back do AboutScreen vai sempre para HOME
+                        popUpTo(Routes.HOME) { inclusive = false }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape    = RoundedCornerShape(14.dp),
                 border   = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
