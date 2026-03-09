@@ -191,7 +191,7 @@ fun CommunityHomeScreen(navController: NavController) {
     var errorMsg     by remember { mutableStateOf<String?>(null) }
 
     fun loadPage(cursor: Int? = null) {
-        if (isLoading) return
+        if (isLoading && !isRefreshing) return
         isLoading = true
         if (cursor == null) errorMsg = null
         scope.launch {
@@ -220,6 +220,13 @@ fun CommunityHomeScreen(navController: NavController) {
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
+
+    // Scroll ao topo quando o refresh termina
+    LaunchedEffect(isRefreshing) {
+        if (!isRefreshing && listState.firstVisibleItemIndex > 0) {
+            listState.animateScrollToItem(0)
+        }
+    }
 
     AppBackground {
         Column(modifier = Modifier.fillMaxSize()) {

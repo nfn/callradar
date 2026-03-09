@@ -103,7 +103,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     var errorMsg     by remember { mutableStateOf<String?>(null) }
 
     fun loadPage(cursor: Int? = null) {
-        if (isLoading) return
+        if (isLoading && !isRefreshing) return
         isLoading = true
         if (cursor == null) errorMsg = null
         scope.launch {
@@ -155,6 +155,13 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
+
+    // Scroll ao topo quando o refresh termina
+    LaunchedEffect(isRefreshing) {
+        if (!isRefreshing && listState.firstVisibleItemIndex > 0) {
+            listState.animateScrollToItem(0)
+        }
+    }
 
     AppBackground {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -530,7 +537,7 @@ fun NumberCommentCard(
     val scope      = rememberCoroutineScope()
     val classColor = classificationColor(comment.classification)
 
-    var localLikes  by remember(comment.id) { mutableStateOf(comment.likes) }
+    var localLikes  by remember(comment.id, comment.likes) { mutableStateOf(comment.likes) }
     var localLiked  by remember(comment.id) { mutableStateOf(false) }
     var likeLoading by remember(comment.id) { mutableStateOf(false) }
 
