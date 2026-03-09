@@ -193,7 +193,13 @@ fun CommunityHomeScreen(navController: NavController) {
     fun loadPage(cursor: Int? = null) {
         if (isLoading && !isRefreshing) return
         isLoading = true
-        if (cursor == null) errorMsg = null
+        if (cursor == null) {
+            // reset completo — garante que todos os campos JSON ficam actualizados
+            items      = emptyList()
+            hasMore    = true
+            nextCursor = null
+            errorMsg   = null
+        }
         scope.launch {
             val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
             when (result) {

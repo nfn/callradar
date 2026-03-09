@@ -105,7 +105,16 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     fun loadPage(cursor: Int? = null) {
         if (isLoading && !isRefreshing) return
         isLoading = true
-        if (cursor == null) errorMsg = null
+        if (cursor == null) {
+            // reset completo — garante que todos os campos JSON ficam actualizados
+            comments     = emptyList()
+            analysis     = null
+            numberRating = null
+            hasMore      = true
+            nextCursor   = null
+            notFound     = false
+            errorMsg     = null
+        }
         scope.launch {
             val result = withContext(Dispatchers.IO) {
                 CommunityApi.fetchComments(number, cursor = cursor)
