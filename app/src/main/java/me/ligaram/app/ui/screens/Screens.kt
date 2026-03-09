@@ -189,7 +189,6 @@ fun AppNavigation() {
 }
 
 // ─── Main shell com Bottom Navigation ────────────────────────────────────────
-@Suppress("ASSIGNED_VALUE_IS_NEVER_READ")
 @Composable
 fun MainShell(rootNav: NavController, startTab: Int = 0) {
     var selectedTab by remember { mutableStateOf(startTab) }
@@ -451,7 +450,6 @@ fun PermOverlayScreen(navController: NavController) {
 
 // ─── Home Screen ───────────────────────────────────────────────────────────────
 @OptIn(ExperimentalPermissionsApi::class)
-@Suppress("ASSIGNED_VALUE_IS_NEVER_READ")
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
@@ -956,6 +954,84 @@ fun AboutScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // ── Bateria ───────────────────────────────────────────────────
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape    = RoundedCornerShape(16.dp),
+                    colors   = CardDefaults.cardColors(containerColor = AccentOrange.copy(alpha = 0.07f)),
+                    border   = androidx.compose.foundation.BorderStroke(1.dp, AccentOrange.copy(alpha = 0.3f))
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.BatteryFull, null,
+                                tint     = AccentOrange,
+                                modifier = Modifier.size(22.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Funcionamento em segundo plano",
+                                color      = AccentOrange,
+                                fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            "Para garantir que o CallRadar funciona corretamente em todas as chamadas, recomendamos duas configurações no Android:",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 13.sp, lineHeight = 20.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        // Item 1
+                        Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(AccentOrange.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("1", color = AccentOrange, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Desativar otimização de bateria",
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    "Aceda a Definições → Bateria → Otimização de bateria e exclua o CallRadar. Alguns fabricantes (Xiaomi, Samsung, Huawei) podem encerrar o serviço de deteção de chamadas se esta opção estiver ativa.",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 12.sp, lineHeight = 18.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        // Item 2
+                        Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(AccentOrange.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("2", color = AccentOrange, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Excluir da lista de apps não utilizadas",
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    "Alguns sistemas Android desativam automaticamente apps que não são abertas com frequência. Aceda a Definições → Apps → CallRadar e desative a opção \"Pausar app se não usada\" ou equivalente.",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 12.sp, lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 // Privacy
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -983,12 +1059,16 @@ fun AboutScreen(navController: NavController) {
                     modifier            = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    /*
+                    // Remoção do link no rodapé
+
                     TextButton(onClick = ::openSite) {
                         Text("ligaram.me",
                             color      = AccentBlue,
                             fontSize   = 13.sp,
                             fontWeight = FontWeight.SemiBold)
                     }
+                     */
                     Text(
                         "© 2026 CallRadar · ligaram.me · Todos os direitos reservados",
                         color     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),

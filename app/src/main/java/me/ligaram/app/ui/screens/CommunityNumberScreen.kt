@@ -211,37 +211,37 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 
             // ── Lista com pull-to-refresh ─────────────────────────────────────
             Box(modifier = Modifier.fillMaxSize()) {
-                when {
-                    comments.isEmpty() && isLoading && !isRefreshing -> {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = AccentBlue)
+                PullToRefreshBox(
+                    state        = ptrState,
+                    isRefreshing = isRefreshing,
+                    onRefresh    = {
+                        if (!isRefreshing) {
+                            isRefreshing = true
+                            nextCursor   = null
+                            hasMore      = true
+                            loadPage(null)
                         }
-                    }
-                    comments.isEmpty() && errorMsg != null -> {
-                        CommunityErrorState(message = errorMsg!!, onRetry = {
-                            errorMsg = null
-                            loadPage()
-                        })
-                    }
-                    notFound || (comments.isEmpty() && !isLoading) -> {
-                        EmptyCommentsState(number = number, onAdd = {
-                            navController.navigate("${Routes.ADD_COMMENT}/$number")
-                        })
-                    }
-                    else -> {
-                        PullToRefreshBox(
-                            state        = ptrState,
-                            isRefreshing = isRefreshing,
-                            onRefresh    = {
-                                if (!isRefreshing) {
-                                    isRefreshing = true
-                                    nextCursor   = null
-                                    hasMore      = true
-                                    loadPage(null)
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        ) {
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    when {
+                        comments.isEmpty() && isLoading && !isRefreshing -> {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = AccentBlue)
+                            }
+                        }
+                        comments.isEmpty() && errorMsg != null -> {
+                            CommunityErrorState(message = errorMsg!!, onRetry = {
+                                errorMsg = null
+                                loadPage()
+                            })
+                        }
+                        notFound || (comments.isEmpty() && !isLoading) -> {
+                            EmptyCommentsState(number = number, onAdd = {
+                                navController.navigate("${Routes.ADD_COMMENT}/$number")
+                            })
+                        }
+                        else -> {
                             LazyColumn(
                                 state          = listState,
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
@@ -281,7 +281,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                     NumberCommentCard(
                                         comment        = comment,
                                         onLikeToggled  = { id, _, newCount ->
-                                            // Actualiza o item na lista para manter consistência
                                             comments = comments.map {
                                                 if (it.id == id) it.copy(likes = newCount) else it
                                             }
@@ -339,7 +338,6 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 }
 
 // ─── Analysis card (colapsável) ───────────────────────────────────────────────
-@Suppress("ASSIGNED_VALUE_IS_NEVER_READ")
 @Composable
 fun NumberAnalysisCard(analysis: NumberAnalysis) {
     var expanded by remember { mutableStateOf(false) }

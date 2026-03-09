@@ -235,24 +235,24 @@ fun CommunityHomeScreen(navController: NavController) {
 
             PhoneSearchBar(onSearch = { n -> navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") })
 
-            when {
-                items.isEmpty() && isLoading && !isRefreshing -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = AccentBlue)
+            PullToRefreshBox(
+                state        = ptrState,
+                isRefreshing = isRefreshing,
+                onRefresh    = {
+                    if (!isRefreshing) { isRefreshing = true; nextCursor = null; hasMore = true; loadPage(null) }
+                },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when {
+                    items.isEmpty() && isLoading && !isRefreshing -> {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = AccentBlue)
+                        }
                     }
-                }
-                items.isEmpty() && errorMsg != null -> {
-                    CommunityErrorState(message = errorMsg!!, onRetry = { loadPage() })
-                }
-                else -> {
-                    PullToRefreshBox(
-                        state        = ptrState,
-                        isRefreshing = isRefreshing,
-                        onRefresh    = {
-                            if (!isRefreshing) { isRefreshing = true; nextCursor = null; hasMore = true; loadPage(null) }
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    ) {
+                    items.isEmpty() && errorMsg != null -> {
+                        CommunityErrorState(message = errorMsg!!, onRetry = { loadPage() })
+                    }
+                    else -> {
                         LazyColumn(
                             state               = listState,
                             contentPadding      = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
