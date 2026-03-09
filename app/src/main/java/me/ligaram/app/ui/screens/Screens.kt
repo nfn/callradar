@@ -230,8 +230,8 @@ fun AppNavigation() {
                 fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
                 slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { (it * SLIDE_OFFSET).toInt() }
             }
-        ) { back ->
-            val number = back.arguments?.getString("number") ?: ""
+        ) { it ->
+            val number = it.arguments?.getString("number") ?: ""
             CommunityNumberScreen(navController, number)
         }
 
@@ -253,8 +253,8 @@ fun AppNavigation() {
                 fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
                 slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { (it * SLIDE_OFFSET).toInt() }
             }
-        ) { back ->
-            val number = back.arguments?.getString("number") ?: ""
+        ) { it ->
+            val number = it.arguments?.getString("number") ?: ""
             AddCommentScreen(navController, number)
         }
     }
@@ -280,7 +280,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
             ) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
-                    onClick  = { selectedTab = 0 },
+                    onClick  = { selectedTab = 0; Unit },
                     icon     = { Icon(Icons.Default.Shield, null) },
                     label    = { Text("Proteção") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -293,7 +293,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { selectedTab = 1 },
+                    onClick  = { selectedTab = 1; Unit },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -470,7 +470,7 @@ fun PermPhoneScreen(navController: NavController) {
             "O acesso é utilizado exclusivamente para identificação"
         ),
         buttonLabel = "Conceder Permissão",
-        onButtonClick = { phonePermission.launchMultiplePermissionRequest() },
+        onButtonClick = { phonePermission.launchMultiplePermissionRequest(); Unit },
         granted = phonePermission.allPermissionsGranted,
         onNext = { navController.navigate(Routes.PERM_OVERLAY) }
     )
@@ -516,6 +516,7 @@ fun PermOverlayScreen(navController: NavController) {
             navController.navigate(Routes.HOME) {
                 popUpTo(Routes.PERM_PHONE) { inclusive = true }
             }
+            Unit
         }
     )
 }
@@ -556,7 +557,7 @@ fun HomeScreen(navController: NavController) {
         PermissionDialog(
             phoneGranted   = phoneGranted,
             overlayGranted = overlayGranted,
-            onDismiss      = { showPermDialog = false }
+            onDismiss      = { showPermDialog = false; Unit }
         )
     }
 
@@ -585,7 +586,7 @@ fun HomeScreen(navController: NavController) {
                     containerColor = if (allGood) AccentGreen.copy(alpha = 0.1f) else AccentOrange.copy(alpha = 0.1f)
                 ),
                 border = BorderStroke(1.dp, if (allGood) AccentGreen.copy(alpha = 0.4f) else AccentOrange.copy(alpha = 0.4f)),
-                onClick = { if (!allGood) showPermDialog = true }
+                onClick = { if (!allGood) showPermDialog = true; Unit }
             ) {
                 Row(
                     modifier          = Modifier.padding(18.dp),
@@ -837,6 +838,7 @@ fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
 @Composable
 fun AboutScreen(navController: NavController) {
     val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
 
     fun openSite() {
         context.startActivity(Intent(Intent.ACTION_VIEW, "https://ligaram.me".toUri()))
@@ -992,7 +994,7 @@ fun AboutScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // ── Permissões ────────────────────────────────────────────────
-                Text("Permissões utilizadas", color = MaterialTheme.colorScheme.onBackground,
+                Text("Permissões utilizadas", color = colorScheme.onBackground,
                     fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -1041,7 +1043,7 @@ fun AboutScreen(navController: NavController) {
                     modifier = Modifier.fillMaxWidth(),
                     shape    = RoundedCornerShape(16.dp),
                     colors   = CardDefaults.cardColors(containerColor = AccentOrange.copy(alpha = 0.07f)),
-                    border   = androidx.compose.foundation.BorderStroke(1.dp, AccentOrange.copy(alpha = 0.3f))
+                    border   = BorderStroke(1.dp, AccentOrange.copy(alpha = 0.3f))
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

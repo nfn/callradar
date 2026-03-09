@@ -150,7 +150,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                         ?.savedStateHandle
                         ?.set("refresh", true)
                     // Sinaliza CommunityHomeScreen (MainShell entry no backstack) → reload lista global
-                    val communityHomeEntry = navController.previousBackStackEntry
+                    navController.previousBackStackEntry
                         ?.savedStateHandle
                         ?.set("refresh_home", true)
                     navController.popBackStack()
