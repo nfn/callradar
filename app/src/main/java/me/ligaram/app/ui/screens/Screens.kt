@@ -7,6 +7,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.EaseIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -125,62 +129,130 @@ fun allPermissionsGranted(context: android.content.Context): Boolean =
     hasPhonePermissions(context) && hasOverlayPermission(context)
 
 // ─── Main Nav Host ────────────────────────────────────────────────────────────
+
+// Constantes de animação partilhadas por todas as rotas
+private const val ANIM_DURATION = 280
+private const val SLIDE_OFFSET  = 0.30f   // 30% da largura — elimina a faixa lateral
+
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
     // A app arranca sempre no HOME - as permissões são opcionais e activadas
     // a partir do status card da tab Proteção.
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    NavHost(
+        navController    = navController,
+        startDestination = Routes.HOME,
+        modifier         = Modifier.background(MaterialTheme.colorScheme.background)
+    ) {
         composable(Routes.PERM_PHONE,
-            enterTransition = { fadeIn() + slideInHorizontally() },
-            exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            }
         ) { PermPhoneScreen(navController) }
 
         composable(Routes.PERM_OVERLAY,
-            enterTransition = { fadeIn() + slideInHorizontally { it } },
-            exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            }
         ) { PermOverlayScreen(navController) }
 
         // HOME e COMMUNITY_HOME são o mesmo shell - apenas diferem no tab inicial
         composable(Routes.HOME,
-            enterTransition = { fadeIn() + slideInHorizontally { it } },
-            exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            }
         ) { MainShell(navController, startTab = 0) }
 
         composable(Routes.COMMUNITY_HOME,
-            enterTransition = { fadeIn() + slideInHorizontally { it } },
-            exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            }
         ) { MainShell(navController, startTab = 1) }
 
         composable(Routes.ABOUT,
-            enterTransition = { fadeIn() + slideInHorizontally { it } },
-            exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            }
         ) { AboutScreen(navController) }
 
         composable(Routes.OVERLAY_STYLE,
-            enterTransition = { fadeIn() + slideInHorizontally { it } },
-            exitTransition  = { fadeOut() + slideOutHorizontally { -it } }
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            }
         ) { OverlayStyleScreen(navController) }
 
         // Página de detalhe de número
         composable("${Routes.COMMUNITY_NUMBER}/{number}",
-            enterTransition    = { fadeIn() + slideInHorizontally { it } },
-            exitTransition     = { fadeOut() + slideOutHorizontally { -it } },
-            popEnterTransition = { fadeIn() + slideInHorizontally { -it } },
-            popExitTransition  = { fadeOut() + slideOutHorizontally { it } }
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            },
+            popEnterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { -(it * SLIDE_OFFSET).toInt() }
+            },
+            popExitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { (it * SLIDE_OFFSET).toInt() }
+            }
         ) { back ->
             val number = back.arguments?.getString("number") ?: ""
             CommunityNumberScreen(navController, number)
         }
 
-        // Screen para adicionar comentário - slide + fade bem suave
-        // Screen para adicionar comentário - mesmos tempos e suavidade que CommunityNumberScreen
+        // Screen para adicionar comentário
         composable("${Routes.ADD_COMMENT}/{number}",
-            enterTransition    = { fadeIn() + slideInHorizontally { it } },
-            exitTransition     = { fadeOut() + slideOutHorizontally { -it } },
-            popEnterTransition = { fadeIn() + slideInHorizontally { -it } },
-            popExitTransition  = { fadeOut() + slideOutHorizontally { it } }
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            },
+            popEnterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { -(it * SLIDE_OFFSET).toInt() }
+            },
+            popExitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { (it * SLIDE_OFFSET).toInt() }
+            }
         ) { back ->
             val number = back.arguments?.getString("number") ?: ""
             AddCommentScreen(navController, number)
