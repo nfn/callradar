@@ -97,8 +97,15 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     val listState = rememberLazyListState()
     val ptrState  = rememberPullToRefreshState()
 
-    // Intercepta o gesto/botão físico de back → vai sempre para community home
-    BackHandler { navController.backToCommunity() }
+    fun backToCommunityWithRestore() {
+        navController.previousBackStackEntry
+            ?.savedStateHandle
+            ?.set("restore_scroll_position", true)
+        navController.backToCommunity()
+    }
+
+    // Intercepta o gesto/botao fisico de back -> vai sempre para community home
+    BackHandler { backToCommunityWithRestore() }
 
     var comments     by remember { mutableStateOf<List<NumberComment>>(emptyList()) }
     var analysis     by remember { mutableStateOf<NumberAnalysis?>(null) }
@@ -188,7 +195,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                 modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 48.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { navController.backToCommunity() }) {
+                IconButton(onClick = { backToCommunityWithRestore() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null,
                         tint = MaterialTheme.colorScheme.onBackground)
                 }
@@ -313,6 +320,12 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                             // O CommunityHomeScreen lê directamente deste cache via
                                             // LikeCache.getLikes() — sem savedStateHandle, sem re-navegação
                                             LikeCache.update(id, isLiked, newCount)
+                                            // também avisamos o HomeScreen para trocar o número quando
+                                            // regressar, caso o cache não seja suficiente ou a lista seja
+                                            // recriada
+                                            navController.previousBackStackEntry
+                                                ?.savedStateHandle
+                                                ?.set("likes_update", id to newCount)
                                         }
                                     )
                                 }
