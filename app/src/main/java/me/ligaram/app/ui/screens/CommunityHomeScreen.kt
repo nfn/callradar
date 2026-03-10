@@ -75,6 +75,7 @@ import kotlinx.coroutines.withContext
 import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.HomeComment
+import me.ligaram.app.data.LikeCache
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentOrange
 import me.ligaram.app.ui.theme.RiskHigh
@@ -218,7 +219,7 @@ fun CommunityHomeScreen(navController: NavController) {
 
     LaunchedEffect(Unit) { loadPage() }
 
-    // Refresca quando volta de qualquer screen filho (ex: AddCommentScreen via CommunityNumber)
+    // Refresca quando volta do AddCommentScreen (novo comentário submetido)
     val refreshSignal = navController.currentBackStackEntry
         ?.savedStateHandle
         ?.getStateFlow("refresh_home", false)
@@ -231,6 +232,11 @@ fun CommunityHomeScreen(navController: NavController) {
             }
         }
     }
+    // PRÉ-PRODUÇÃO - [Melhoria] - likes actualizados via LikeCache (singleton em memória)
+    // O HomeCommentCard lê LikeCache.getLikes() directamente na composição —
+    // quando o NumberScreen escreve no cache, o Compose recompõe apenas o card
+    // afectado porque mutableStateMapOf é observable. Sem LaunchedEffect, sem
+    // savedStateHandle, sem re-navegação. O scroll mantém a posição exacta.
 
     val shouldLoadMore by remember {
         derivedStateOf {
@@ -241,11 +247,22 @@ fun CommunityHomeScreen(navController: NavController) {
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
 
-    // Scroll ao topo quando o refresh termina
+    // Scroll ao topo quando o refresh termina (apenas em refresh explícito, não ao voltar do detalhe)
     LaunchedEffect(isRefreshing) {
         if (!isRefreshing && listState.firstVisibleItemIndex > 0) {
             listState.animateScrollToItem(0)
         }
+    }
+
+    // Restaurar posição de scroll ao voltar do CommunityNumberScreen
+    LaunchedEffect(items.size) {
+        if (items.isEmpty()) return@LaunchedEffect
+        val entry = navController.currentBackStackEntry ?: return@LaunchedEffect
+        val idx = entry.savedStateHandle.get<Int>("home_scroll_index") ?: return@LaunchedEffect
+        if (idx < 0) return@LaunchedEffect
+        val offset = entry.savedStateHandle.get<Int>("home_scroll_offset") ?: 0
+        entry.savedStateHandle.set("home_scroll_index", -1)
+        listState.animateScrollToItem(idx.coerceIn(0, (items.size - 1).coerceAtLeast(0)), scrollOffset = offset)
     }
 
     AppBackground {
@@ -260,7 +277,15 @@ fun CommunityHomeScreen(navController: NavController) {
                     modifier = Modifier.weight(1f))
             }
 
-            PhoneSearchBar(onSearch = { n -> navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") })
+            PhoneSearchBar(onSearch = { n ->
+                // PRÉ-PRODUÇÃO - [Bug] - popUpTo garante que o backstack fica
+                // COMMUNITY_HOME → COMMUNITY_NUMBER (não HOME → COMMUNITY_NUMBER)
+                // para que o popBackStack() no NumberScreen volte ao MainShell
+                // já vivo com o listState preservado
+                navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") {
+                    popUpTo(Routes.COMMUNITY_HOME) { inclusive = false }
+                }
+            })
 
             PullToRefreshBox(
                 state        = ptrState,
@@ -286,9 +311,23 @@ fun CommunityHomeScreen(navController: NavController) {
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(items, key = { it.id }) { item ->
-                                HomeCommentCard(item = item, onClick = {
-                                    navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}")
-                                })
+                                HomeCommentCard(
+                                    item    = item,
+                                    onClick = {
+                                        // Guardar posição de scroll para restaurar ao voltar do detalhe
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "home_scroll_index",
+                                            listState.firstVisibleItemIndex
+                                        )
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "home_scroll_offset",
+                                            listState.firstVisibleItemScrollOffset
+                                        )
+                                        navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}") {
+                                            popUpTo(Routes.COMMUNITY_HOME) { inclusive = false }
+                                        }
+                                    }
+                                )
                             }
                             item {
                                 when {
@@ -333,8 +372,12 @@ fun CommunityHomeScreen(navController: NavController) {
 // Row 2: separador
 // Row 3: comentário
 // Row 4: hora · autor · classification (esq) | like (dir)
+// PRÉ-PRODUÇÃO - [Melhoria] - likes lido do LikeCache (mutableStateMapOf observable):
+// quando o NumberScreen escreve no cache após API confirmar, o Compose recompõe
+// automaticamente apenas este card — o scroll e o resto da lista não são tocados
 @Composable
 fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
+    val likes = LikeCache.getLikes(item.id, item.likes)
     val classColor  = classificationColor(item.classification)
     val ratingColor = item.rating?.let { starColor(it) } ?: MaterialTheme.colorScheme.onSurfaceVariant
 
@@ -401,7 +444,7 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
                 Spacer(Modifier.width(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Default.ThumbUp, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
-                    Text("${item.likes}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    Text("$likes", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
         }

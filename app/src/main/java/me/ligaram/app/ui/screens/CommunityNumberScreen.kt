@@ -67,6 +67,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
+import me.ligaram.app.data.LikeCache
 import me.ligaram.app.data.NumberAnalysis
 import me.ligaram.app.data.NumberComment
 import me.ligaram.app.ui.theme.AccentBlue
@@ -74,10 +75,17 @@ import me.ligaram.app.ui.theme.AccentOrange
 import me.ligaram.app.ui.theme.RiskHigh
 import me.ligaram.app.ui.theme.RiskLow
 
-// ─── Navegar sempre para a community home ─────────────────────────────────────
+// PRÉ-PRODUÇÃO - [Bug] - popBackStack() em vez de navigate(COMMUNITY_HOME):
+// volta ao entry COMMUNITY_HOME já existente no backstack — o MainShell
+// não é recriado, o listState do CommunityHomeScreen mantém a posição.
+// Fallback para navigate() se COMMUNITY_HOME não estiver no backstack
+// (ex: entrada directa pelo overlay)
 private fun NavController.backToCommunity() {
-    navigate(Routes.COMMUNITY_HOME) {
-        popUpTo(Routes.HOME) { inclusive = false }
+    val wentBack = popBackStack(Routes.COMMUNITY_HOME, inclusive = false)
+    if (!wentBack) {
+        navigate(Routes.COMMUNITY_HOME) {
+            popUpTo(Routes.HOME) { inclusive = false }
+        }
     }
 }
 
@@ -296,10 +304,15 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                 items(comments, key = { it.id }) { comment ->
                                     NumberCommentCard(
                                         comment        = comment,
-                                        onLikeToggled  = { id, _, newCount ->
+                                        onLikeToggled  = { id, isLiked, newCount ->
+                                            // Actualiza o estado local desta screen
                                             comments = comments.map {
                                                 if (it.id == id) it.copy(likes = newCount) else it
                                             }
+                                            // PRÉ-PRODUÇÃO - [Melhoria] - escreve no LikeCache partilhado
+                                            // O CommunityHomeScreen lê directamente deste cache via
+                                            // LikeCache.getLikes() — sem savedStateHandle, sem re-navegação
+                                            LikeCache.update(id, isLiked, newCount)
                                         }
                                     )
                                 }
@@ -546,8 +559,11 @@ fun NumberCommentCard(
     val scope      = rememberCoroutineScope()
     val classColor = classificationColor(comment.classification)
 
-    var localLikes  by remember(comment.id, comment.likes) { mutableStateOf(comment.likes) }
-    var localLiked  by remember(comment.id) { mutableStateOf(false) }
+    var localLikes  by remember(comment.id) { mutableStateOf(LikeCache.getLikes(comment.id, comment.likes)) }
+    // PRÉ-PRODUÇÃO - [Bug] - sem cache, localLiked inicializava sempre como false mesmo que
+    // o utilizador já tivesse dado like nesta sessão — ao interagir de novo o optimismo
+    // calculava +1 sobre um valor já incrementado, causando o flash 2 → 0
+    var localLiked  by remember(comment.id) { mutableStateOf(LikeCache.getLiked(comment.id) ?: false) }
     var likeLoading by remember(comment.id) { mutableStateOf(false) }
 
     Card(
