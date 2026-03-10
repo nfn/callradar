@@ -70,7 +70,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.snapshotFlow
@@ -290,7 +289,7 @@ fun CommunityHomeScreen(navController: NavController) {
             isRestoringScroll = true
 
             if (index < items.size) {
-                listState.scrollToItem(index, offset)
+                listState.scrollToItem(index, -offset)
             } else {
                 // Se ja ha carregamento em curso, espera terminar antes de paginar manualmente.
                 if (isLoading) {
@@ -308,12 +307,10 @@ fun CommunityHomeScreen(navController: NavController) {
                         .filter { loading -> !loading }
                         .first()
                 }
-                if (index < items.size) listState.scrollToItem(index, offset)
+                if (index < items.size) listState.scrollToItem(index, -offset)
             }
 
             entry.savedStateHandle.set("scroll_position", null)
-            // impede o fallback por ID de disparar depois do restore exacto
-            entry.savedStateHandle.set("scroll_to_comment_id", -1)
             entry.savedStateHandle.set("restore_scroll_position", false)
             isRestoringScroll = false
         }
@@ -332,23 +329,6 @@ fun CommunityHomeScreen(navController: NavController) {
                 }
             }
         }
-    }
-
-    // Reposicionar no mesmo comentário ao voltar do CommunityNumberScreen (guardamos id, restauramos por id)
-    LaunchedEffect(items.size) {
-        if (items.isEmpty()) return@LaunchedEffect
-        val entry = navController.currentBackStackEntry ?: return@LaunchedEffect
-        if (entry.savedStateHandle.get<Boolean>("restore_scroll_position") == true) return@LaunchedEffect
-        val targetId = entry.savedStateHandle.get<Int>("scroll_to_comment_id") ?: return@LaunchedEffect
-        if (targetId <= 0) return@LaunchedEffect
-        val idx = items.indexOfFirst { it.id == targetId }
-        if (idx < 0) {
-            entry.savedStateHandle.set("scroll_to_comment_id", -1)
-            return@LaunchedEffect
-        }
-        entry.savedStateHandle.set("scroll_to_comment_id", -1)
-        delay(32) // 1–2 frames para a LazyColumn ter os itens no layout
-        listState.scrollToItem(idx, scrollOffset = 0)
     }
 
     AppBackground {
@@ -390,12 +370,16 @@ fun CommunityHomeScreen(navController: NavController) {
                         ) {
                             items(items, key = { it.id }) { item ->
                                 HomeCommentCard(item = item, onClick = {
-                                    // lembra índice+offset para scroll exacto
+                                    // guarda o índice do item clicado e o seu offset visual no viewport
+                                    // offset de visibleItemsInfo é positivo se item está abaixo do topo,
+                                    // negativo se está parcialmente fora de vista acima
+                                    val clickedIndex = items.indexOfFirst { it.id == item.id }
+                                    val clickedOffset = listState.layoutInfo.visibleItemsInfo
+                                        .firstOrNull { it.index == clickedIndex }?.offset ?: 0
                                     navController.currentBackStackEntry?.savedStateHandle?.set(
                                         "scroll_position",
-                                        listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+                                        clickedIndex to clickedOffset
                                     )
-                                    navController.currentBackStackEntry?.savedStateHandle?.set("scroll_to_comment_id", item.id)
                                     navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}")
                                 })
                             }
