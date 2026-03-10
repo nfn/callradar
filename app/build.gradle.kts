@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Estes dois imports foram incluidos por mim para gerar o nome do ficheiro da build
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 android {
     namespace = "me.ligaram.app"
     compileSdk = 36
@@ -13,7 +17,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0-beta.1"
     }
 
     buildTypes {
@@ -27,6 +31,25 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+}
+
+
+// Estes modulo foi incluido por mim para gerar o nome do ficheiro da build
+androidComponents {
+    onVariants { variant ->
+        // Captura a data uma vez por variante
+        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_hhmm"))
+
+        variant.outputs.forEach { output ->
+            val versionName = output.versionName.get() ?: "unknown"
+            val fileName = "CallRadar-${versionName}-${timestamp}.apk"
+
+            // Cast para a classe de implementação (necessário no AGP atual)
+            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.let {
+                it.outputFileName.set(fileName)
+            }
+        }
     }
 }
 
