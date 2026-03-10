@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -363,9 +364,9 @@ fun AddCommentScreen(navController: NavController, number: String) {
 
                 // Classificação *
                 SheetSection("Classificação *") {
-                    androidx.compose.foundation.layout.FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement   = Arrangement.spacedBy(6.dp)
+                    Row(
+                        modifier              = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         ADD_CLASSIFICATIONS.forEach { cls ->
                             val selected = classification == cls

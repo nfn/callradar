@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseOut
@@ -230,8 +232,8 @@ fun AppNavigation() {
                 fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
                 slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { (it * SLIDE_OFFSET).toInt() }
             }
-        ) { it ->
-            val number = it.arguments?.getString("number") ?: ""
+        ) { back ->
+            val number = back.arguments?.getString("number") ?: ""
             CommunityNumberScreen(navController, number)
         }
 
@@ -253,8 +255,8 @@ fun AppNavigation() {
                 fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
                 slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { (it * SLIDE_OFFSET).toInt() }
             }
-        ) { it ->
-            val number = it.arguments?.getString("number") ?: ""
+        ) { back ->
+            val number = back.arguments?.getString("number") ?: ""
             AddCommentScreen(navController, number)
         }
     }
@@ -280,7 +282,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
             ) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
-                    onClick  = { selectedTab = 0; Unit },
+                    onClick  = { selectedTab = 0 },
                     icon     = { Icon(Icons.Default.Shield, null) },
                     label    = { Text("Proteção") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -293,7 +295,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { selectedTab = 1; Unit },
+                    onClick  = { selectedTab = 1 },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -307,8 +309,23 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
             }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            when (selectedTab) {
+        AnimatedContent(
+            targetState = selectedTab,
+            modifier    = Modifier.padding(innerPadding),
+            transitionSpec = {
+                val toRight = targetState > initialState
+                (fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                 slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) {
+                     if (toRight) (it * SLIDE_OFFSET).toInt() else -(it * SLIDE_OFFSET).toInt()
+                 }) togetherWith
+                (fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                 slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) {
+                     if (toRight) -(it * SLIDE_OFFSET).toInt() else (it * SLIDE_OFFSET).toInt()
+                 })
+            },
+            label = "tab_transition"
+        ) { tab ->
+            when (tab) {
                 0 -> HomeScreen(rootNav)
                 1 -> CommunityHomeScreen(rootNav)
             }
@@ -470,7 +487,7 @@ fun PermPhoneScreen(navController: NavController) {
             "O acesso é utilizado exclusivamente para identificação"
         ),
         buttonLabel = "Conceder Permissão",
-        onButtonClick = { phonePermission.launchMultiplePermissionRequest(); Unit },
+        onButtonClick = { phonePermission.launchMultiplePermissionRequest() },
         granted = phonePermission.allPermissionsGranted,
         onNext = { navController.navigate(Routes.PERM_OVERLAY) }
     )
@@ -516,7 +533,6 @@ fun PermOverlayScreen(navController: NavController) {
             navController.navigate(Routes.HOME) {
                 popUpTo(Routes.PERM_PHONE) { inclusive = true }
             }
-            Unit
         }
     )
 }
@@ -557,7 +573,7 @@ fun HomeScreen(navController: NavController) {
         PermissionDialog(
             phoneGranted   = phoneGranted,
             overlayGranted = overlayGranted,
-            onDismiss      = { showPermDialog = false; Unit }
+            onDismiss      = { showPermDialog = false }
         )
     }
 
@@ -586,7 +602,7 @@ fun HomeScreen(navController: NavController) {
                     containerColor = if (allGood) AccentGreen.copy(alpha = 0.1f) else AccentOrange.copy(alpha = 0.1f)
                 ),
                 border = BorderStroke(1.dp, if (allGood) AccentGreen.copy(alpha = 0.4f) else AccentOrange.copy(alpha = 0.4f)),
-                onClick = { if (!allGood) showPermDialog = true; Unit }
+                onClick = { if (!allGood) showPermDialog = true }
             ) {
                 Row(
                     modifier          = Modifier.padding(18.dp),
@@ -838,7 +854,6 @@ fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
 @Composable
 fun AboutScreen(navController: NavController) {
     val context = LocalContext.current
-    val colorScheme = MaterialTheme.colorScheme
 
     fun openSite() {
         context.startActivity(Intent(Intent.ACTION_VIEW, "https://ligaram.me".toUri()))
@@ -994,7 +1009,7 @@ fun AboutScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // ── Permissões ────────────────────────────────────────────────
-                Text("Permissões utilizadas", color = colorScheme.onBackground,
+                Text("Permissões utilizadas", color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -1043,7 +1058,7 @@ fun AboutScreen(navController: NavController) {
                     modifier = Modifier.fillMaxWidth(),
                     shape    = RoundedCornerShape(16.dp),
                     colors   = CardDefaults.cardColors(containerColor = AccentOrange.copy(alpha = 0.07f)),
-                    border   = BorderStroke(1.dp, AccentOrange.copy(alpha = 0.3f))
+                    border   = androidx.compose.foundation.BorderStroke(1.dp, AccentOrange.copy(alpha = 0.3f))
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
