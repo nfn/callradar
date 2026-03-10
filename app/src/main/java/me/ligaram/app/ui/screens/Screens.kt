@@ -271,6 +271,21 @@ fun AppNavigation() {
 fun MainShell(rootNav: NavController, startTab: Int = 0) {
     var selectedTab by remember { mutableStateOf(startTab) }
 
+    val forceCommunityTabFlow = rootNav.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow("force_community_tab", false)
+
+    LaunchedEffect(forceCommunityTabFlow) {
+        forceCommunityTabFlow?.collect { forceCommunity ->
+            if (forceCommunity) {
+                selectedTab = 1
+                rootNav.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("force_community_tab", false)
+            }
+        }
+    }
+
     // Botão/gesto back quando estamos no tab Comunidade → volta ao tab Proteção
     // Em qualquer tab → não sai da app (comportamento padrão do sistema)
     androidx.activity.compose.BackHandler(enabled = selectedTab == 1) {

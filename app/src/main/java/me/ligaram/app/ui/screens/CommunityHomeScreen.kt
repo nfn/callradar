@@ -374,11 +374,26 @@ fun CommunityHomeScreen(navController: NavController) {
                                     // offset de visibleItemsInfo é positivo se item está abaixo do topo,
                                     // negativo se está parcialmente fora de vista acima
                                     val clickedIndex = items.indexOfFirst { it.id == item.id }
-                                    val clickedOffset = listState.layoutInfo.visibleItemsInfo
-                                        .firstOrNull { it.index == clickedIndex }?.offset ?: 0
+                                    val visibleInfo = listState.layoutInfo.visibleItemsInfo
+                                    val clickedOffset = visibleInfo
+                                        .firstOrNull { it.index == clickedIndex }
+                                        ?.offset
+
+                                    // fallback robusto: se por timing de layout o item clicado não estiver
+                                    // em visibleItemsInfo, usa a âncora real atual da lista em vez de 0.
+                                    val anchorIndex: Int
+                                    val anchorOffset: Int
+                                    if (clickedIndex >= 0 && clickedOffset != null) {
+                                        anchorIndex = clickedIndex
+                                        anchorOffset = clickedOffset
+                                    } else {
+                                        anchorIndex = listState.firstVisibleItemIndex
+                                        anchorOffset = -listState.firstVisibleItemScrollOffset
+                                    }
+
                                     navController.currentBackStackEntry?.savedStateHandle?.set(
                                         "scroll_position",
-                                        clickedIndex to clickedOffset
+                                        anchorIndex to anchorOffset
                                     )
                                     navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}")
                                 })
