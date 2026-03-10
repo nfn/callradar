@@ -195,42 +195,38 @@ fun CommunityHomeScreen(navController: NavController) {
         if (isLoading && !isRefreshing) return
         isLoading = true
         if (cursor == null) {
-            // reset completo — garante que todos os campos JSON ficam actualizados
             items      = emptyList()
             hasMore    = true
             nextCursor = null
             errorMsg   = null
         }
         scope.launch {
-            val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
-            when (result) {
-                is CommunityResult.Success -> {
-                    val page = result.data
-                    items      = if (cursor == null) page.data else items + page.data
-                    hasMore    = page.pagination.hasMore
-                    nextCursor = page.pagination.nextCursor
+            try {
+                val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
+                when (result) {
+                    is CommunityResult.Success -> {
+                        val page = result.data
+                        items      = if (cursor == null) page.data else items + page.data
+                        hasMore    = page.pagination.hasMore
+                        nextCursor = page.pagination.nextCursor
+                    }
+                    is CommunityResult.Error -> errorMsg = result.message
                 }
-                is CommunityResult.Error -> errorMsg = result.message
+            } finally {
+                isLoading    = false
+                isRefreshing = false
             }
-            isLoading    = false
-            isRefreshing = false
         }
     }
 
-    LaunchedEffect(Unit) { loadPage() }
-
-    // Refresca quando volta do AddCommentScreen (novo comentário submetido)
-    val refreshSignal = navController.currentBackStackEntry
-        ?.savedStateHandle
-        ?.getStateFlow("refresh_home", false)
-    LaunchedEffect(refreshSignal) {
-        refreshSignal?.collect { shouldRefresh ->
-            if (shouldRefresh) {
-                navController.currentBackStackEntry?.savedStateHandle?.set("refresh_home", false)
-                isRefreshing = true
-                loadPage(null)
-            }
+    // Carregamento inicial e refresh ao voltar do AddCommentScreen (um único efeito evita corridas)
+    LaunchedEffect(Unit) {
+        val needRefresh = navController.currentBackStackEntry?.savedStateHandle?.get<Boolean>("refresh_home") == true
+        if (needRefresh) {
+            navController.currentBackStackEntry?.savedStateHandle?.set("refresh_home", false)
+            isRefreshing = true
         }
+        loadPage(null)
     }
     // PRÉ-PRODUÇÃO - [Melhoria] - likes actualizados via LikeCache (singleton em memória)
     // O HomeCommentCard lê LikeCache.getLikes() directamente na composição —
