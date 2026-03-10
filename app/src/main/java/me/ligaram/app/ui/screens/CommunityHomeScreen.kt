@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.ligaram.app.data.CommunityApi
@@ -195,44 +196,43 @@ fun CommunityHomeScreen(navController: NavController) {
         if (isLoading && !isRefreshing) return
         isLoading = true
         if (cursor == null) {
+            // reset completo — garante que todos os campos JSON ficam actualizados
             items      = emptyList()
             hasMore    = true
             nextCursor = null
             errorMsg   = null
         }
         scope.launch {
-            try {
-                val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
-                when (result) {
-                    is CommunityResult.Success -> {
-                        val page = result.data
-                        items      = if (cursor == null) page.data else items + page.data
-                        hasMore    = page.pagination.hasMore
-                        nextCursor = page.pagination.nextCursor
-                    }
-                    is CommunityResult.Error -> errorMsg = result.message
+            val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
+            when (result) {
+                is CommunityResult.Success -> {
+                    val page = result.data
+                    items      = if (cursor == null) page.data else items + page.data
+                    hasMore    = page.pagination.hasMore
+                    nextCursor = page.pagination.nextCursor
                 }
-            } finally {
-                isLoading    = false
-                isRefreshing = false
+                is CommunityResult.Error -> errorMsg = result.message
             }
+            isLoading    = false
+            isRefreshing = false
         }
     }
 
-    // Carregamento inicial e refresh ao voltar do AddCommentScreen (um único efeito evita corridas)
-    LaunchedEffect(Unit) {
-        val needRefresh = navController.currentBackStackEntry?.savedStateHandle?.get<Boolean>("refresh_home") == true
-        if (needRefresh) {
-            navController.currentBackStackEntry?.savedStateHandle?.set("refresh_home", false)
-            isRefreshing = true
+    LaunchedEffect(Unit) { loadPage() }
+
+    // Refresca quando volta de qualquer screen filho (ex: AddCommentScreen via CommunityNumber)
+    val refreshSignal = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow("refresh_home", false)
+    LaunchedEffect(refreshSignal) {
+        refreshSignal?.collect { shouldRefresh ->
+            if (shouldRefresh) {
+                navController.currentBackStackEntry?.savedStateHandle?.set("refresh_home", false)
+                isRefreshing = true
+                loadPage(null)
+            }
         }
-        loadPage(null)
     }
-    // PRÉ-PRODUÇÃO - [Melhoria] - likes actualizados via LikeCache (singleton em memória)
-    // O HomeCommentCard lê LikeCache.getLikes() directamente na composição —
-    // quando o NumberScreen escreve no cache, o Compose recompõe apenas o card
-    // afectado porque mutableStateMapOf é observable. Sem LaunchedEffect, sem
-    // savedStateHandle, sem re-navegação. O scroll mantém a posição exacta.
 
     val shouldLoadMore by remember {
         derivedStateOf {
@@ -243,22 +243,27 @@ fun CommunityHomeScreen(navController: NavController) {
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
 
-    // Scroll ao topo quando o refresh termina (apenas em refresh explícito, não ao voltar do detalhe)
+    // Scroll ao topo quando o refresh termina (não quando voltamos do NumberScreen)
     LaunchedEffect(isRefreshing) {
         if (!isRefreshing && listState.firstVisibleItemIndex > 0) {
             listState.animateScrollToItem(0)
         }
     }
 
-    // Restaurar posição de scroll ao voltar do CommunityNumberScreen
+    // Reposicionar no mesmo comentário ao voltar do CommunityNumberScreen (guardamos id, restauramos por id)
     LaunchedEffect(items.size) {
         if (items.isEmpty()) return@LaunchedEffect
         val entry = navController.currentBackStackEntry ?: return@LaunchedEffect
-        val idx = entry.savedStateHandle.get<Int>("home_scroll_index") ?: return@LaunchedEffect
-        if (idx < 0) return@LaunchedEffect
-        val offset = entry.savedStateHandle.get<Int>("home_scroll_offset") ?: 0
-        entry.savedStateHandle.set("home_scroll_index", -1)
-        listState.animateScrollToItem(idx.coerceIn(0, (items.size - 1).coerceAtLeast(0)), scrollOffset = offset)
+        val targetId = entry.savedStateHandle.get<Int>("scroll_to_comment_id") ?: return@LaunchedEffect
+        if (targetId <= 0) return@LaunchedEffect
+        val idx = items.indexOfFirst { it.id == targetId }
+        if (idx < 0) {
+            entry.savedStateHandle.set("scroll_to_comment_id", -1)
+            return@LaunchedEffect
+        }
+        entry.savedStateHandle.set("scroll_to_comment_id", -1)
+        delay(32) // 1–2 frames para a LazyColumn ter os itens no layout
+        listState.scrollToItem(idx, scrollOffset = 0)
     }
 
     AppBackground {
@@ -273,15 +278,7 @@ fun CommunityHomeScreen(navController: NavController) {
                     modifier = Modifier.weight(1f))
             }
 
-            PhoneSearchBar(onSearch = { n ->
-                // PRÉ-PRODUÇÃO - [Bug] - popUpTo garante que o backstack fica
-                // COMMUNITY_HOME → COMMUNITY_NUMBER (não HOME → COMMUNITY_NUMBER)
-                // para que o popBackStack() no NumberScreen volte ao MainShell
-                // já vivo com o listState preservado
-                navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") {
-                    popUpTo(Routes.COMMUNITY_HOME) { inclusive = false }
-                }
-            })
+            PhoneSearchBar(onSearch = { n -> navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") })
 
             PullToRefreshBox(
                 state        = ptrState,
@@ -307,23 +304,10 @@ fun CommunityHomeScreen(navController: NavController) {
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(items, key = { it.id }) { item ->
-                                HomeCommentCard(
-                                    item    = item,
-                                    onClick = {
-                                        // Guardar posição de scroll para restaurar ao voltar do detalhe
-                                        navController.currentBackStackEntry?.savedStateHandle?.set(
-                                            "home_scroll_index",
-                                            listState.firstVisibleItemIndex
-                                        )
-                                        navController.currentBackStackEntry?.savedStateHandle?.set(
-                                            "home_scroll_offset",
-                                            listState.firstVisibleItemScrollOffset
-                                        )
-                                        navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}") {
-                                            popUpTo(Routes.COMMUNITY_HOME) { inclusive = false }
-                                        }
-                                    }
-                                )
+                                HomeCommentCard(item = item, onClick = {
+                                    navController.currentBackStackEntry?.savedStateHandle?.set("scroll_to_comment_id", item.id)
+                                    navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}")
+                                })
                             }
                             item {
                                 when {
@@ -368,9 +352,6 @@ fun CommunityHomeScreen(navController: NavController) {
 // Row 2: separador
 // Row 3: comentário
 // Row 4: hora · autor · classification (esq) | like (dir)
-// PRÉ-PRODUÇÃO - [Melhoria] - likes lido do LikeCache (mutableStateMapOf observable):
-// quando o NumberScreen escreve no cache após API confirmar, o Compose recompõe
-// automaticamente apenas este card — o scroll e o resto da lista não são tocados
 @Composable
 fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
     val likes = LikeCache.getLikes(item.id, item.likes)
@@ -440,7 +421,7 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
                 Spacer(Modifier.width(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Default.ThumbUp, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
-                    Text("$likes", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    Text("${item.likes}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
         }
@@ -450,10 +431,10 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
 @Composable
 fun CommunityErrorState(message: String, onRetry: () -> Unit) {
     val isNetwork = message.contains("network", ignoreCase = true)
-                || message.contains("connect", ignoreCase = true)
-                || message.contains("rede",    ignoreCase = true)
-                || message.contains("timeout", ignoreCase = true)
-                || message.contains("Unable",  ignoreCase = true)
+            || message.contains("connect", ignoreCase = true)
+            || message.contains("rede",    ignoreCase = true)
+            || message.contains("timeout", ignoreCase = true)
+            || message.contains("Unable",  ignoreCase = true)
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(40.dp)) {
