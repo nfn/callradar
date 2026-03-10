@@ -146,14 +146,22 @@ fun AddCommentScreen(navController: NavController, number: String) {
             when (result) {
                 is CommunityResult.Success -> {
                     delay(400)
-                    // Sinaliza CommunityNumberScreen (entry imediatamente anterior) → reload local
+                    // PRÉ-PRODUÇÃO - [Bug] - refresh_home deve ir para o entry do MainShell
+                    // (HOME ou COMMUNITY_HOME), não para o previousBackStackEntry (CommunityNumber)
                     navController.previousBackStackEntry
                         ?.savedStateHandle
                         ?.set("refresh", true)
-                    // Sinaliza CommunityHomeScreen (MainShell entry no backstack) → reload lista global
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("refresh_home", true)
+                    // Tenta sinalizar o MainShell via HOME; se não estiver no backstack tenta COMMUNITY_HOME
+                    // getBackStackEntry lança exceção se a rota não existir — tratamos com try/catch
+                    try {
+                        navController.getBackStackEntry(Routes.HOME)
+                            .savedStateHandle.set("refresh_home", true)
+                    } catch (_: Exception) {
+                        try {
+                            navController.getBackStackEntry(Routes.COMMUNITY_HOME)
+                                .savedStateHandle.set("refresh_home", true)
+                        } catch (_: Exception) { /* rota não encontrada — ignorar */ }
+                    }
                     navController.popBackStack()
                 }
                 is CommunityResult.Error -> {
