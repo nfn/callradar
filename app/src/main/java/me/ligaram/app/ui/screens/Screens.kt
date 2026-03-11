@@ -72,6 +72,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -270,9 +271,10 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
         currentEntry.savedStateHandle.get<Boolean>("force_community_tab") == true
 
     // Usa a flag já no 1o frame para evitar ver o tab Home por baixo durante a pop transition.
-    var selectedTab by remember(startTab, forceCommunityInitial) {
-        mutableStateOf(if (forceCommunityInitial) 1 else startTab)
+    val selectedTabState = remember(startTab, forceCommunityInitial) {
+        mutableIntStateOf(if (forceCommunityInitial) 1 else startTab)
     }
+    val selectedTab = selectedTabState.intValue
 
     val forceCommunityTabFlow = currentEntry
         .savedStateHandle
@@ -287,7 +289,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
     LaunchedEffect(forceCommunityTabFlow) {
         forceCommunityTabFlow.collect { forceCommunity ->
             if (forceCommunity) {
-                selectedTab = 1
+                selectedTabState.intValue = 1
                 currentEntry.savedStateHandle.set("force_community_tab", false)
             }
         }
@@ -296,7 +298,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
     // Botão/gesto back quando estamos no tab Comunidade → volta ao tab Proteção
     // Em qualquer tab → não sai da app (comportamento padrão do sistema)
     androidx.activity.compose.BackHandler(enabled = selectedTab == 1) {
-        selectedTab = 0
+        selectedTabState.intValue = 0
     }
 
     Scaffold(
@@ -308,7 +310,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
             ) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
-                    onClick  = { selectedTab = 0 },
+                    onClick  = { selectedTabState.intValue = 0 },
                     icon     = { Icon(Icons.Default.Shield, null) },
                     label    = { Text("Proteção") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -321,7 +323,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { selectedTab = 1 },
+                    onClick  = { selectedTabState.intValue = 1 },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
