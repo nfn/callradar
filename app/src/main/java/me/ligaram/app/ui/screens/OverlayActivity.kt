@@ -484,99 +484,7 @@ fun StyleBannerFull(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 4 - Banner completo tap-to-dismiss
-// Igual ao 3 mas fecha ao tocar. Drag também funciona: distingue tap de drag
-// medindo o deslocamento total - se for pequeno é tap, caso contrário é drag.
-// ═══════════════════════════════════════════════════════════════════════════════
-@Suppress("unused")
-@Composable
-fun StyleBannerFullTap(
-    number: String,
-    risk: String,
-    color: Color,
-    category: String,
-    subcategory: String,
-    contactName: String?,
-    _onDismiss: () -> Unit
-) {
-    // O drag é gerido aqui dentro (não no OverlayScreen) para poder distinguir tap de drag.
-    var offsetY by remember { mutableStateOf(0f) }
-    var totalDrag by remember { mutableStateOf(0f) }
-
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = NavyDeep.copy(alpha = 0.97f),
-        shadowElevation = 16.dp,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth()
-            .offset { IntOffset(0, offsetY.roundToInt()) }
-            .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-            // Um único pointerInput que trata drag E tap sem conflito
-            .pointerInput(_onDismiss) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val down = awaitPointerEvent().changes.firstOrNull() ?: continue
-                        if (!down.pressed) continue
-                        totalDrag = 0f
-                        var dragging = false
-                        // Seguir o dedo enquanto está pressionado
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.firstOrNull() ?: break
-                            if (!change.pressed) {
-                                // Dedo levantou - se não arrastou muito, é tap → dismiss
-                                if (!dragging) _onDismiss()
-                                break
-                            }
-                            val dy = change.position.y - change.previousPosition.y
-                            totalDrag += abs(dy)
-                            if (totalDrag > 10f) dragging = true
-                            if (dragging) {
-                                offsetY += dy
-                                change.consume()
-                            }
-                        }
-                    }
-                }
-            }
-    ) {
-        Column {
-            Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(34.dp).clip(CircleShape).background(color.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Warning, null, tint = color, modifier = Modifier.size(18.dp))
-                }
-                Spacer(Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(contactName ?: number, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (contactName != null)
-                        Text(number, color = TextSecondary, fontSize = 11.sp)
-                    else {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(color))
-                            Text(risk, color = TextSecondary, fontSize = 11.sp)
-                        }
-                    }
-                }
-                // Hint subtil no lugar do X
-                Icon(Icons.Default.TouchApp, null, tint = TextSecondary.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
-            }
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(NavyLight))
-            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (contactName != null)
-                    DetailRow(Icons.Default.Warning, "Risco", risk, color)
-                DetailRow(Icons.Default.Category, "Categoria", category, AccentBlue)
-                if (subcategory.isNotBlank())
-                    DetailRow(Icons.Default.Info, "Subcategoria", subcategory, TextSecondary)
-                Text("CallRadar por ligaram.me", color = TextSecondary.copy(alpha = 0.50f), fontSize = 9.sp,
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-            }
-        }
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 5 - Card com barra lateral colorida
+// STYLE 4 - Card com barra lateral colorida
 // ═══════════════════════════════════════════════════════════════════════════════
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -622,7 +530,7 @@ fun StyleCard(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 6 - Split: identidade à esquerda, risco à direita
+// STYLE 5 - Split: identidade à esquerda, risco à direita
 // ═══════════════════════════════════════════════════════════════════════════════
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -672,7 +580,7 @@ fun StyleSplit(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 7 - Score card com barra visual de risco
+// STYLE 6 - Score card com barra visual de risco
 // ═══════════════════════════════════════════════════════════════════════════════
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -746,8 +654,7 @@ fun StyleScore(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 8 - Chip flutuante no canto inferior direito
-// Toca na seta para expandir painel completo. Drag no chip.
+// STYLE 7 - Chip flutuante no canto inferior direito
 // ═══════════════════════════════════════════════════════════════════════════════
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -823,8 +730,7 @@ fun StyleFloatingChip(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 9 - Minimal pill sem expansão
-// Ultra-compacto: só risco + nome + fechar. Zero clutter.
+// STYLE 8 - Minimal pill sem expansão
 // ═══════════════════════════════════════════════════════════════════════════════
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -856,7 +762,7 @@ fun StyleMinimal(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLE 10 - Banner topo com linha de cor e detalhes visíveis
+// STYLE 9 - Banner topo com linha de cor e detalhes visíveis
 // ═══════════════════════════════════════════════════════════════════════════════
 @Suppress("UNUSED_PARAMETER")
 @Composable
