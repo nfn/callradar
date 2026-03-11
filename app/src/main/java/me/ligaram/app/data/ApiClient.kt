@@ -16,7 +16,7 @@ object ApiClient {
 
     private val gson = Gson()
 
-    private const val BASE_URL  = "https://api.ligaram.me/api/v1/overlay"
+    private const val BASE_URL  = "https://overlay.ligaram.me/api/v1/overlay"
     private const val API_TOKEN = "lUDf9WGHuW7OMbeNvQmZ8vIAwJLvTUo5HiwcCY9cPn7"
 
     private var appContext: Context? = null
