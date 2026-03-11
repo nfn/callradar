@@ -1,6 +1,5 @@
 package me.ligaram.app.ui.screens
 
-// ⚠️ DEMO_MODE — imports para modo de testes — REMOVER EM PRODUÇÃO (ou mudar DEMO_MODE = false)
 import android.Manifest
 import android.content.Intent
 import android.provider.Settings
@@ -68,8 +67,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -96,7 +93,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import me.ligaram.app.data.TestConfig
 import me.ligaram.app.service.CallMonitorService
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
@@ -579,13 +575,6 @@ fun HomeScreen(navController: NavController) {
     // Diálogo de activação de permissões (abre ao clicar no status card)
     val showPermDialog = remember { mutableStateOf(false) }
 
-    // ⚠️ DEMO_MODE — estado do toggle demo (só existe se DEMO_MODE = true)
-    // Para remover em produção: apagar este bloco e o card DemoBanner abaixo
-    var demoEnabled by remember {
-        mutableStateOf(TestConfig.isDemoOverlayEnabled(context))
-    }
-    // ⚠️ DEMO_MODE — fim do bloco de estado
-
     // Poll permissões enquanto o ecrã estiver visível
     LaunchedEffect(Unit) {
         while (true) {
@@ -628,89 +617,6 @@ fun HomeScreen(navController: NavController) {
             Text("por ligaram.me", color = AccentBlue, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(4.dp))
             Text("Proteção contra chamadas indesejadas", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, textAlign = TextAlign.Center)
-
-            // ╔══════════════════════════════════════════════════════════════╗
-            // ║  ⚠️ DEMO_MODE — Card de aviso de versão de testes           ║
-            // ║  Este bloco inteiro deve ser removido em produção            ║
-            // ║  (ou basta mudar TestConfig.DEMO_MODE = false)               ║
-            // ╚══════════════════════════════════════════════════════════════╝
-            Spacer(modifier = Modifier.height(20.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape    = RoundedCornerShape(16.dp),
-                colors   = CardDefaults.cardColors(
-                    containerColor = AccentOrange.copy(alpha = 0.12f)
-                ),
-                border = BorderStroke(1.dp, AccentOrange.copy(alpha = 0.5f))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Warning, null,
-                            tint     = AccentOrange,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            "Versão de testes",
-                            color      = AccentOrange,
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 14.sp,
-                            modifier   = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        "Esta é uma versão de demonstração e testes. Em todas as chamadas é mostrado o overlay. Os dados apresentados no overlay são fictícios e não correspondem a chamadas reais.",
-                        color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize   = 12.sp,
-                        lineHeight = 18.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier          = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                "Overlay demo",
-                                color      = MaterialTheme.colorScheme.onBackground,
-                                fontSize   = 13.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                if (demoEnabled) "Dados fictícios ativos" else "A usar dados reais da API",
-                                color    = if (demoEnabled) AccentOrange else AccentBlue,
-                                fontSize = 11.sp
-                            )
-                        }
-                        Switch(
-                            checked         = demoEnabled,
-                            onCheckedChange = { enabled ->
-                                demoEnabled = enabled
-                                TestConfig.setDemoOverlayEnabled(context, enabled)
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor   = AccentOrange,
-                                checkedTrackColor   = AccentOrange.copy(alpha = 0.3f),
-                                uncheckedThumbColor = AccentBlue,
-                                uncheckedTrackColor = AccentBlue.copy(alpha = 0.2f)
-                            )
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        "O overlay roda por 3 cenários: Risco Alto → Médio → Baixo",
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        fontSize = 10.sp
-                    )
-                }
-            }
-            // ╚══════════════════════════════════════════════════════════════╝
-            // ⚠️ DEMO_MODE — fim do card de aviso
 
             Spacer(modifier = Modifier.height(36.dp))
 

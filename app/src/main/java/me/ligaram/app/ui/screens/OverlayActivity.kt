@@ -1,6 +1,5 @@
 package me.ligaram.app.ui.screens
 
-// ⚠️ DEMO_MODE — import para modo de testes — REMOVER EM PRODUÇÃO (ou mudar DEMO_MODE = false)
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -71,7 +70,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.ligaram.app.data.OverlayPreferences
-import me.ligaram.app.data.TestConfig
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
 import me.ligaram.app.ui.theme.LigaramTheme
@@ -120,24 +118,6 @@ class OverlayActivity : ComponentActivity() {
         contactName = intent.getStringExtra("contactName")
     )
 
-    // ⚠️ DEMO_MODE — substitui os dados reais por um cenário fictício rotativo
-    // Remove este método e as suas chamadas ao lançar em produção
-    // (ou simplesmente muda TestConfig.DEMO_MODE = false)
-    private fun applyDemoIfEnabled(data: OverlayData): OverlayData {
-        if (!TestConfig.DEMO_MODE) return data
-        if (!TestConfig.isDemoOverlayEnabled(this)) return data
-        val scenario = TestConfig.nextScenario(this)
-        return OverlayData(
-            number      = scenario.number,
-            rating      = scenario.rating,
-            risk        = scenario.risk,
-            category    = scenario.category,
-            subcategory = scenario.subcategory,
-            contactName = scenario.contactName
-        )
-    }
-    // ⚠️ DEMO_MODE — fim do bloco
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -152,8 +132,7 @@ class OverlayActivity : ComponentActivity() {
         )
         window.setBackgroundDrawableResource(android.R.color.transparent)
 
-        // ⚠️ DEMO_MODE — applyDemoIfEnabled substitui dados reais por fictícios quando ativo
-        overlayDataState.value = applyDemoIfEnabled(overlayDataFromIntent(intent))
+        overlayDataState.value = overlayDataFromIntent(intent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(dismissReceiver, IntentFilter(ACTION_DISMISS), RECEIVER_NOT_EXPORTED)
@@ -180,16 +159,14 @@ class OverlayActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // ⚠️ DEMO_MODE — applyDemoIfEnabled substitui dados reais quando ativo
-        overlayDataState.value = applyDemoIfEnabled(overlayDataFromIntent(intent))
+        overlayDataState.value = overlayDataFromIntent(intent)
     }
 
     override fun onResume() {
         super.onResume()
         val current = overlayDataFromIntent(intent)
         if (current.number != overlayDataState.value.number) {
-            // ⚠️ DEMO_MODE — applyDemoIfEnabled substitui dados reais quando ativo
-            overlayDataState.value = applyDemoIfEnabled(current)
+            overlayDataState.value = current
         }
     }
 

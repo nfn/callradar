@@ -1,6 +1,5 @@
 package me.ligaram.app.service
 
-// ⚠️ DEMO_MODE — import para modo de testes — REMOVER EM PRODUÇÃO (ou mudar DEMO_MODE = false)
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -20,7 +19,6 @@ import kotlinx.coroutines.launch
 import me.ligaram.app.R
 import me.ligaram.app.data.ApiClient
 import me.ligaram.app.data.ApiResult
-import me.ligaram.app.data.TestConfig
 import me.ligaram.app.ui.screens.OverlayActivity
 
 class CallMonitorService : Service() {
@@ -112,38 +110,10 @@ class CallMonitorService : Service() {
                     )
                 }
                 is ApiResult.NoResult -> {
-                    // ╔══════════════════════════════════════════════════════════════╗
-                    // ║  ⚠️ DEMO_MODE — Em produção o overlay NÃO é mostrado        ║
-                    // ║  quando o número não tem resultados na base de dados.        ║
-                    // ║  Em DEMO_MODE lançamos sempre o overlay com dados vazios;    ║
-                    // ║  o OverlayActivity.applyDemoIfEnabled() substitui-os pelos   ║
-                    // ║  dados fictícios rotativos.                                  ║
-                    // ║  REMOVER o bloco if() abaixo ao desativar DEMO_MODE          ║
-                    // ╚══════════════════════════════════════════════════════════════╝
-                    if (TestConfig.DEMO_MODE && TestConfig.isDemoOverlayEnabled(this@CallMonitorService)) {
-                        Log.d("CallMonitorService", "DEMO_MODE: forcing overlay on NoResult for $number")
-                        showOverlay(number = number, rating = "", risk = "", category = "", subcategory = "", contactName = contactName)
-                    } else {
-                        Log.d("CallMonitorService", "No result for $number - overlay suppressed")
-                    }
-                    // ⚠️ DEMO_MODE — fim do bloco
+                    Log.d("CallMonitorService", "No result for $number - overlay suppressed")
                 }
                 is ApiResult.Error -> {
-                    // ╔══════════════════════════════════════════════════════════════╗
-                    // ║  ⚠️ DEMO_MODE — Em produção o overlay NÃO é mostrado        ║
-                    // ║  quando a API devolve erro.                                  ║
-                    // ║  Em DEMO_MODE lançamos sempre o overlay com dados vazios;    ║
-                    // ║  o OverlayActivity.applyDemoIfEnabled() substitui-os pelos   ║
-                    // ║  dados fictícios rotativos.                                  ║
-                    // ║  REMOVER o bloco if() abaixo ao desativar DEMO_MODE          ║
-                    // ╚══════════════════════════════════════════════════════════════╝
-                    if (TestConfig.DEMO_MODE && TestConfig.isDemoOverlayEnabled(this@CallMonitorService)) {
-                        Log.d("CallMonitorService", "DEMO_MODE: forcing overlay on API error for $number — ${result.message}")
-                        showOverlay(number = number, rating = "", risk = "", category = "", subcategory = "", contactName = contactName)
-                    } else {
-                        Log.e("CallMonitorService", "API error: ${result.message}")
-                    }
-                    // ⚠️ DEMO_MODE — fim do bloco
+                    Log.e("CallMonitorService", "API error: ${result.message}")
                 }
             }
         }
