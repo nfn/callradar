@@ -321,7 +321,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { if (selectedTab != 1) selectedTab = 1 },
+                    onClick  = { selectedTab = 1 },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
