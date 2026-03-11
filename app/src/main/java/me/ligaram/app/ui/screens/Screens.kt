@@ -269,9 +269,9 @@ fun AppNavigation() {
 // ─── Main shell com Bottom Navigation ────────────────────────────────────────
 @Composable
 fun MainShell(rootNav: NavController, startTab: Int = 0) {
-    val currentEntry = rootNav.currentBackStackEntry
+    val currentEntry = rootNav.currentBackStackEntry ?: return
     val forceCommunityInitial =
-        currentEntry?.savedStateHandle?.get<Boolean>("force_community_tab") == true
+        currentEntry.savedStateHandle.get<Boolean>("force_community_tab") == true
 
     // Usa a flag já no 1o frame para evitar ver o tab Home por baixo durante a pop transition.
     var selectedTab by remember(startTab, forceCommunityInitial) {
@@ -279,20 +279,20 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
     }
 
     val forceCommunityTabFlow = currentEntry
-        ?.savedStateHandle
-        ?.getStateFlow("force_community_tab", false)
+        .savedStateHandle
+        .getStateFlow("force_community_tab", false)
 
     LaunchedEffect(forceCommunityInitial) {
         if (forceCommunityInitial) {
-            currentEntry?.savedStateHandle?.set("force_community_tab", false)
+            currentEntry.savedStateHandle.set("force_community_tab", false)
         }
     }
 
     LaunchedEffect(forceCommunityTabFlow) {
-        forceCommunityTabFlow?.collect { forceCommunity ->
+        forceCommunityTabFlow.collect { forceCommunity ->
             if (forceCommunity) {
                 selectedTab = 1
-                currentEntry?.savedStateHandle?.set("force_community_tab", false)
+                currentEntry.savedStateHandle.set("force_community_tab", false)
             }
         }
     }
