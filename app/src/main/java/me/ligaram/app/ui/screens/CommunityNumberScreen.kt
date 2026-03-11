@@ -81,10 +81,14 @@ import me.ligaram.app.ui.theme.RiskLow
 // Fallback para navigate() se COMMUNITY_HOME não estiver no backstack
 // (ex: entrada directa pelo overlay)
 private fun NavController.backToCommunity() {
+    // Caminho principal: regressa para o entry pai real (normalmente o MainShell).
+    if (popBackStack()) return
+
     val wentBack = popBackStack(Routes.COMMUNITY_HOME, inclusive = false)
     if (!wentBack) {
         navigate(Routes.COMMUNITY_HOME) {
             popUpTo(Routes.HOME) { inclusive = false }
+            launchSingleTop = true
         }
     }
 }
@@ -97,8 +101,29 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     val listState = rememberLazyListState()
     val ptrState  = rememberPullToRefreshState()
 
-    // Intercepta o gesto/botão físico de back → vai sempre para community home
-    BackHandler { navController.backToCommunity() }
+    fun backToCommunityWithRestore() {
+        // O estado de scroll foi guardado no entry pai que abriu o NumberScreen,
+        // por isso esse entry é o alvo principal para restore.
+        val parentEntry = navController.previousBackStackEntry
+        parentEntry?.savedStateHandle?.set("restore_scroll_position", true)
+        parentEntry?.savedStateHandle?.set("force_community_tab", true)
+
+        // Espelha o sinal nos entries canónicos do MainShell para fluxos híbridos.
+        runCatching { navController.getBackStackEntry(Routes.HOME) }
+            .getOrNull()
+            ?.savedStateHandle
+            ?.set("force_community_tab", true)
+
+        runCatching { navController.getBackStackEntry(Routes.COMMUNITY_HOME) }
+            .getOrNull()
+            ?.savedStateHandle
+            ?.set("force_community_tab", true)
+
+        navController.backToCommunity()
+    }
+
+    // Intercepta o gesto/botao fisico de back -> vai sempre para community home
+    BackHandler { backToCommunityWithRestore() }
 
     var comments     by remember { mutableStateOf<List<NumberComment>>(emptyList()) }
     var analysis     by remember { mutableStateOf<NumberAnalysis?>(null) }
@@ -188,7 +213,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                 modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 48.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { navController.backToCommunity() }) {
+                IconButton(onClick = { backToCommunityWithRestore() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null,
                         tint = MaterialTheme.colorScheme.onBackground)
                 }
@@ -313,6 +338,12 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                             // O CommunityHomeScreen lê directamente deste cache via
                                             // LikeCache.getLikes() — sem savedStateHandle, sem re-navegação
                                             LikeCache.update(id, isLiked, newCount)
+                                            // também avisamos o HomeScreen para trocar o número quando
+                                            // regressar, caso o cache não seja suficiente ou a lista seja
+                                            // recriada
+                                            navController.previousBackStackEntry
+                                                ?.savedStateHandle
+                                                ?.set("likes_update", id to newCount)
                                         }
                                     )
                                 }

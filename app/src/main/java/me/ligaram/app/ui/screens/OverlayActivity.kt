@@ -143,7 +143,12 @@ class OverlayActivity : ComponentActivity() {
 
         window.addFlags(
             android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    @Suppress("DEPRECATION")
+                    android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                    @Suppress("DEPRECATION")
+                    android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
         window.setBackgroundDrawableResource(android.R.color.transparent)
 

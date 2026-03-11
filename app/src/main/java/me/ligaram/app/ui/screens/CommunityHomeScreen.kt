@@ -58,6 +58,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -72,6 +73,10 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.HomeComment
@@ -183,6 +188,11 @@ fun CommunityHomeScreen(navController: NavController) {
     val scope     = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val ptrState  = rememberPullToRefreshState()
+    val currentEntry = navController.currentBackStackEntry
+
+    val restoreScrollInitial =
+        currentEntry?.savedStateHandle?.get<Boolean>("restore_scroll_position") == true &&
+            currentEntry.savedStateHandle.get<Pair<Int, Int>?>("scroll_position") != null
 
     var items        by remember { mutableStateOf<List<HomeComment>>(emptyList()) }
     var isLoading    by remember { mutableStateOf(false) }
@@ -190,81 +200,165 @@ fun CommunityHomeScreen(navController: NavController) {
     var hasMore      by remember { mutableStateOf(true) }
     var nextCursor   by remember { mutableStateOf<Int?>(null) }
     var errorMsg     by remember { mutableStateOf<String?>(null) }
+    var isRestoringScroll by remember(restoreScrollInitial) { mutableStateOf(restoreScrollInitial) }
+
+    // flows coming from NumberScreen via SavedStateHandle
+    val restoreScrollFlow = currentEntry
+        ?.savedStateHandle
+        ?.getStateFlow("restore_scroll_position", false)
+
+    val likesUpdateFlow = currentEntry
+        ?.savedStateHandle
+        ?.getStateFlow<Pair<Int, Int>?>("likes_update", null)
+
 
     fun loadPage(cursor: Int? = null) {
         if (isLoading && !isRefreshing) return
         isLoading = true
         if (cursor == null) {
+            // reset completo — garante que todos os campos JSON ficam actualizados
             items      = emptyList()
             hasMore    = true
             nextCursor = null
             errorMsg   = null
         }
         scope.launch {
-            try {
-                val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
-                when (result) {
-                    is CommunityResult.Success -> {
-                        val page = result.data
-                        items      = if (cursor == null) page.data else items + page.data
-                        hasMore    = page.pagination.hasMore
-                        nextCursor = page.pagination.nextCursor
-                    }
-                    is CommunityResult.Error -> errorMsg = result.message
+            val result = withContext(Dispatchers.IO) { CommunityApi.fetchHome(cursor = cursor) }
+            when (result) {
+                is CommunityResult.Success -> {
+                    val page = result.data
+                    items      = if (cursor == null) page.data else items + page.data
+                    hasMore    = page.pagination.hasMore
+                    nextCursor = page.pagination.nextCursor
                 }
-            } finally {
-                isLoading    = false
-                isRefreshing = false
+                is CommunityResult.Error -> errorMsg = result.message
             }
+            isLoading    = false
+            isRefreshing = false
         }
     }
 
-    // Carregamento inicial e refresh ao voltar do AddCommentScreen (um único efeito evita corridas)
+    // Ao voltar do NumberScreen, evita reset da lista se já há conteúdo em memória.
     LaunchedEffect(Unit) {
-        val needRefresh = navController.currentBackStackEntry?.savedStateHandle?.get<Boolean>("refresh_home") == true
-        if (needRefresh) {
-            navController.currentBackStackEntry?.savedStateHandle?.set("refresh_home", false)
-            isRefreshing = true
-        }
-        loadPage(null)
+        if (items.isEmpty()) loadPage()
     }
-    // PRÉ-PRODUÇÃO - [Melhoria] - likes actualizados via LikeCache (singleton em memória)
-    // O HomeCommentCard lê LikeCache.getLikes() directamente na composição —
-    // quando o NumberScreen escreve no cache, o Compose recompõe apenas o card
-    // afectado porque mutableStateMapOf é observable. Sem LaunchedEffect, sem
-    // savedStateHandle, sem re-navegação. O scroll mantém a posição exacta.
+
+    // Refresca quando volta de qualquer screen filho (ex: AddCommentScreen via CommunityNumber)
+    val refreshSignal = currentEntry
+        ?.savedStateHandle
+        ?.getStateFlow("refresh_home", false)
+    LaunchedEffect(refreshSignal) {
+        refreshSignal?.collect { shouldRefresh ->
+            if (shouldRefresh) {
+                navController.currentBackStackEntry?.savedStateHandle?.set("refresh_home", false)
+                isRefreshing = true
+                loadPage(null)
+            }
+        }
+    }
 
     val shouldLoadMore by remember {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = listState.layoutInfo.totalItemsCount
-            hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
+            !isRestoringScroll && hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
 
-    // Scroll ao topo quando o refresh termina (apenas em refresh explícito, não ao voltar do detalhe)
-    LaunchedEffect(isRefreshing) {
-        if (!isRefreshing && listState.firstVisibleItemIndex > 0) {
-            listState.animateScrollToItem(0)
+    // Scroll ao topo apenas quando o pull-to-refresh termina (transição true→false).
+    // Usar LaunchedEffect(isRefreshing) não serve: ao regressar do NumberScreen o
+    // composable é re-entrado na composição, todos os LaunchedEffects relançam, e
+    // isRefreshing=false com firstVisibleItemIndex>0 disparava animateScrollToItem(0).
+    LaunchedEffect(Unit) {
+        var wasRefreshing = false
+        snapshotFlow { isRefreshing }.collect { refreshing ->
+            if (wasRefreshing && !refreshing) {
+                listState.animateScrollToItem(0)
+            }
+            wasRefreshing = refreshing
         }
     }
 
-    // Restaurar posição de scroll ao voltar do CommunityNumberScreen
-    LaunchedEffect(items.size) {
-        if (items.isEmpty()) return@LaunchedEffect
-        val entry = navController.currentBackStackEntry ?: return@LaunchedEffect
-        val idx = entry.savedStateHandle.get<Int>("home_scroll_index") ?: return@LaunchedEffect
-        if (idx < 0) return@LaunchedEffect
-        val offset = entry.savedStateHandle.get<Int>("home_scroll_offset") ?: 0
-        entry.savedStateHandle.set("home_scroll_index", -1)
-        listState.animateScrollToItem(idx.coerceIn(0, (items.size - 1).coerceAtLeast(0)), scrollOffset = offset)
+    // restaura scroll exato (indice + offset) apenas quando NumberScreen sinaliza regresso
+    LaunchedEffect(restoreScrollFlow) {
+        restoreScrollFlow?.collect { shouldRestore ->
+            if (!shouldRestore) return@collect
+
+            val entry = navController.currentBackStackEntry ?: return@collect
+            val pos = entry.savedStateHandle.get<Pair<Int, Int>?>("scroll_position")
+            if (pos == null) {
+                entry.savedStateHandle.set("restore_scroll_position", false)
+                isRestoringScroll = false
+                return@collect
+            }
+
+            val (index, offset) = pos
+            isRestoringScroll = true
+
+            // Aguarda 1 frame para o LazyListState preservado (quando existe) ser aplicado.
+            withFrameNanos { }
+
+            // Se já voltou numa posição válida, evita um segundo scroll visível.
+            val alreadyPositioned =
+                listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+            if (items.isNotEmpty() && alreadyPositioned) {
+                entry.savedStateHandle.set("scroll_position", null)
+                entry.savedStateHandle.set("restore_scroll_position", false)
+                isRestoringScroll = false
+                return@collect
+            }
+
+            if (index < items.size) {
+                listState.scrollToItem(index, -offset)
+            } else {
+                // Se ja ha carregamento em curso, espera terminar antes de paginar manualmente.
+                if (isLoading) {
+                    snapshotFlow { isLoading }
+                        .filter { loading -> !loading }
+                        .first()
+                }
+
+                while (index >= items.size) {
+                    val cursor = nextCursor
+                    if (!hasMore || cursor == null) break
+
+                    loadPage(cursor)
+                    snapshotFlow { isLoading }
+                        .filter { loading -> !loading }
+                        .first()
+                }
+                if (index < items.size) listState.scrollToItem(index, -offset)
+            }
+
+            // Garante um frame com posição final antes de mostrar novamente a lista.
+            withFrameNanos { }
+
+            entry.savedStateHandle.set("scroll_position", null)
+            entry.savedStateHandle.set("restore_scroll_position", false)
+            isRestoringScroll = false
+        }
+    }
+
+    // atualiza likes quando volta do CommunityNumberScreen
+    LaunchedEffect(likesUpdateFlow) {
+        likesUpdateFlow?.collect { upd ->
+            upd?.let { (id, newLikes) ->
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("likes_update", null)
+
+                items = items.map {
+                    if (it.id == id) it.copy(likes = newLikes) else it
+                }
+            }
+        }
     }
 
     AppBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 27.dp, bottom = 19.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Comentários",
@@ -273,15 +367,7 @@ fun CommunityHomeScreen(navController: NavController) {
                     modifier = Modifier.weight(1f))
             }
 
-            PhoneSearchBar(onSearch = { n ->
-                // PRÉ-PRODUÇÃO - [Bug] - popUpTo garante que o backstack fica
-                // COMMUNITY_HOME → COMMUNITY_NUMBER (não HOME → COMMUNITY_NUMBER)
-                // para que o popBackStack() no NumberScreen volte ao MainShell
-                // já vivo com o listState preservado
-                navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") {
-                    popUpTo(Routes.COMMUNITY_HOME) { inclusive = false }
-                }
-            })
+            PhoneSearchBar(onSearch = { n -> navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") })
 
             PullToRefreshBox(
                 state        = ptrState,
@@ -302,28 +388,40 @@ fun CommunityHomeScreen(navController: NavController) {
                     }
                     else -> {
                         LazyColumn(
+                            modifier = Modifier.alpha(if (isRestoringScroll) 0f else 1f),
                             state               = listState,
                             contentPadding      = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(items, key = { it.id }) { item ->
-                                HomeCommentCard(
-                                    item    = item,
-                                    onClick = {
-                                        // Guardar posição de scroll para restaurar ao voltar do detalhe
-                                        navController.currentBackStackEntry?.savedStateHandle?.set(
-                                            "home_scroll_index",
-                                            listState.firstVisibleItemIndex
-                                        )
-                                        navController.currentBackStackEntry?.savedStateHandle?.set(
-                                            "home_scroll_offset",
-                                            listState.firstVisibleItemScrollOffset
-                                        )
-                                        navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}") {
-                                            popUpTo(Routes.COMMUNITY_HOME) { inclusive = false }
-                                        }
+                                HomeCommentCard(item = item, onClick = {
+                                    // guarda o índice do item clicado e o seu offset visual no viewport
+                                    // offset de visibleItemsInfo é positivo se item está abaixo do topo,
+                                    // negativo se está parcialmente fora de vista acima
+                                    val clickedIndex = items.indexOfFirst { it.id == item.id }
+                                    val visibleInfo = listState.layoutInfo.visibleItemsInfo
+                                    val clickedOffset = visibleInfo
+                                        .firstOrNull { it.index == clickedIndex }
+                                        ?.offset
+
+                                    // fallback robusto: se por timing de layout o item clicado não estiver
+                                    // em visibleItemsInfo, usa a âncora real atual da lista em vez de 0.
+                                    val anchorIndex: Int
+                                    val anchorOffset: Int
+                                    if (clickedIndex >= 0 && clickedOffset != null) {
+                                        anchorIndex = clickedIndex
+                                        anchorOffset = clickedOffset
+                                    } else {
+                                        anchorIndex = listState.firstVisibleItemIndex
+                                        anchorOffset = -listState.firstVisibleItemScrollOffset
                                     }
-                                )
+
+                                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                                        "scroll_position",
+                                        anchorIndex to anchorOffset
+                                    )
+                                    navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}")
+                                })
                             }
                             item {
                                 when {
@@ -368,9 +466,6 @@ fun CommunityHomeScreen(navController: NavController) {
 // Row 2: separador
 // Row 3: comentário
 // Row 4: hora · autor · classification (esq) | like (dir)
-// PRÉ-PRODUÇÃO - [Melhoria] - likes lido do LikeCache (mutableStateMapOf observable):
-// quando o NumberScreen escreve no cache após API confirmar, o Compose recompõe
-// automaticamente apenas este card — o scroll e o resto da lista não são tocados
 @Composable
 fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
     val likes = LikeCache.getLikes(item.id, item.likes)
@@ -440,7 +535,7 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
                 Spacer(Modifier.width(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Default.ThumbUp, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
-                    Text("$likes", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    Text("${item.likes}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
         }
@@ -450,10 +545,10 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
 @Composable
 fun CommunityErrorState(message: String, onRetry: () -> Unit) {
     val isNetwork = message.contains("network", ignoreCase = true)
-                || message.contains("connect", ignoreCase = true)
-                || message.contains("rede",    ignoreCase = true)
-                || message.contains("timeout", ignoreCase = true)
-                || message.contains("Unable",  ignoreCase = true)
+            || message.contains("connect", ignoreCase = true)
+            || message.contains("rede",    ignoreCase = true)
+            || message.contains("timeout", ignoreCase = true)
+            || message.contains("Unable",  ignoreCase = true)
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(40.dp)) {

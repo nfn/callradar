@@ -269,7 +269,33 @@ fun AppNavigation() {
 // ─── Main shell com Bottom Navigation ────────────────────────────────────────
 @Composable
 fun MainShell(rootNav: NavController, startTab: Int = 0) {
-    var selectedTab by remember { mutableStateOf(startTab) }
+    val currentEntry = rootNav.currentBackStackEntry ?: return
+    val forceCommunityInitial =
+        currentEntry.savedStateHandle.get<Boolean>("force_community_tab") == true
+
+    // Usa a flag já no 1o frame para evitar ver o tab Home por baixo durante a pop transition.
+    var selectedTab by remember(startTab, forceCommunityInitial) {
+        mutableStateOf(if (forceCommunityInitial) 1 else startTab)
+    }
+
+    val forceCommunityTabFlow = currentEntry
+        .savedStateHandle
+        .getStateFlow("force_community_tab", false)
+
+    LaunchedEffect(forceCommunityInitial) {
+        if (forceCommunityInitial) {
+            currentEntry.savedStateHandle.set("force_community_tab", false)
+        }
+    }
+
+    LaunchedEffect(forceCommunityTabFlow) {
+        forceCommunityTabFlow.collect { forceCommunity ->
+            if (forceCommunity) {
+                selectedTab = 1
+                currentEntry.savedStateHandle.set("force_community_tab", false)
+            }
+        }
+    }
 
     // Botão/gesto back quando estamos no tab Comunidade → volta ao tab Proteção
     // Em qualquer tab → não sai da app (comportamento padrão do sistema)
@@ -299,7 +325,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { selectedTab = 1 },
+                    onClick  = { if (selectedTab != 1) selectedTab = 1 },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -551,7 +577,7 @@ fun HomeScreen(navController: NavController) {
     val allGood = phoneGranted && overlayGranted
 
     // Diálogo de activação de permissões (abre ao clicar no status card)
-    var showPermDialog by remember { mutableStateOf(false) }
+    val showPermDialog = remember { mutableStateOf(false) }
 
     // ⚠️ DEMO_MODE — estado do toggle demo (só existe se DEMO_MODE = true)
     // Para remover em produção: apagar este bloco e o card DemoBanner abaixo
@@ -580,11 +606,11 @@ fun HomeScreen(navController: NavController) {
         }
     }
 
-    if (showPermDialog) {
+    if (showPermDialog.value) {
         PermissionDialog(
             phoneGranted   = phoneGranted,
             overlayGranted = overlayGranted,
-            onDismiss      = { showPermDialog = false }
+            onDismiss      = { showPermDialog.value = false }
         )
     }
 
@@ -608,81 +634,79 @@ fun HomeScreen(navController: NavController) {
             // ║  Este bloco inteiro deve ser removido em produção            ║
             // ║  (ou basta mudar TestConfig.DEMO_MODE = false)               ║
             // ╚══════════════════════════════════════════════════════════════╝
-            if (TestConfig.DEMO_MODE) {
-                Spacer(modifier = Modifier.height(20.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape    = RoundedCornerShape(16.dp),
-                    colors   = CardDefaults.cardColors(
-                        containerColor = AccentOrange.copy(alpha = 0.12f)
-                    ),
-                    border = BorderStroke(1.dp, AccentOrange.copy(alpha = 0.5f))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Warning, null,
-                                tint     = AccentOrange,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                "Versão de testes",
-                                color      = AccentOrange,
-                                fontWeight = FontWeight.Bold,
-                                fontSize   = 14.sp,
-                                modifier   = Modifier.weight(1f)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "Esta é uma versão de demonstração e testes. Em todas as chamadas é mostrado o overlay. Os dados apresentados no overlay são fictícios e não correspondem a chamadas reais.",
-                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize   = 12.sp,
-                            lineHeight = 18.sp
+            Spacer(modifier = Modifier.height(20.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape    = RoundedCornerShape(16.dp),
+                colors   = CardDefaults.cardColors(
+                    containerColor = AccentOrange.copy(alpha = 0.12f)
+                ),
+                border = BorderStroke(1.dp, AccentOrange.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Warning, null,
+                            tint     = AccentOrange,
+                            modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier          = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    "Overlay demo",
-                                    color      = MaterialTheme.colorScheme.onBackground,
-                                    fontSize   = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    if (demoEnabled) "Dados fictícios ativos" else "A usar dados reais da API",
-                                    color    = if (demoEnabled) AccentOrange else AccentBlue,
-                                    fontSize = 11.sp
-                                )
-                            }
-                            Switch(
-                                checked         = demoEnabled,
-                                onCheckedChange = { enabled ->
-                                    demoEnabled = enabled
-                                    TestConfig.setDemoOverlayEnabled(context, enabled)
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor   = AccentOrange,
-                                    checkedTrackColor   = AccentOrange.copy(alpha = 0.3f),
-                                    uncheckedThumbColor = AccentBlue,
-                                    uncheckedTrackColor = AccentBlue.copy(alpha = 0.2f)
-                                )
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            "O overlay roda por 3 cenários: Risco Alto → Médio → Baixo",
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            fontSize = 10.sp
+                            "Versão de testes",
+                            color      = AccentOrange,
+                            fontWeight = FontWeight.Bold,
+                            fontSize   = 14.sp,
+                            modifier   = Modifier.weight(1f)
                         )
                     }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "Esta é uma versão de demonstração e testes. Em todas as chamadas é mostrado o overlay. Os dados apresentados no overlay são fictícios e não correspondem a chamadas reais.",
+                        color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize   = 12.sp,
+                        lineHeight = 18.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier          = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                "Overlay demo",
+                                color      = MaterialTheme.colorScheme.onBackground,
+                                fontSize   = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                if (demoEnabled) "Dados fictícios ativos" else "A usar dados reais da API",
+                                color    = if (demoEnabled) AccentOrange else AccentBlue,
+                                fontSize = 11.sp
+                            )
+                        }
+                        Switch(
+                            checked         = demoEnabled,
+                            onCheckedChange = { enabled ->
+                                demoEnabled = enabled
+                                TestConfig.setDemoOverlayEnabled(context, enabled)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor   = AccentOrange,
+                                checkedTrackColor   = AccentOrange.copy(alpha = 0.3f),
+                                uncheckedThumbColor = AccentBlue,
+                                uncheckedTrackColor = AccentBlue.copy(alpha = 0.2f)
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "O overlay roda por 3 cenários: Risco Alto → Médio → Baixo",
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        fontSize = 10.sp
+                    )
                 }
             }
             // ╚══════════════════════════════════════════════════════════════╝
@@ -698,7 +722,7 @@ fun HomeScreen(navController: NavController) {
                     containerColor = if (allGood) AccentGreen.copy(alpha = 0.1f) else AccentOrange.copy(alpha = 0.1f)
                 ),
                 border = BorderStroke(1.dp, if (allGood) AccentGreen.copy(alpha = 0.4f) else AccentOrange.copy(alpha = 0.4f)),
-                onClick = { if (!allGood) showPermDialog = true }
+                onClick = { if (!allGood) showPermDialog.value = true }
             ) {
                 Row(
                     modifier          = Modifier.padding(18.dp),
@@ -1155,7 +1179,7 @@ fun AboutScreen(navController: NavController) {
                     modifier = Modifier.fillMaxWidth(),
                     shape    = RoundedCornerShape(16.dp),
                     colors   = CardDefaults.cardColors(containerColor = AccentOrange.copy(alpha = 0.07f)),
-                    border   = androidx.compose.foundation.BorderStroke(1.dp, AccentOrange.copy(alpha = 0.3f))
+                    border   = BorderStroke(1.dp, AccentOrange.copy(alpha = 0.3f))
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1266,7 +1290,7 @@ fun AboutScreen(navController: NavController) {
                     }
                      */
                     Text(
-                        "© 2026 CallRadar · ligaram.me · Todos os direitos reservados",
+                        "© 2026 · ligaram.me · Todos os direitos reservados",
                         color     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         fontSize  = 11.sp,
                         textAlign = TextAlign.Center
