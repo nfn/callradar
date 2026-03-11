@@ -61,17 +61,17 @@ dependencies {
 // Estes modulo foi incluido por mim para gerar o nome do ficheiro da build
 androidComponents {
     onVariants { variant ->
-        // Captura a data uma vez por variante
-        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_hhmm"))
+
+        val timestamp = LocalDateTime.now()
+            .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"))
 
         variant.outputs.forEach { output ->
-            val versionName = output.versionName.get() ?: "unknown"
+            val versionName = output.versionName.get()
             val fileName = "CallRadar-${versionName}-${timestamp}.apk"
 
-            // Cast para a classe de implementação (necessário no AGP atual)
-            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.let {
-                it.outputFileName.set(fileName)
-            }
+            (output as? com.android.build.api.variant.impl.VariantOutputImpl)
+                ?.outputFileName
+                ?.set(fileName)
         }
     }
 }
