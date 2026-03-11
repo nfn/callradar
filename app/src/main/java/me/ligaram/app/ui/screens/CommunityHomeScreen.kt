@@ -58,6 +58,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -73,6 +74,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import me.ligaram.app.data.CommunityApi
@@ -186,6 +188,11 @@ fun CommunityHomeScreen(navController: NavController) {
     val scope     = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val ptrState  = rememberPullToRefreshState()
+    val currentEntry = navController.currentBackStackEntry
+
+    val restoreScrollInitial =
+        currentEntry?.savedStateHandle?.get<Boolean>("restore_scroll_position") == true &&
+            currentEntry.savedStateHandle.get<Pair<Int, Int>?>("scroll_position") != null
 
     var items        by remember { mutableStateOf<List<HomeComment>>(emptyList()) }
     var isLoading    by remember { mutableStateOf(false) }
@@ -193,14 +200,14 @@ fun CommunityHomeScreen(navController: NavController) {
     var hasMore      by remember { mutableStateOf(true) }
     var nextCursor   by remember { mutableStateOf<Int?>(null) }
     var errorMsg     by remember { mutableStateOf<String?>(null) }
-    var isRestoringScroll by remember { mutableStateOf(false) }
+    var isRestoringScroll by remember(restoreScrollInitial) { mutableStateOf(restoreScrollInitial) }
 
     // flows coming from NumberScreen via SavedStateHandle
-    val restoreScrollFlow = navController.currentBackStackEntry
+    val restoreScrollFlow = currentEntry
         ?.savedStateHandle
         ?.getStateFlow("restore_scroll_position", false)
 
-    val likesUpdateFlow = navController.currentBackStackEntry
+    val likesUpdateFlow = currentEntry
         ?.savedStateHandle
         ?.getStateFlow<Pair<Int, Int>?>("likes_update", null)
 
@@ -237,7 +244,7 @@ fun CommunityHomeScreen(navController: NavController) {
     }
 
     // Refresca quando volta de qualquer screen filho (ex: AddCommentScreen via CommunityNumber)
-    val refreshSignal = navController.currentBackStackEntry
+    val refreshSignal = currentEntry
         ?.savedStateHandle
         ?.getStateFlow("refresh_home", false)
     LaunchedEffect(refreshSignal) {
@@ -282,11 +289,25 @@ fun CommunityHomeScreen(navController: NavController) {
             val pos = entry.savedStateHandle.get<Pair<Int, Int>?>("scroll_position")
             if (pos == null) {
                 entry.savedStateHandle.set("restore_scroll_position", false)
+                isRestoringScroll = false
                 return@collect
             }
 
             val (index, offset) = pos
             isRestoringScroll = true
+
+            // Aguarda 1 frame para o LazyListState preservado (quando existe) ser aplicado.
+            withFrameNanos { }
+
+            // Se já voltou numa posição válida, evita um segundo scroll visível.
+            val alreadyPositioned =
+                listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+            if (items.isNotEmpty() && alreadyPositioned) {
+                entry.savedStateHandle.set("scroll_position", null)
+                entry.savedStateHandle.set("restore_scroll_position", false)
+                isRestoringScroll = false
+                return@collect
+            }
 
             if (index < items.size) {
                 listState.scrollToItem(index, -offset)
@@ -309,6 +330,9 @@ fun CommunityHomeScreen(navController: NavController) {
                 }
                 if (index < items.size) listState.scrollToItem(index, -offset)
             }
+
+            // Garante um frame com posição final antes de mostrar novamente a lista.
+            withFrameNanos { }
 
             entry.savedStateHandle.set("scroll_position", null)
             entry.savedStateHandle.set("restore_scroll_position", false)
@@ -364,6 +388,7 @@ fun CommunityHomeScreen(navController: NavController) {
                     }
                     else -> {
                         LazyColumn(
+                            modifier = Modifier.alpha(if (isRestoringScroll) 0f else 1f),
                             state               = listState,
                             contentPadding      = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
