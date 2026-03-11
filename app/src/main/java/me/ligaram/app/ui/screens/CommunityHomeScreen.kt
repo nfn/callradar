@@ -358,7 +358,7 @@ fun CommunityHomeScreen(navController: NavController) {
     AppBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 27.dp, bottom = 19.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Comentários",
