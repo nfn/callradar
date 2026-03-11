@@ -1290,7 +1290,7 @@ fun AboutScreen(navController: NavController) {
                     }
                      */
                     Text(
-                        "© 2026 CallRadar · ligaram.me · Todos os direitos reservados",
+                        "© 2026 · ligaram.me · Todos os direitos reservados",
                         color     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         fontSize  = 11.sp,
                         textAlign = TextAlign.Center
