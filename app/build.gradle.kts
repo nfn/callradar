@@ -1,12 +1,12 @@
+// Estes dois imports foram incluidos por mim para gerar o nome do ficheiro da build
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
-
-// Estes dois imports foram incluidos por mim para gerar o nome do ficheiro da build
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 android {
     namespace = "me.ligaram.app"
@@ -34,25 +34,6 @@ android {
     }
 }
 
-
-// Estes modulo foi incluido por mim para gerar o nome do ficheiro da build
-androidComponents {
-    onVariants { variant ->
-        // Captura a data uma vez por variante
-        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_hhmm"))
-
-        variant.outputs.forEach { output ->
-            val versionName = output.versionName.get() ?: "unknown"
-            val fileName = "CallRadar-${versionName}-${timestamp}.apk"
-
-            // Cast para a classe de implementação (necessário no AGP atual)
-            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.let {
-                it.outputFileName.set(fileName)
-            }
-        }
-    }
-}
-
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
@@ -75,4 +56,22 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.androidx.splashscreen)
     debugImplementation(libs.androidx.ui.tooling)
+}
+
+// Estes modulo foi incluido por mim para gerar o nome do ficheiro da build
+androidComponents {
+    onVariants { variant ->
+        // Captura a data uma vez por variante
+        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_hhmm"))
+
+        variant.outputs.forEach { output ->
+            val versionName = output.versionName.get() ?: "unknown"
+            val fileName = "CallRadar-${versionName}-${timestamp}.apk"
+
+            // Cast para a classe de implementação (necessário no AGP atual)
+            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.let {
+                it.outputFileName.set(fileName)
+            }
+        }
+    }
 }
