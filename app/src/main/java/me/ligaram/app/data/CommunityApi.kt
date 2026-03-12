@@ -149,6 +149,27 @@ object CommunityApi {
         }
     }
 
+    // ── POST /report ─────────────────────────────────────────────────────────
+    fun reportComment(number: String, commentId: Int, message: String): CommunityResult<Unit> {
+        return try {
+            val url = "$BASE/report"
+            Log.d("CommunityApi", "POST $url")
+            val resp = post(url, mapOf(
+                "number"     to number,
+                "comment_id" to commentId,
+                "message"    to message
+            ))
+            if (resp.isSuccessful) {
+                CommunityResult.Success(Unit)
+            } else {
+                CommunityResult.Error("Erro ${resp.code}")
+            }
+        } catch (e: Exception) {
+            Log.e("CommunityApi", "reportComment: ${e.message}")
+            CommunityResult.Error(e.message ?: "Erro de rede")
+        }
+    }
+
     // ── GET /entities?q=X ────────────────────────────────────────────────────
     // Endpoint: GET /api/v1/entities?q={string}  → { data: [{id, entity}] }
     // Usado no autocomplete do formulário - não é obrigatório, o utilizador pode escrever livremente.

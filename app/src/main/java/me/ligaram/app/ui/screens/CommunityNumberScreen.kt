@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.AddComment
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Phone
@@ -41,8 +42,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -61,8 +65,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.ligaram.app.data.CommunityApi
@@ -329,6 +335,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                 items(comments, key = { it.id }) { comment ->
                                     NumberCommentCard(
                                         comment        = comment,
+                                        number         = number,
                                         onLikeToggled  = { id, isLiked, newCount ->
                                             // Actualiza o estado local desta screen
                                             comments = comments.map {
@@ -581,10 +588,11 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
 // Row 1: nome (esq) | classification (dir)
 // Row 2: separador
 // Row 3: comentário
-// Row 4: hora (esq) | like (dir)
+// Row 4: hora (esq) | report + like (dir)
 @Composable
 fun NumberCommentCard(
     comment: NumberComment,
+    number: String,
     onLikeToggled: (commentId: Int, liked: Boolean, newCount: Int) -> Unit
 ) {
     val scope      = rememberCoroutineScope()
@@ -596,6 +604,16 @@ fun NumberCommentCard(
     // calculava +1 sobre um valor já incrementado, causando o flash 2 → 0
     var localLiked  by remember(comment.id) { mutableStateOf(LikeCache.getLiked(comment.id) ?: false) }
     var likeLoading by remember(comment.id) { mutableStateOf(false) }
+
+    var showReportDialog by remember { mutableStateOf(false) }
+
+    if (showReportDialog) {
+        ReportDialog(
+            number    = number,
+            commentId = comment.id,
+            onDismiss = { showReportDialog = false }
+        )
+    }
 
     Card(
         modifier  = Modifier.fillMaxWidth(),
@@ -659,7 +677,7 @@ fun NumberCommentCard(
                 Spacer(Modifier.height(10.dp))
             }
 
-            // Row 4: hora (esq) | like (dir)
+            // Row 4: hora (esq) | report + like (dir)
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -670,11 +688,24 @@ fun NumberCommentCard(
                     color    = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp
                 )
-                // Botão de like
                 Row(
                     verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
+                    // Botão de report
+                    IconButton(
+                        onClick  = { showReportDialog = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Flag,
+                            contentDescription = "Reportar comentário",
+                            tint     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    // Botão de like
                     IconButton(
                         onClick  = {
                             if (likeLoading) return@IconButton
@@ -737,6 +768,152 @@ fun EmptyCommentsState(number: String, onAdd: () -> Unit) {
                 Icon(Icons.Default.AddComment, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Adicionar comentário")
+            }
+        }
+    }
+}
+
+// ─── Dialog de report ─────────────────────────────────────────────────────────
+@Composable
+fun ReportDialog(
+    number:    String,
+    commentId: Int,
+    onDismiss: () -> Unit
+) {
+    val scope   = rememberCoroutineScope()
+    var message by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var success by remember { mutableStateOf(false) }
+    var error   by remember { mutableStateOf<String?>(null) }
+
+    // Fecha automaticamente 1.5s após sucesso
+    LaunchedEffect(success) {
+        if (success) {
+            delay(3000L)
+            onDismiss()
+        }
+    }
+
+    Dialog(onDismissRequest = { if (!loading) onDismiss() }) {
+        Card(
+            shape  = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                if (success) {
+                    // Estado de sucesso — fecha automaticamente após 1.5s
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Comentário reportado",
+                            fontWeight = FontWeight.Bold,
+                            fontSize   = 16.sp,
+                            color      = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "O relatório foi enviado para moderação. Obrigado pela contribuição.",
+                            fontSize  = 14.sp,
+                            color     = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(4.dp))
+                    }
+                } else {
+                    // Formulário
+                    Text(
+                        "Reportar comentário",
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 16.sp,
+                        color      = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Descreve o motivo do relatório para ajudar a moderação.",
+                        fontSize = 13.sp,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value         = message,
+                        onValueChange = { if (it.length <= 500) message = it },
+                        placeholder   = { Text("Motivo do relatório...", fontSize = 14.sp) },
+                        minLines      = 3,
+                        maxLines      = 5,
+                        modifier      = Modifier.fillMaxWidth(),
+                        shape         = RoundedCornerShape(12.dp),
+                        colors        = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor   = AccentBlue,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                        ),
+                        supportingText = {
+                            Text(
+                                "${message.length}/500",
+                                modifier  = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.End,
+                                fontSize  = 11.sp,
+                                color     = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+                    if (error != null) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            error!!,
+                            color    = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Spacer(Modifier.height(20.dp))
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment     = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = onDismiss,
+                            enabled = !loading
+                        ) {
+                            Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                if (message.isBlank()) {
+                                    error = "Escreve o motivo do relatório."
+                                    return@Button
+                                }
+                                error   = null
+                                loading = true
+                                scope.launch {
+                                    val result = withContext(Dispatchers.IO) {
+                                        CommunityApi.reportComment(number, commentId, message.trim())
+                                    }
+                                    loading = false
+                                    when (result) {
+                                        is CommunityResult.Success -> success = true
+                                        is CommunityResult.Error   -> error = "Erro ao enviar. Tenta novamente."
+                                    }
+                                }
+                            },
+                            enabled = !loading,
+                            colors  = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+                        ) {
+                            if (loading) {
+                                CircularProgressIndicator(
+                                    modifier    = Modifier.size(16.dp),
+                                    color       = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text("Enviar")
+                            }
+                        }
+                    }
+                }
             }
         }
     }
