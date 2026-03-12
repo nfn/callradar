@@ -38,15 +38,6 @@ captures/
 # IntelliJ IDEA / Android Studio files
 *.iml
 .idea/
-!.idea/workspace.xml
-!.idea/tasks.xml
-!.idea/modules.xml
-!.idea/vcs.xml
-!.idea/gradle.xml
-!.idea/libraries/
-!.idea/caches/
-!.idea/codeStyles/
-!.idea/navEditor.xml
 
 # Keystore files
 *.jks

@@ -261,7 +261,7 @@ fun CommunityHomeScreen(navController: NavController) {
         derivedStateOf {
             val last  = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val total = listState.layoutInfo.totalItemsCount
-            !isRestoringScroll && hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 3
+            !isRestoringScroll && hasMore && !isLoading && errorMsg == null && total > 0 && last >= total - 8
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadPage(nextCursor) }
