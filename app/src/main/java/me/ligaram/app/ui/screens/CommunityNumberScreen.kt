@@ -366,7 +366,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                                 Text("Erro ao carregar mais",
                                                     color    = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     fontSize = 12.sp)
-                                                androidx.compose.material3.TextButton(onClick = {
+                                                TextButton(onClick = {
                                                     errorMsg = null
                                                     loadPage(nextCursor)
                                                 }) {
@@ -407,7 +407,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 // ─── Analysis card (colapsável) ───────────────────────────────────────────────
 @Composable
 fun NumberAnalysisCard(analysis: NumberAnalysis) {
-    var expanded by remember { mutableStateOf(false) }
+    val expanded = remember { mutableStateOf(false) }
 
     val riskColor = when (analysis.riskLevel) {
         "Risco Alto"        -> RiskHigh
@@ -422,7 +422,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
         shape    = RoundedCornerShape(16.dp),
         colors   = CardDefaults.cardColors(containerColor = riskColor.copy(alpha = 0.06f)),
         border   = androidx.compose.foundation.BorderStroke(1.dp, riskColor.copy(alpha = 0.3f)),
-        onClick  = { expanded = !expanded }
+        onClick  = { expanded.value = !expanded.value }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
@@ -483,8 +483,8 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                         }
                     }
                     Icon(
-                        if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (expanded) "Colapsar" else "Expandir",
+                        if (expanded.value) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = if (expanded.value) "Colapsar" else "Expandir",
                         tint     = riskColor.copy(alpha = 0.7f),
                         modifier = Modifier.size(18.dp)
                     )
@@ -522,7 +522,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
             }
 
             // ── Conteúdo expandido ────────────────────────────────────────────
-            AnimatedVisibility(visible = expanded) {
+            AnimatedVisibility(visible = expanded.value) {
                 Column(modifier = Modifier.padding(top = 14.dp)) {
 
                     HorizontalDivider(color = riskColor.copy(alpha = 0.2f))
@@ -574,7 +574,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
             }
 
             // Dica apenas quando colapsado
-            if (!expanded) {
+            if (!expanded.value) {
                 Spacer(Modifier.height(6.dp))
                 Text("Toque para ver a análise completa",
                     color    = riskColor.copy(alpha = 0.6f),
@@ -605,13 +605,13 @@ fun NumberCommentCard(
     var localLiked  by remember(comment.id) { mutableStateOf(LikeCache.getLiked(comment.id) ?: false) }
     var likeLoading by remember(comment.id) { mutableStateOf(false) }
 
-    var showReportDialog by remember { mutableStateOf(false) }
+    val showReportDialog = remember { mutableStateOf(false) }
 
-    if (showReportDialog) {
+    if (showReportDialog.value) {
         ReportDialog(
             number    = number,
             commentId = comment.id,
-            onDismiss = { showReportDialog = false }
+            onDismiss = { showReportDialog.value = false }
         )
     }
 
@@ -694,7 +694,7 @@ fun NumberCommentCard(
                 ) {
                     // Botão de report
                     IconButton(
-                        onClick  = { showReportDialog = true },
+                        onClick  = { showReportDialog.value = true },
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
