@@ -59,7 +59,6 @@ data class CommentsResponse(
 
 // ── Entities autocomplete ─────────────────────────────────────────────────────
 data class EntityItem(
-    @SerializedName("id")     val id: Int,
     @SerializedName("entity") val entity: String
 )
 
