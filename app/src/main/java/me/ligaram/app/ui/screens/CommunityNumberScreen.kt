@@ -789,7 +789,7 @@ fun ReportDialog(
     // Fecha automaticamente 1.5s após sucesso
     LaunchedEffect(success) {
         if (success) {
-            delay(3000L)
+            delay(2000L)
             onDismiss()
         }
     }
