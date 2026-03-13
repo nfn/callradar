@@ -21,12 +21,7 @@
 -keepattributes *Annotation*
 -keepattributes EnclosingMethod
 
--keep class com.google.gson.** { *; }
--keep interface com.google.gson.** { *; }
-
-# ── Modelos de dados (usados pelo Gson via reflexão) ──────────────────────────
--keep class me.ligaram.app.data.** { *; }
--keepclassmembers class me.ligaram.app.data.** {
-    <fields>;
-    <init>(...);
+# Mantém apenas os campos anotados que o Gson lê por reflexão.
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
 }

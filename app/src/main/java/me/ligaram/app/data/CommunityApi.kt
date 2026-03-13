@@ -3,6 +3,7 @@ package me.ligaram.app.data
 import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -193,5 +194,7 @@ object CommunityApi {
         }
     }
 
-    private data class EntityListWrapper(val data: List<EntityItem>?)
+    private data class EntityListWrapper(
+        @SerializedName("data") val data: List<EntityItem>?
+    )
 }
