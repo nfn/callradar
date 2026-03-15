@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import me.ligaram.app.R
 
 @Composable
-fun LigaramLogo(size: Dp = 56.dp, modifier: Modifier = Modifier) {
+fun LigaramLogo(modifier: Modifier = Modifier, size: Dp = 56.dp) {
     Image(
         painter = painterResource(id = R.drawable.ic_ligaram_logo),
         contentDescription = "Logo ligaram.me",
