@@ -271,12 +271,12 @@ fun CommunityHomeScreen(navController: NavController) {
     // composable é re-entrado na composição, todos os LaunchedEffects relançam, e
     // isRefreshing=false com firstVisibleItemIndex>0 disparava animateScrollToItem(0).
     LaunchedEffect(Unit) {
-        var wasRefreshing = false
+        val prevRefreshing = mutableListOf(isRefreshing)
         snapshotFlow { isRefreshing }.collect { refreshing ->
-            if (wasRefreshing && !refreshing) {
+            if (prevRefreshing[0] && !refreshing) {
                 listState.animateScrollToItem(0)
             }
-            wasRefreshing = refreshing
+            prevRefreshing[0] = refreshing
         }
     }
 
