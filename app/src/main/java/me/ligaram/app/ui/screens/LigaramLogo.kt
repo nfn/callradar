@@ -13,7 +13,7 @@ import me.ligaram.app.R
 fun LigaramLogo(size: Dp = 56.dp, modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(id = R.drawable.ic_ligaram_logo),
-        contentDescription = null,
+        contentDescription = "Logo ligaram.me",
         modifier = modifier.size(size)
     )
 }

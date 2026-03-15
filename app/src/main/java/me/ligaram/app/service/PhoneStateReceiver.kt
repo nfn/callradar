@@ -5,10 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.CallLog
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
 import android.util.Log
+import java.util.concurrent.Executors
 
 class PhoneStateReceiver : BroadcastReceiver() {
 
@@ -28,10 +31,9 @@ class PhoneStateReceiver : BroadcastReceiver() {
 
         when (state) {
             TelephonyManager.EXTRA_STATE_RINGING -> {
-                val number = when {
-                    !extraNumber.isNullOrBlank() -> extraNumber
-                    else -> getLastIncomingNumberFromCallLog(context)
-                }
+                // Não chamar getLastIncomingNumberFromCallLog aqui (evita bloquear o receiver);
+                // quando extraNumber é nulo, usamos resolveNumberFromCallLogAsync mais abaixo
+                val number = extraNumber?.takeIf { it.isNotBlank() }
 
                 Log.d("PhoneStateReceiver", "Ringing - number: $number")
 
@@ -54,7 +56,8 @@ class PhoneStateReceiver : BroadcastReceiver() {
                     Log.d("PhoneStateReceiver", "Contact name: $contactName")
                     sendToService(context, CallMonitorService.ACTION_INCOMING_CALL, number, contactName)
                 } else {
-                    Log.w("PhoneStateReceiver", "Could not resolve number")
+                    // Alguns OEMs escrevem no CallLog ligeiramente após o broadcast RINGING
+                    resolveNumberFromCallLogAsync(context)
                 }
             }
             TelephonyManager.EXTRA_STATE_IDLE -> {
@@ -94,9 +97,37 @@ class PhoneStateReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun getLastIncomingNumberFromCallLog(context: Context): String? {
-        // Brief pause: some OEMs write to CallLog slightly after the RINGING broadcast
-        Thread.sleep(300)
+    private val callLogExecutor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /**
+     * Resolve número via CallLog em background (alguns OEMs escrevem após o broadcast RINGING).
+     * Evita Thread.sleep() no receiver que bloquearia o main thread.
+     */
+    private fun resolveNumberFromCallLogAsync(context: Context) {
+        val pendingResult = goAsync()
+        callLogExecutor.execute {
+            try {
+                Thread.sleep(300)
+                val number = getLastIncomingNumberFromCallLogSync(context)
+                mainHandler.post {
+                    if (!number.isNullOrBlank()) {
+                        val contactName = lookupContactName(context, number)
+                        Log.d("PhoneStateReceiver", "CallLog fallback: $number, contact: $contactName")
+                        sendToService(context, CallMonitorService.ACTION_INCOMING_CALL, number, contactName)
+                    } else {
+                        Log.w("PhoneStateReceiver", "Could not resolve number")
+                    }
+                    pendingResult.finish()
+                }
+            } catch (e: Exception) {
+                Log.e("PhoneStateReceiver", "CallLog async failed: ${e.message}")
+                mainHandler.post { pendingResult.finish() }
+            }
+        }
+    }
+
+    private fun getLastIncomingNumberFromCallLogSync(context: Context): String? {
         return try {
             val cursor = context.contentResolver.query(
                 CallLog.Calls.CONTENT_URI,
@@ -107,12 +138,12 @@ class PhoneStateReceiver : BroadcastReceiver() {
             cursor?.use {
                 if (it.moveToFirst()) {
                     val number = it.getString(it.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
-                    Log.d("PhoneStateReceiver", "CallLog fallback: " + number)
+                    Log.d("PhoneStateReceiver", "CallLog fallback: $number")
                     number
                 } else null
             }
         } catch (e: Exception) {
-            Log.e("PhoneStateReceiver", "CallLog query failed: " + e.message)
+            Log.e("PhoneStateReceiver", "CallLog query failed: ${e.message}")
             null
         }
     }
