@@ -49,9 +49,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import me.ligaram.app.data.OverlayPreferences
 import me.ligaram.app.data.OverlayStyle
+import androidx.compose.foundation.isSystemInDarkTheme
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
-import me.ligaram.app.ui.theme.NavyDeep
+import me.ligaram.app.ui.theme.NavyLight
+import me.ligaram.app.ui.theme.NavyMid
 import me.ligaram.app.ui.theme.RiskHigh
 
 // Dados fictícios para o preview
@@ -106,9 +108,15 @@ fun OverlayStyleScreen(navController: NavController) {
                     .height(300.dp)
                     .clip(RectangleShape)
                     .background(
-                        Brush.verticalGradient(
-                            listOf(NavyDeep, NavyDeep.copy(alpha = 0.85f))
-                        )
+                        if (isSystemInDarkTheme())
+                            Brush.verticalGradient(listOf(NavyMid, NavyLight))
+                        else
+                            Brush.verticalGradient(
+                                listOf(
+                                    androidx.compose.ui.graphics.Color(0xFFCBD5E1),
+                                    androidx.compose.ui.graphics.Color(0xFFE2E8F0)
+                                )
+                            )
                     ),
                 contentAlignment = Alignment.Center
             ) {
