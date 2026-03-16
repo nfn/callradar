@@ -23,7 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddComment
-import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Flag
@@ -444,7 +444,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                             .background(riskColor.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Analytics, null,
+                        Icon(Icons.Default.AutoAwesome, null,
                             tint     = riskColor,
                             modifier = Modifier.size(16.dp))
                     }
