@@ -251,8 +251,11 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(formatPhoneNumber(number), color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-                        Text("${comments.size} comentário${if (comments.size != 1) "s" else ""}",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                        Text(
+                            if (isLoading && comments.isEmpty()) "\u00A0"
+                            else "${comments.size} comentário${if (comments.size != 1) "s" else ""}",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp
+                        )
                     }
                     if (!numberRating.isNullOrBlank() && numberRating != "null") {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
