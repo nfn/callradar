@@ -80,6 +80,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -314,7 +315,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
         currentEntry.savedStateHandle.get<Boolean>("force_community_tab") == true
 
     // Usa a flag já no 1o frame para evitar ver o tab Home por baixo durante a pop transition.
-    val selectedTabState = remember(startTab, forceCommunityInitial) {
+    val selectedTabState = rememberSaveable(startTab, forceCommunityInitial) {
         mutableIntStateOf(if (forceCommunityInitial) 1 else startTab)
     }
     val selectedTab = selectedTabState.intValue
@@ -1077,9 +1078,7 @@ fun SettingsScreen(navController: NavController) {
                     title       = "Estilo do overlay",
                     description = "Escolhe como o overlay é apresentado durante as chamadas",
                     onClick     = {
-                        navController.navigate(Routes.OVERLAY_STYLE) {
-                            popUpTo(Routes.HOME) { inclusive = false }
-                        }
+                        navController.navigate(Routes.OVERLAY_STYLE)
                     }
                 )
 
@@ -1184,9 +1183,7 @@ fun SettingsScreen(navController: NavController) {
                     title       = "Sobre a aplicação",
                     description = "Versão, privacidade e informações do CallRadar",
                     onClick     = {
-                        navController.navigate(Routes.ABOUT) {
-                            popUpTo(Routes.HOME) { inclusive = false }
-                        }
+                        navController.navigate(Routes.ABOUT)
                     }
                 )
 
