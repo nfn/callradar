@@ -114,8 +114,9 @@ class CallMonitorService : Service() {
         latestRequestGeneration += 1
         val myGeneration  = latestRequestGeneration
         activeNumber      = number
-        overlayHadResult  = false
-        overlayShownAt    = System.currentTimeMillis()  // registar início da chamada
+        // Número nos contactos → nunca mostrar notificação de sugestão
+        overlayHadResult  = contactName != null
+        overlayShownAt    = System.currentTimeMillis()
         currentJob = serviceScope.launch {
             Log.d("CallMonitorService", "Fetching info for: $number (contact: $contactName)")
             when (val result = ApiClient.fetchCallInfo(number)) {

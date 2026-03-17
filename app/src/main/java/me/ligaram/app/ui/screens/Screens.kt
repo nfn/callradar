@@ -16,6 +16,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +49,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.PrivacyTip
@@ -115,6 +117,7 @@ import me.ligaram.app.ui.theme.ligaramColors
 object Routes {
     const val PERM_PHONE       = "perm_phone"
     const val PERM_OVERLAY     = "perm_overlay"
+    const val PERM_NOTIFY      = "perm_notify"
     const val HOME             = "home"
     const val ABOUT            = "about"
     const val SETTINGS         = "settings"
@@ -187,6 +190,17 @@ fun AppNavigation(initialAddComment: String? = null) {
                 slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
             }
         ) { PermOverlayScreen(navController) }
+
+        composable(Routes.PERM_NOTIFY,
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            }
+        ) { PermNotifyScreen(navController) }
 
         // HOME e COMMUNITY_HOME são o mesmo shell - apenas diferem no tab inicial
         composable(Routes.HOME,
@@ -447,7 +461,8 @@ fun PermissionScreenLayout(
     buttonLabel: String,
     onButtonClick: () -> Unit,
     granted: Boolean,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    onSkip: (() -> Unit)? = null
 ) {
     AppBackground {
         Column(
@@ -527,6 +542,12 @@ fun PermissionScreenLayout(
                 ) {
                     Text(buttonLabel, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
+                if (onSkip != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TextButton(onClick = onSkip) {
+                        Text("Continuar sem ativar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
         }
     }
@@ -545,7 +566,7 @@ fun PermPhoneScreen(navController: NavController) {
     )
 
     PermissionScreenLayout(
-        step = 0, total = 2,
+        step = 0, total = 3,
         icon = Icons.Default.Phone,
         iconTint = AccentBlue,
         iconBg = AccentBlue.copy(alpha = 0.15f),
@@ -580,7 +601,7 @@ fun PermOverlayScreen(navController: NavController) {
     }
 
     PermissionScreenLayout(
-        step = 1, total = 2,
+        step = 1, total = 3,
         icon = Icons.Default.Layers,
         iconTint = AccentOrange,
         iconBg = AccentOrange.copy(alpha = 0.15f),
@@ -602,10 +623,63 @@ fun PermOverlayScreen(navController: NavController) {
             context.startForegroundService(Intent(context, CallMonitorService::class.java).apply {
                 action = CallMonitorService.ACTION_START
             })
-            navController.navigate(Routes.HOME) {
-                popUpTo(Routes.PERM_PHONE) { inclusive = true }
+            navController.navigate(Routes.PERM_NOTIFY) {
+                popUpTo(Routes.PERM_PHONE) { inclusive = false }
             }
         }
+    )
+}
+
+// ─── Permission 3: Notificações (opcional) ─────────────────────────────────────
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun PermNotifyScreen(navController: NavController) {
+    val context = LocalContext.current
+
+    fun goHome() {
+        navController.navigate(Routes.HOME) {
+            popUpTo(Routes.PERM_PHONE) { inclusive = true }
+        }
+    }
+
+    // Android < 13 — sem permissão explícita; toggle fica ON, ir para HOME
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        LaunchedEffect(Unit) {
+            OverlayPreferences.setSuggestComment(context, true)
+            goHome()
+        }
+        return
+    }
+
+    val notifPermission = rememberPermissionState(
+        android.Manifest.permission.POST_NOTIFICATIONS
+    ) { granted ->
+        // Só navegar quando concedida; se recusou, utilizador pode pressionar "Continuar sem ativar"
+        if (granted) {
+            OverlayPreferences.setSuggestComment(context, true)
+            goHome()
+        }
+    }
+
+    PermissionScreenLayout(
+        step          = 2,
+        total         = 3,
+        icon          = Icons.Default.Notifications,
+        iconTint      = AccentBlue,
+        iconBg        = AccentBlue.copy(alpha = 0.15f),
+        title         = "Notificações (opcional)",
+        description   = "Ativa as notificações para receber sugestões de comentário após chamadas de números desconhecidos. Podes ativar mais tarde nas Definições.",
+        detailPoints  = listOf(
+            "Apenas para números sem dados na base de dados",
+            "Nunca para números nos teus contactos",
+            "Só para chamadas muito curtas (menos de 8 segundos)",
+            "Podes ativar ou desativar a qualquer momento nas Definições"
+        ),
+        buttonLabel   = "Ativar Notificações",
+        onButtonClick = { notifPermission.launchPermissionRequest() },
+        granted       = notifPermission.status.isGranted,
+        onNext        = { goHome() },
+        onSkip        = { goHome() }
     )
 }
 
@@ -638,6 +712,7 @@ fun HomeScreen(navController: NavController) {
                 }
                 context.startForegroundService(svc)
             } catch (_: Exception) {}
+            // Notificações: pedidas no onboarding (passo opcional) ou nas Definições ao tocar no toggle inativo
         }
     }
 
@@ -674,7 +749,7 @@ fun HomeScreen(navController: NavController) {
                     containerColor = if (allGood) AccentGreen.copy(alpha = 0.1f) else AccentOrange.copy(alpha = 0.1f)
                 ),
                 border = BorderStroke(1.dp, if (allGood) AccentGreen.copy(alpha = 0.4f) else AccentOrange.copy(alpha = 0.4f)),
-                onClick = { if (!allGood) showPermDialog.value = true }
+                onClick = { showPermDialog.value = true }
             ) {
                 Row(
                     modifier          = Modifier.padding(18.dp),
@@ -694,8 +769,10 @@ fun HomeScreen(navController: NavController) {
                             fontWeight = FontWeight.Bold, fontSize = 15.sp
                         )
                         Text(
-                            if (allGood) "Chamadas recebidas serão identificadas automaticamente"
-                            else "Toque aqui para ativar a identificação de chamadas",
+                            if (allGood)
+                                "Chamadas recebidas serão identificadas automaticamente · Toca para rever as permissões"
+                            else
+                                "Toque aqui para ativar a identificação de chamadas",
                             color    = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp
                         )
@@ -717,13 +794,14 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(14.dp))
 
             listOf(
-                Triple(Icons.Default.PhoneInTalk, "Chamada recebida",       "A app deteta automaticamente quem está a ligar"),
+                Triple(Icons.Default.PhoneInTalk, "Chamada recebida",        "A app deteta automaticamente quem está a ligar"),
                 Triple(Icons.Default.Search,       "Consulta a base de dados","O número é verificado em tempo real no ligaram.me"),
-                Triple(Icons.Default.Layers,       "Overlay apresentado",    "Se houver resultado, mostramos risco e categoria sobre o ecrã"),
-                Triple(Icons.Default.Block,        "Proteja-se",             "Decida com informação se atende ou rejeita a chamada")
+                Triple(Icons.Default.Layers,       "Overlay apresentado",     "Se houver resultado, mostramos risco e categoria sobre o ecrã"),
+                Triple(Icons.Default.Block,        "Proteja-se",              "Decida com informação se atende ou rejeita a chamada"),
+                Triple(Icons.Default.Notifications,"Sugestão de comentário",  "Após chamadas curtas de números desconhecidos, sugerimos que partilhes a experiência com a comunidade")
             ).forEachIndexed { idx, (icon, title, desc) ->
                 HowItWorksStep(icon = icon, title = title, description = desc)
-                if (idx < 3) Spacer(modifier = Modifier.height(8.dp))
+                if (idx < 4) Spacer(modifier = Modifier.height(8.dp))
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -749,13 +827,13 @@ fun PermissionDialog(
         )
     )
 
-    // Ao obter todas as permissões, fechar o diálogo automaticamente
-    LaunchedEffect(phonePermissions.allPermissionsGranted, overlayGranted) {
-        if (phonePermissions.allPermissionsGranted && overlayGranted) {
-            kotlinx.coroutines.delay(800)
-            onDismiss()
-        }
-    }
+    // Permissão opcional de notificações (Android 13+)
+    val notifPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
+    } else null
+    val hasNotificationPermission =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                (notifPermission?.status?.isGranted == true)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -794,12 +872,41 @@ fun PermissionDialog(
                         context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()))
                     }
                 )
+
+                // ── Permissão 3: Notificações (opcional) ──────────────────────
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    PermissionRow(
+                        icon    = Icons.Default.Notifications,
+                        title   = "Sugestões de comentário (opcional)",
+                        desc    = "Recebe notificação para comentar chamadas muito curtas de números desconhecidos.",
+                        granted = hasNotificationPermission,
+                        buttonLabel = "Ativar",
+                        onAction    = {
+                            when {
+                                notifPermission?.status?.isGranted == true -> {
+                                    // Já ativo — nada a fazer, o utilizador pode fechar o diálogo
+                                }
+                                notifPermission?.status?.shouldShowRationale == true -> {
+                                    // Pode pedir a permissão diretamente
+                                    notifPermission.launchPermissionRequest()
+                                }
+                                else -> {
+                                    // Provavelmente bloqueado nas definições — abrir ecrã de notificações da app
+                                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                    }
+                                    context.startActivity(intent)
+                                }
+                            }
+                        }
+                    )
+                }
             }
         },
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Agora não", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Fechar", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )
@@ -893,33 +1000,39 @@ fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
 @Composable
 fun SettingsScreen(navController: NavController) {
     val context       = LocalContext.current
+    // getSuggestComment já força true na primeira vez (migração v1)
+    // o remember inicializa com o valor actual das prefs
     var suggestComment by remember {
         mutableStateOf<Boolean>(OverlayPreferences.getSuggestComment(context))
     }
 
-    // Permissão de notificação — necessária no Android 13+
+    // Permissão de notificação — necessária no Android 13+ para notificações funcionarem
     val notifPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS) { granted ->
             if (granted) {
-                // Utilizador concedeu — ligar o toggle
                 suggestComment = true
                 OverlayPreferences.setSuggestComment(context, true)
-            } else {
-                // Utilizador recusou — manter desligado
-                suggestComment = false
-                OverlayPreferences.setSuggestComment(context, false)
             }
+            // Se recusou: não alterar a preferência (toggle continua ON mas inativo)
         }
     } else null
 
-    // Sincronizar toggle com estado real das notificações ao reentrar no ecrã
-    // (utilizador pode ter ido às definições do sistema e bloqueado manualmente)
-    val notifManager = context.getSystemService(NotificationManager::class.java)
-    val notifsEnabled = notifManager.areNotificationsEnabled()
-    androidx.compose.runtime.LaunchedEffect(notifsEnabled) {
-        if (!notifsEnabled && suggestComment) {
-            suggestComment = false
-            OverlayPreferences.setSuggestComment(context, false)
+    val hasNotificationPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+        (notifPermission?.status?.isGranted == true)
+    val isToggleInactive = suggestComment && !hasNotificationPermission
+
+    fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        when {
+            notifPermission?.status?.isGranted == true -> { }
+            notifPermission?.status?.shouldShowRationale == true ->
+                notifPermission?.launchPermissionRequest()
+            else -> {
+                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                }
+                context.startActivity(intent)
+            }
         }
     }
 
@@ -971,13 +1084,15 @@ fun SettingsScreen(navController: NavController) {
                 )
 
                 // Toggle — sugerir comentário após chamada rejeitada
+                // Quando ON mas sem permissão: card clicável para pedir permissão; switch em ON mas inativo
                 androidx.compose.material3.Card(
                     shape     = RoundedCornerShape(14.dp),
                     colors    = androidx.compose.material3.CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     ),
                     elevation = androidx.compose.material3.CardDefaults.cardElevation(0.dp),
-                    modifier  = Modifier.fillMaxWidth()
+                    modifier  = Modifier.fillMaxWidth(),
+                    onClick   = { if (isToggleInactive) requestNotificationPermission() }
                 ) {
                     Row(
                         modifier          = Modifier
@@ -1007,7 +1122,10 @@ fun SettingsScreen(navController: NavController) {
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                "Notificação quando rejeitas uma chamada rapidamente",
+                                if (isToggleInactive)
+                                    "As permissões não permitem que esta opção funcione. Toque para ativar."
+                                else
+                                    "Notificação quando rejeitas uma chamada rapidamente",
                                 color      = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize   = 12.sp,
                                 lineHeight = 16.sp
@@ -1015,38 +1133,32 @@ fun SettingsScreen(navController: NavController) {
                         }
                         androidx.compose.material3.Switch(
                             checked         = suggestComment,
-                            onCheckedChange = { checked ->
-                                if (checked) {
+                            onCheckedChange = {
+                                if (isToggleInactive) {
+                                    requestNotificationPermission()
+                                    return@Switch
+                                }
+                                if (it) {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                         when {
                                             notifPermission?.status?.isGranted == true -> {
-                                                // Permissão já concedida
                                                 suggestComment = true
                                                 OverlayPreferences.setSuggestComment(context, true)
                                             }
-                                            notifPermission?.status?.shouldShowRationale == true -> {
-                                                // Pode pedir — utilizador ainda não recusou definitivamente
-                                                notifPermission.launchPermissionRequest()
-                                            }
-                                            else -> {
-                                                // Permanentemente bloqueada — abrir definições do sistema
-                                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                                                }
-                                                context.startActivity(intent)
-                                            }
+                                            notifPermission?.status?.shouldShowRationale == true ->
+                                                notifPermission?.launchPermissionRequest()
+                                            else -> requestNotificationPermission()
                                         }
                                     } else {
-                                        // Android < 13 — sem permissão explícita necessária
                                         suggestComment = true
                                         OverlayPreferences.setSuggestComment(context, true)
                                     }
                                 } else {
-                                    // Desligar — sempre permitido
                                     suggestComment = false
                                     OverlayPreferences.setSuggestComment(context, false)
                                 }
                             },
+                            enabled = !isToggleInactive,
                             colors = androidx.compose.material3.SwitchDefaults.colors(
                                 checkedThumbColor   = androidx.compose.ui.graphics.Color.White,
                                 checkedTrackColor   = AccentBlue,

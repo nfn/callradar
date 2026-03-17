@@ -20,9 +20,9 @@ enum class OverlayStyle(val id: Int, val label: String, val description: String)
 }
 
 object OverlayPreferences {
-    private const val PREFS_NAME      = "overlay_prefs"
-    private const val KEY_STYLE       = "overlay_style"
-    private const val KEY_SUGGEST     = "suggest_comment"
+    private const val PREFS_NAME  = "overlay_prefs"
+    private const val KEY_STYLE   = "overlay_style"
+    private const val KEY_SUGGEST = "suggest_comment"
 
     fun getStyle(context: Context): OverlayStyle =
         OverlayStyle.fromId(
@@ -35,10 +35,17 @@ object OverlayPreferences {
             .edit { putInt(KEY_STYLE, style.id) }
     }
 
-    // Sugerir comentário após chamada rejeitada (< 8s) — desligado por omissão
-    fun getSuggestComment(context: Context): Boolean =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_SUGGEST, false)
+    // Toggle ligado por omissão. Se a chave não existe (nova instalação ou
+    // primeira vez nesta versão), grava true para que o estado fique persistido.
+    fun getSuggestComment(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return if (!prefs.contains(KEY_SUGGEST)) {
+            prefs.edit { putBoolean(KEY_SUGGEST, true) }
+            true
+        } else {
+            prefs.getBoolean(KEY_SUGGEST, true)
+        }
+    }
 
     fun setSuggestComment(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
