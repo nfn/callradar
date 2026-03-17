@@ -147,6 +147,36 @@ fun hasOverlayPermission(context: android.content.Context): Boolean =
 fun allPermissionsGranted(context: android.content.Context): Boolean =
     hasPhonePermissions(context) && hasOverlayPermission(context)
 
+private class PermissionUiState(
+    private val context: android.content.Context
+) {
+    var phoneGranted by mutableStateOf(hasPhonePermissions(context))
+        private set
+    var overlayGranted by mutableStateOf(hasOverlayPermission(context))
+        private set
+    var suggestComment by mutableStateOf(OverlayPreferences.getSuggestComment(context))
+        private set
+
+    val allCoreGranted: Boolean
+        get() = phoneGranted && overlayGranted
+
+    fun refreshCorePermissions() {
+        phoneGranted = hasPhonePermissions(context)
+        overlayGranted = hasOverlayPermission(context)
+    }
+
+    fun updateSuggestComment(enabled: Boolean) {
+        suggestComment = enabled
+        OverlayPreferences.setSuggestComment(context, enabled)
+    }
+}
+
+@Composable
+private fun rememberPermissionUiState(): PermissionUiState {
+    val context = LocalContext.current
+    return remember(context) { PermissionUiState(context) }
+}
+
 @OptIn(ExperimentalPermissionsApi::class)
 private fun requestNotificationPermissionOrOpenSettings(
     context: android.content.Context,
@@ -303,6 +333,7 @@ fun AppNavigation(
 // ─── Main shell com Bottom Navigation ────────────────────────────────────────
 @Composable
 fun MainShell(rootNav: NavController, startTab: Int = 0) {
+    val permissionUiState = rememberPermissionUiState()
     val currentEntry = rootNav.currentBackStackEntry ?: return
     val forceCommunityInitial =
         currentEntry.savedStateHandle.get<Boolean>("force_community_tab") == true
@@ -404,9 +435,9 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
             label = "tab_transition"
         ) { tab ->
             when (tab) {
-                0 -> HomeScreen(rootNav)
+                0 -> HomeScreen(rootNav, permissionUiState)
                 1 -> CommunityHomeScreen(rootNav)
-                2 -> SettingsScreen(rootNav)
+                2 -> SettingsScreen(rootNav, permissionUiState)
             }
         }
     }
@@ -425,17 +456,15 @@ fun AppBackground(content: @Composable () -> Unit) {
 // ─── Home Screen ───────────────────────────────────────────────────────────────
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+private fun HomeScreen(
+    navController: NavController,
+    permissionUiState: PermissionUiState = rememberPermissionUiState()
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    var phoneGranted   by remember { mutableStateOf(hasPhonePermissions(context)) }
-    var overlayGranted by remember { mutableStateOf(hasOverlayPermission(context)) }
-    val allGood = phoneGranted && overlayGranted
-
-    fun refreshPermissions() {
-        phoneGranted = hasPhonePermissions(context)
-        overlayGranted = hasOverlayPermission(context)
-    }
+    val phoneGranted = permissionUiState.phoneGranted
+    val overlayGranted = permissionUiState.overlayGranted
+    val allGood = permissionUiState.allCoreGranted
 
     // Diálogo de activação de permissões (abre ao clicar no status card)
     val showPermDialog = remember { mutableStateOf(false) }
@@ -444,7 +473,7 @@ fun HomeScreen(navController: NavController) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                refreshPermissions()
+                permissionUiState.refreshCorePermissions()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -597,7 +626,7 @@ fun PermissionDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("A app usa duas permissões obrigatórias e uma opcional (notificações no Android 13+):",
+                Text("Ativa as permissões necessárias para que a app funcione corretamente:",
                     color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
 
                 // ── Permissão 1: Chamadas ─────────────────────────────────────
@@ -734,20 +763,18 @@ fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
 // ─── Settings Screen ─────────────────────────────────────────────────────────
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun SettingsScreen(navController: NavController) {
+private fun SettingsScreen(
+    navController: NavController,
+    permissionUiState: PermissionUiState = rememberPermissionUiState()
+) {
     val context       = LocalContext.current
-    // getSuggestComment já força true na primeira vez (migração v1)
-    // o remember inicializa com o valor actual das prefs
-    var suggestComment by remember {
-        mutableStateOf<Boolean>(OverlayPreferences.getSuggestComment(context))
-    }
+    val suggestComment = permissionUiState.suggestComment
 
     // Permissão de notificação — necessária no Android 13+ para notificações funcionarem
     val notifPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS) { granted ->
             if (granted) {
-                suggestComment = true
-                OverlayPreferences.setSuggestComment(context, true)
+                permissionUiState.updateSuggestComment(true)
             }
             // Se recusou: não alterar a preferência (toggle continua ON mas inativo)
         }
@@ -834,7 +861,7 @@ fun SettingsScreen(navController: NavController) {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                Icons.Default.Forum, null,
+                                Icons.Default.Notifications, null,
                                 tint     = AccentBlue,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -868,20 +895,17 @@ fun SettingsScreen(navController: NavController) {
                                         val perm = notifPermission
                                         when {
                                             perm?.status?.isGranted == true -> {
-                                                suggestComment = true
-                                                OverlayPreferences.setSuggestComment(context, true)
+                                                permissionUiState.updateSuggestComment(true)
                                             }
                                             perm?.status?.shouldShowRationale == true ->
                                                 perm.launchPermissionRequest()
                                             else -> requestNotificationPermission()
                                         }
                                     } else {
-                                        suggestComment = true
-                                        OverlayPreferences.setSuggestComment(context, true)
+                                        permissionUiState.updateSuggestComment(true)
                                     }
                                 } else {
-                                    suggestComment = false
-                                    OverlayPreferences.setSuggestComment(context, false)
+                                    permissionUiState.updateSuggestComment(false)
                                 }
                             },
                             enabled = !isToggleInactive,
