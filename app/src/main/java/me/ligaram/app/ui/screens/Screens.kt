@@ -74,6 +74,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -96,6 +97,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -401,19 +405,29 @@ fun AppBackground(content: @Composable () -> Unit) {
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var phoneGranted   by remember { mutableStateOf(hasPhonePermissions(context)) }
     var overlayGranted by remember { mutableStateOf(hasOverlayPermission(context)) }
     val allGood = phoneGranted && overlayGranted
 
+    fun refreshPermissions() {
+        phoneGranted = hasPhonePermissions(context)
+        overlayGranted = hasOverlayPermission(context)
+    }
+
     // Diálogo de activação de permissões (abre ao clicar no status card)
     val showPermDialog = remember { mutableStateOf(false) }
 
-    // Poll permissões enquanto o ecrã estiver visível
-    LaunchedEffect(Unit) {
-        while (true) {
-            kotlinx.coroutines.delay(500)
-            phoneGranted   = hasPhonePermissions(context)
-            overlayGranted = hasOverlayPermission(context)
+    // Atualiza estado ao regressar ao ecrã (ex.: após definições do sistema)
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshPermissions()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
