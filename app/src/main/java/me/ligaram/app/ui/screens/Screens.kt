@@ -672,7 +672,7 @@ fun PermNotifyScreen(navController: NavController) {
         iconTint      = AccentBlue,
         iconBg        = AccentBlue.copy(alpha = 0.15f),
         title         = "Notificações (opcional)",
-        description   = "Ativa as notificações para receber sugestões de comentário após chamadas de números desconhecidos. Podes ativar mais tarde nas Definições.",
+        description   = "Ativa as notificações de comentário após chamadas de números desconhecidos. Podes ativar mais tarde nas Definições.",
         detailPoints  = listOf(
             "Apenas para números sem dados na base de dados",
             "Nunca para números nos teus contactos",
@@ -802,7 +802,7 @@ fun HomeScreen(navController: NavController) {
                 Triple(Icons.Default.Search,       "Consulta a base de dados","O número é verificado em tempo real no ligaram.me"),
                 Triple(Icons.Default.Layers,       "Overlay apresentado",     "Se houver resultado, mostramos risco e categoria sobre o ecrã"),
                 Triple(Icons.Default.Block,        "Proteja-se",              "Decida com informação se atende ou rejeita a chamada"),
-                Triple(Icons.Default.Notifications,"Sugestão de comentário",  "Após chamadas curtas de números desconhecidos, sugerimos que partilhes a experiência com a comunidade")
+                Triple(Icons.Default.Notifications,"Notificação de comentário",  "Após chamadas curtas de números desconhecidos, enviamos uma notificação para partilhares a experiência com a comunidade")
             ).forEachIndexed { idx, (icon, title, desc) ->
                 HowItWorksStep(icon = icon, title = title, description = desc)
                 if (idx < 4) Spacer(modifier = Modifier.height(8.dp))
@@ -881,7 +881,7 @@ fun PermissionDialog(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     PermissionRow(
                         icon    = Icons.Default.Notifications,
-                        title   = "Sugestões de comentário (opcional)",
+                        title   = "Notificações de comentário (opcional)",
                         desc    = "Recebe notificação para comentar chamadas muito curtas de números desconhecidos.",
                         granted = hasNotificationPermission,
                         buttonLabel = "Ativar",
@@ -1093,7 +1093,7 @@ fun SettingsScreen(navController: NavController) {
                     }
                 )
 
-                // Toggle — sugerir comentário após chamada rejeitada
+                // Toggle — notificações de comentário após chamada rejeitada
                 // Quando ON mas sem permissão: card clicável para pedir permissão; switch em ON mas inativo
                 androidx.compose.material3.Card(
                     shape     = RoundedCornerShape(14.dp),
@@ -1126,7 +1126,7 @@ fun SettingsScreen(navController: NavController) {
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Sugerir comentário",
+                                "Notificações de comentário",
                                 color      = MaterialTheme.colorScheme.onBackground,
                                 fontSize   = 15.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -1401,7 +1401,7 @@ fun AboutScreen(navController: NavController) {
                     Icons.Default.Shield     to "Base de dados comunitária",
                     Icons.Default.Forum      to "Comunidade de reporte",
                     Icons.Default.Visibility to "Overlay não intrusivo",
-                    Icons.Default.Notifications to "Sugestão após chamada curta",
+                    Icons.Default.Notifications to "Notificação após chamada curta",
                     Icons.Default.BatteryFull to "Baixo consumo de bateria",
                     Icons.Default.Lock       to "Sem armazenamento de dados pessoais",
                     Icons.Default.Update     to "Base de dados sempre atualizada"
@@ -1433,7 +1433,7 @@ fun AboutScreen(navController: NavController) {
                     Triple(Icons.Default.Contacts, "READ_CONTACTS",
                         "Utilizado para mostrar o nome do contacto no overlay, caso o número já exista na agenda. Nenhum dado de contacto é transmitido ou armazenado."),
                     Triple(Icons.Default.Notifications, "POST_NOTIFICATIONS",
-                        "Permite apresentar sugestões de comentário após chamadas curtas de números sem dados na base de dados. Esta permissão é opcional e pode ser desativada nas Definições da app."),
+                        "Permite apresentar notificações com sugestão de comentário após chamadas curtas de números sem dados na base de dados. Esta permissão é opcional e pode ser desativada nas Definições da app."),
                     Triple(Icons.Default.Layers, "SYSTEM_ALERT_WINDOW",
                         "Necessário para apresentar o overlay de identificação sobre a interface de chamada do sistema. Sem esta permissão, a informação de risco não pode ser exibida durante a chamada.")
                 ).forEach { (icon, perm, desc) ->
