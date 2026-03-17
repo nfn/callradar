@@ -574,7 +574,7 @@ fun PermPhoneScreen(navController: NavController) {
         icon = Icons.Default.Phone,
         iconTint = AccentBlue,
         iconBg = AccentBlue.copy(alpha = 0.15f),
-        title = "Acesso às Chamadas",
+        title = "Acesso às chamadas",
         description = "Para identificar quem está a ligar, a aplicação precisa de acesso ao estado do telefone.",
         detailPoints = listOf(
             "Detetamos chamadas recebidas em tempo real",
@@ -852,7 +852,7 @@ fun PermissionDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Para identificar chamadas em tempo real, a app precisa de duas permissões:",
+                Text("A app usa duas permissões obrigatórias e uma opcional (notificações no Android 13+):",
                     color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
 
                 // ── Permissão 1: Chamadas ─────────────────────────────────────
@@ -1133,9 +1133,9 @@ fun SettingsScreen(navController: NavController) {
                             )
                             Text(
                                 if (isToggleInactive)
-                                    "As permissões não permitem que esta opção funcione. Toque para ativar."
+                                    "As notificações estão desativadas no sistema. Toque para ativar."
                                 else
-                                    "Notificação quando rejeitas uma chamada rapidamente",
+                                    "Notificação após chamada curta, que pode ser sinal de spam",
                                 color      = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize   = 12.sp,
                                 lineHeight = 16.sp
@@ -1401,6 +1401,7 @@ fun AboutScreen(navController: NavController) {
                     Icons.Default.Shield     to "Base de dados comunitária",
                     Icons.Default.Forum      to "Comunidade de reporte",
                     Icons.Default.Visibility to "Overlay não intrusivo",
+                    Icons.Default.Notifications to "Sugestão após chamada curta",
                     Icons.Default.BatteryFull to "Baixo consumo de bateria",
                     Icons.Default.Lock       to "Sem armazenamento de dados pessoais",
                     Icons.Default.Update     to "Base de dados sempre atualizada"
@@ -1431,6 +1432,8 @@ fun AboutScreen(navController: NavController) {
                         "Permite ler o número de telefone da chamada recebida. Este número é enviado à API do ligaram.me apenas para consulta de risco - nunca é armazenado localmente."),
                     Triple(Icons.Default.Contacts, "READ_CONTACTS",
                         "Utilizado para mostrar o nome do contacto no overlay, caso o número já exista na agenda. Nenhum dado de contacto é transmitido ou armazenado."),
+                    Triple(Icons.Default.Notifications, "POST_NOTIFICATIONS",
+                        "Permite apresentar sugestões de comentário após chamadas curtas de números sem dados na base de dados. Esta permissão é opcional e pode ser desativada nas Definições da app."),
                     Triple(Icons.Default.Layers, "SYSTEM_ALERT_WINDOW",
                         "Necessário para apresentar o overlay de identificação sobre a interface de chamada do sistema. Sem esta permissão, a informação de risco não pode ser exibida durante a chamada.")
                 ).forEach { (icon, perm, desc) ->
