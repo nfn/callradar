@@ -17,6 +17,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import me.ligaram.app.MainActivity
 import me.ligaram.app.R
 import me.ligaram.app.data.ApiClient
 import me.ligaram.app.data.ApiResult
@@ -232,7 +233,7 @@ class CallMonitorService : Service() {
         if (!OverlayPreferences.getSuggestComment(this)) return
 
         // Abre a MainActivity com o número para navegar para AddCommentScreen
-        val openIntent = Intent(this, Class.forName("me.ligaram.app.MainActivity")).apply {
+        val openIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("open_add_comment", number)
         }
