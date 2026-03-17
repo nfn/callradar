@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.History
@@ -116,9 +115,6 @@ import me.ligaram.app.ui.theme.ligaramColors
 
 // ─── Navigation Routes ────────────────────────────────────────────────────────
 object Routes {
-    const val PERM_PHONE       = "perm_phone"
-    const val PERM_OVERLAY     = "perm_overlay"
-    const val PERM_NOTIFY      = "perm_notify"
     const val HOME             = "home"
     const val ABOUT            = "about"
     const val SETTINGS         = "settings"
@@ -174,39 +170,6 @@ fun AppNavigation(
         startDestination = Routes.HOME,
         modifier         = Modifier.background(MaterialTheme.colorScheme.background)
     ) {
-        composable(Routes.PERM_PHONE,
-            enterTransition = {
-                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
-                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
-            },
-            exitTransition = {
-                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
-                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
-            }
-        ) { PermPhoneScreen(navController) }
-
-        composable(Routes.PERM_OVERLAY,
-            enterTransition = {
-                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
-                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
-            },
-            exitTransition = {
-                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
-                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
-            }
-        ) { PermOverlayScreen(navController) }
-
-        composable(Routes.PERM_NOTIFY,
-            enterTransition = {
-                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
-                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
-            },
-            exitTransition = {
-                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
-                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
-            }
-        ) { PermNotifyScreen(navController) }
-
         // HOME e COMMUNITY_HOME são o mesmo shell - apenas diferem no tab inicial
         composable(Routes.HOME,
             enterTransition = {
@@ -433,260 +396,6 @@ fun AppBackground(content: @Composable () -> Unit) {
     ) { content() }
 }
 
-// ─── Step indicator ────────────────────────────────────────────────────────────
-@Composable
-fun StepDots(total: Int, current: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-        repeat(total) { idx ->
-            val active = idx == current
-            Box(
-                modifier = Modifier
-                    .height(6.dp)
-                    .width(if (active) 24.dp else 6.dp)
-                    .clip(CircleShape)
-                    .background(if (active) AccentBlue else MaterialTheme.colorScheme.outline)
-                    
-            )
-        }
-    }
-}
-
-// ─── Permission Screen Template ───────────────────────────────────────────────
-@Composable
-fun PermissionScreenLayout(
-    step: Int,
-    total: Int,
-    icon: ImageVector,
-    iconTint: Color,
-    iconBg: Color,
-    title: String,
-    description: String,
-    detailPoints: List<String>,
-    buttonLabel: String,
-    onButtonClick: () -> Unit,
-    granted: Boolean,
-    onNext: () -> Unit,
-    onSkip: (() -> Unit)? = null
-) {
-    AppBackground {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            StepDots(total, step)
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Ícone de estado
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(iconBg),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (granted) Icons.Default.CheckCircle else icon,
-                    contentDescription = null,
-                    tint = if (granted) AccentGreen else iconTint,
-                    modifier = Modifier.size(52.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(title, color = MaterialTheme.colorScheme.onBackground, fontSize = 24.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp, textAlign = TextAlign.Center, lineHeight = 22.sp)
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Detail points
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                detailPoints.forEach { point ->
-                    Row(verticalAlignment = Alignment.Top) {
-                        Icon(Icons.Default.Circle, null, tint = AccentBlue,
-                            modifier = Modifier.size(8.dp).padding(top = 6.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(point, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            if (granted) {
-                Button(
-                    onClick = onNext,
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentGreen)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Continuar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
-            } else {
-                Button(
-                    onClick = onButtonClick,
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AccentBlue
-                    )
-                ) {
-                    Text(buttonLabel, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
-                if (onSkip != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    TextButton(onClick = onSkip) {
-                        Text("Continuar sem ativar", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ─── Permission 1: Phone State ────────────────────────────────────────────────
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-fun PermPhoneScreen(navController: NavController) {
-    val phonePermission = rememberMultiplePermissionsState(
-        listOf(
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_CALL_LOG,
-            Manifest.permission.READ_CONTACTS
-        )
-    )
-
-    PermissionScreenLayout(
-        step = 0, total = 3,
-        icon = Icons.Default.Phone,
-        iconTint = AccentBlue,
-        iconBg = AccentBlue.copy(alpha = 0.15f),
-        title = "Acesso às chamadas",
-        description = "Para identificar quem está a ligar, a aplicação precisa de acesso ao estado do telefone.",
-        detailPoints = listOf(
-            "Detetamos chamadas recebidas em tempo real",
-            "O número é consultado na base de dados do ligaram.me",
-            "O nome do contacto é mostrado no overlay (se existir)",
-            "Nunca armazenamos chamadas ou contactos pessoais",
-            "O acesso é utilizado exclusivamente para identificação"
-        ),
-        buttonLabel = "Conceder Permissão",
-        onButtonClick = { phonePermission.launchMultiplePermissionRequest() },
-        granted = phonePermission.allPermissionsGranted,
-        onNext = { navController.navigate(Routes.PERM_OVERLAY) }
-    )
-}
-
-// ─── Permission 2: Overlay ─────────────────────────────────────────────────────
-@Composable
-fun PermOverlayScreen(navController: NavController) {
-    val context = LocalContext.current
-    val canDraw = remember { mutableStateOf(Settings.canDrawOverlays(context)) }
-
-    // Poll for overlay permission (user returns from settings)
-    LaunchedEffect(Unit) {
-        while (!canDraw.value) {
-            kotlinx.coroutines.delay(500)
-            canDraw.value = Settings.canDrawOverlays(context)
-        }
-    }
-
-    PermissionScreenLayout(
-        step = 1, total = 3,
-        icon = Icons.Default.Layers,
-        iconTint = AccentOrange,
-        iconBg = AccentOrange.copy(alpha = 0.15f),
-        title = "Mostrar sobre outras apps",
-        description = "Para apresentar informação sobre chamadas suspeitas, a app precisa de permissão para sobrepor conteúdo.",
-        detailPoints = listOf(
-            "O overlay aparece automaticamente ao receber uma chamada",
-            "Apresenta risco, categoria e avaliação do número",
-            "Desaparece quando a chamada termina",
-            "Não interfere com nenhuma outra aplicação"
-        ),
-        buttonLabel = "Ativar Sobreposição",
-        onButtonClick = {
-            context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()))
-        },
-        granted = canDraw.value,
-        onNext = {
-            // App is in foreground here - startForegroundService is safe
-            context.startForegroundService(Intent(context, CallMonitorService::class.java).apply {
-                action = CallMonitorService.ACTION_START
-            })
-            navController.navigate(Routes.PERM_NOTIFY) {
-                popUpTo(Routes.PERM_PHONE) { inclusive = false }
-            }
-        }
-    )
-}
-
-// ─── Permission 3: Notificações (opcional) ─────────────────────────────────────
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-fun PermNotifyScreen(navController: NavController) {
-    val context = LocalContext.current
-
-    fun goHome() {
-        navController.navigate(Routes.HOME) {
-            popUpTo(Routes.PERM_PHONE) { inclusive = true }
-        }
-    }
-
-    // Android < 13 — sem permissão explícita; toggle fica ON, ir para HOME
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        LaunchedEffect(Unit) {
-            OverlayPreferences.setSuggestComment(context, true)
-            goHome()
-        }
-        return
-    }
-
-    val notifPermission = rememberPermissionState(
-        android.Manifest.permission.POST_NOTIFICATIONS
-    ) { granted ->
-        // Só navegar quando concedida; se recusou, utilizador pode pressionar "Continuar sem ativar"
-        if (granted) {
-            OverlayPreferences.setSuggestComment(context, true)
-            goHome()
-        }
-    }
-
-    PermissionScreenLayout(
-        step          = 2,
-        total         = 3,
-        icon          = Icons.Default.Notifications,
-        iconTint      = AccentBlue,
-        iconBg        = AccentBlue.copy(alpha = 0.15f),
-        title         = "Notificações (opcional)",
-        description   = "Ativa as notificações de comentário após chamadas de números desconhecidos. Podes ativar mais tarde nas Definições.",
-        detailPoints  = listOf(
-            "Apenas para números sem dados na base de dados",
-            "Nunca para números nos teus contactos",
-            "Só para chamadas muito curtas (menos de 8 segundos)",
-            "Podes ativar ou desativar a qualquer momento nas Definições"
-        ),
-        buttonLabel   = "Ativar Notificações",
-        onButtonClick = { notifPermission.launchPermissionRequest() },
-        granted       = notifPermission.status.isGranted,
-        onNext        = { goHome() },
-        onSkip        = { goHome() }
-    )
-}
-
 // ─── Home Screen ───────────────────────────────────────────────────────────────
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -716,7 +425,7 @@ fun HomeScreen(navController: NavController) {
                 }
                 context.startForegroundService(svc)
             } catch (_: Exception) {}
-            // Notificações: pedidas no onboarding (passo opcional) ou nas Definições ao tocar no toggle inativo
+            // Notificações: geridas nas Definições ao tocar no toggle inativo
         }
     }
 
