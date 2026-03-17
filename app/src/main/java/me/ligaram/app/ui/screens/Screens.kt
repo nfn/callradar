@@ -105,6 +105,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
@@ -145,6 +146,27 @@ fun hasOverlayPermission(context: android.content.Context): Boolean =
 
 fun allPermissionsGranted(context: android.content.Context): Boolean =
     hasPhonePermissions(context) && hasOverlayPermission(context)
+
+@OptIn(ExperimentalPermissionsApi::class)
+private fun requestNotificationPermissionOrOpenSettings(
+    context: android.content.Context,
+    permissionState: PermissionState
+) {
+    if (permissionState.status.isGranted) return
+
+    val askedBefore = OverlayPreferences.wasNotificationPermissionAsked(context)
+    val shouldShowRationale = permissionState.status.shouldShowRationale
+    if (!askedBefore || shouldShowRationale) {
+        OverlayPreferences.markNotificationPermissionAsked(context)
+        permissionState.launchPermissionRequest()
+    } else {
+        // Já foi pedido antes e não há rationale: provavelmente bloqueado em definições.
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        }
+        context.startActivity(intent)
+    }
+}
 
 // ─── Main Nav Host ────────────────────────────────────────────────────────────
 
@@ -609,24 +631,8 @@ fun PermissionDialog(
                         granted = hasNotificationPermission,
                         buttonLabel = "Ativar",
                         onAction    = {
-                            when {
-                                notifPermission?.status?.isGranted == true -> {
-                                    // Já ativo — nada a fazer, o utilizador pode fechar o diálogo
-                                }
-                                else -> {
-                                    val askedBefore = OverlayPreferences.wasNotificationPermissionAsked(context)
-                                    val shouldShowRationale = notifPermission?.status?.shouldShowRationale == true
-                                    if (!askedBefore || shouldShowRationale) {
-                                        OverlayPreferences.markNotificationPermissionAsked(context)
-                                        notifPermission?.launchPermissionRequest()
-                                    } else {
-                                        // Já foi pedido antes e não há rationale: provavelmente bloqueado em definições.
-                                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                                        }
-                                        context.startActivity(intent)
-                                    }
-                                }
+                            notifPermission?.let {
+                                requestNotificationPermissionOrOpenSettings(context, it)
                             }
                         }
                     )
@@ -754,21 +760,7 @@ fun SettingsScreen(navController: NavController) {
     fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         val perm = notifPermission ?: return
-        val askedBefore = OverlayPreferences.wasNotificationPermissionAsked(context)
-        when {
-            perm.status.isGranted -> { }
-            !askedBefore || perm.status.shouldShowRationale -> {
-                OverlayPreferences.markNotificationPermissionAsked(context)
-                perm.launchPermissionRequest()
-            }
-            else -> {
-                // Já foi pedido antes e não há rationale: provavelmente bloqueado em definições.
-                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                }
-                context.startActivity(intent)
-            }
-        }
+        requestNotificationPermissionOrOpenSettings(context, perm)
     }
 
     AppBackground {
