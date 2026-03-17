@@ -25,17 +25,20 @@ import me.ligaram.app.ui.screens.OverlayActivity
 
 class CallMonitorService : Service() {
 
+    private data class ActiveCallState(
+        val number: String = "",
+        val overlayShownAt: Long = 0L,
+        val overlayHadResult: Boolean = false
+    )
+
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var currentJob: Job? = null
     private var isForeground = false
+    private val callStateLock = Any()
     /** Só a resposta da chamada mais recente pode mostrar overlay (evita race com jobs que terminam tarde). */
     private var latestRequestGeneration = 0
-    /** Timestamp (ms) em que o overlay foi mostrado — usado para calcular duração da chamada. */
-    private var overlayShownAt: Long = 0L
-    /** Número da chamada activa — enviado na notificação de sugestão. */
-    private var activeNumber: String = ""
-    /** True se a API devolveu resultado para a chamada activa — notificação só aparece se false. */
-    private var overlayHadResult: Boolean = false
+    /** Estado da chamada activa — lido/escrito sempre sob lock. */
+    private var activeCallState = ActiveCallState()
 
     companion object {
         const val ACTION_START         = "me.ligaram.app.START"
@@ -69,16 +72,25 @@ class CallMonitorService : Service() {
                 handleIncomingCall(number, contactName)
             }
             ACTION_CALL_ENDED -> {
-                val duration = if (overlayShownAt > 0L) System.currentTimeMillis() - overlayShownAt else Long.MAX_VALUE
+                val endedCallState = synchronized(callStateLock) {
+                    latestRequestGeneration += 1
+                    activeCallState.also { activeCallState = ActiveCallState() }
+                }
+                val duration = if (endedCallState.overlayShownAt > 0L) {
+                    System.currentTimeMillis() - endedCallState.overlayShownAt
+                } else {
+                    Long.MAX_VALUE
+                }
                 dismissOverlay()
                 // Notifica apenas se: chamada curta + número activo + API não devolveu resultado
                 // Se houve resultado (overlay com dados) o utilizador já tinha informação suficiente
-                if (duration < SUGGEST_THRESHOLD_MS && activeNumber.isNotBlank() && !overlayHadResult) {
-                    maybeSuggestComment(activeNumber)
+                if (
+                    duration < SUGGEST_THRESHOLD_MS &&
+                    endedCallState.number.isNotBlank() &&
+                    !endedCallState.overlayHadResult
+                ) {
+                    maybeSuggestComment(endedCallState.number)
                 }
-                overlayShownAt   = 0L
-                activeNumber     = ""
-                overlayHadResult = false
             }
             // Boot/background starts: don't call startForeground, just stay alive
         }
@@ -111,22 +123,33 @@ class CallMonitorService : Service() {
 
     private fun handleIncomingCall(number: String, contactName: String?) {
         currentJob?.cancel()
-        latestRequestGeneration += 1
-        val myGeneration  = latestRequestGeneration
-        activeNumber      = number
-        // Número nos contactos → nunca mostrar notificação de sugestão
-        overlayHadResult  = contactName != null
-        overlayShownAt    = System.currentTimeMillis()
+        val myGeneration = synchronized(callStateLock) {
+            latestRequestGeneration += 1
+            activeCallState = ActiveCallState(
+                number = number,
+                // Número nos contactos → nunca mostrar notificação de sugestão
+                overlayHadResult = contactName != null,
+                overlayShownAt = System.currentTimeMillis()
+            )
+            latestRequestGeneration
+        }
         currentJob = serviceScope.launch {
             Log.d("CallMonitorService", "Fetching info for: $number (contact: $contactName)")
             when (val result = ApiClient.fetchCallInfo(number)) {
                 is ApiResult.Success -> {
-                    if (myGeneration != latestRequestGeneration) {
+                    val shouldShowResult = synchronized(callStateLock) {
+                        if (myGeneration != latestRequestGeneration || activeCallState.number != number) {
+                            false
+                        } else {
+                            activeCallState = activeCallState.copy(overlayHadResult = true)
+                            true
+                        }
+                    }
+                    if (!shouldShowResult) {
                         Log.d("CallMonitorService", "Discarding stale result for $number (newer call in progress)")
                         return@launch
                     }
                     Log.d("CallMonitorService", "Result: ${result.callInfo}")
-                    overlayHadResult = true   // API devolveu dados — não notificar
                     showOverlay(
                         number = result.callInfo.number,
                         rating = result.callInfo.rating,
@@ -142,7 +165,11 @@ class CallMonitorService : Service() {
                 }
                 is ApiResult.Error -> {
                     // Erro de rede — não notificar (não é culpa do número)
-                    overlayHadResult = true
+                    synchronized(callStateLock) {
+                        if (myGeneration == latestRequestGeneration && activeCallState.number == number) {
+                            activeCallState = activeCallState.copy(overlayHadResult = true)
+                        }
+                    }
                     Log.e("CallMonitorService", "API error: ${result.message}")
                 }
             }
