@@ -3,6 +3,7 @@ package me.ligaram.app.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 import me.ligaram.app.R
 import me.ligaram.app.data.ApiClient
 import me.ligaram.app.data.ApiResult
+import me.ligaram.app.data.OverlayPreferences
 import me.ligaram.app.ui.screens.OverlayActivity
 
 class CallMonitorService : Service() {
@@ -28,20 +30,31 @@ class CallMonitorService : Service() {
     private var isForeground = false
     /** Só a resposta da chamada mais recente pode mostrar overlay (evita race com jobs que terminam tarde). */
     private var latestRequestGeneration = 0
+    /** Timestamp (ms) em que o overlay foi mostrado — usado para calcular duração da chamada. */
+    private var overlayShownAt: Long = 0L
+    /** Número da chamada activa — enviado na notificação de sugestão. */
+    private var activeNumber: String = ""
+    /** True se a API devolveu resultado para a chamada activa — notificação só aparece se false. */
+    private var overlayHadResult: Boolean = false
 
     companion object {
-        const val ACTION_START = "me.ligaram.app.START"
+        const val ACTION_START         = "me.ligaram.app.START"
         const val ACTION_INCOMING_CALL = "me.ligaram.app.INCOMING_CALL"
-        const val ACTION_CALL_ENDED = "me.ligaram.app.CALL_ENDED"
-        const val EXTRA_NUMBER = "extra_number"
-        const val EXTRA_CONTACT_NAME = "extra_contact_name"
-        const val NOTIFICATION_ID = 1001
-        const val CHANNEL_ID = "ligaram_channel"
+        const val ACTION_CALL_ENDED    = "me.ligaram.app.CALL_ENDED"
+        const val EXTRA_NUMBER         = "extra_number"
+        const val EXTRA_CONTACT_NAME   = "extra_contact_name"
+        const val NOTIFICATION_ID      = 1001
+        const val NOTIFICATION_SUGGEST_ID = 1002
+        const val CHANNEL_ID           = "ligaram_channel"
+        const val CHANNEL_SUGGEST_ID   = "ligaram_suggest"
+        /** Chamadas com duração inferior a este valor (ms) sugerem comentário. */
+        private const val SUGGEST_THRESHOLD_MS = 8_000L
     }
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        createSuggestChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -56,7 +69,16 @@ class CallMonitorService : Service() {
                 handleIncomingCall(number, contactName)
             }
             ACTION_CALL_ENDED -> {
+                val duration = if (overlayShownAt > 0L) System.currentTimeMillis() - overlayShownAt else Long.MAX_VALUE
                 dismissOverlay()
+                // Notifica apenas se: chamada curta + número activo + API não devolveu resultado
+                // Se houve resultado (overlay com dados) o utilizador já tinha informação suficiente
+                if (duration < SUGGEST_THRESHOLD_MS && activeNumber.isNotBlank() && !overlayHadResult) {
+                    maybeSuggestComment(activeNumber)
+                }
+                overlayShownAt   = 0L
+                activeNumber     = ""
+                overlayHadResult = false
             }
             // Boot/background starts: don't call startForeground, just stay alive
         }
@@ -90,7 +112,10 @@ class CallMonitorService : Service() {
     private fun handleIncomingCall(number: String, contactName: String?) {
         currentJob?.cancel()
         latestRequestGeneration += 1
-        val myGeneration = latestRequestGeneration
+        val myGeneration  = latestRequestGeneration
+        activeNumber      = number
+        overlayHadResult  = false
+        overlayShownAt    = System.currentTimeMillis()  // registar início da chamada
         currentJob = serviceScope.launch {
             Log.d("CallMonitorService", "Fetching info for: $number (contact: $contactName)")
             when (val result = ApiClient.fetchCallInfo(number)) {
@@ -100,6 +125,7 @@ class CallMonitorService : Service() {
                         return@launch
                     }
                     Log.d("CallMonitorService", "Result: ${result.callInfo}")
+                    overlayHadResult = true   // API devolveu dados — não notificar
                     showOverlay(
                         number = result.callInfo.number,
                         rating = result.callInfo.rating,
@@ -110,9 +136,12 @@ class CallMonitorService : Service() {
                     )
                 }
                 is ApiResult.NoResult -> {
+                    // overlayHadResult mantém-se false — notificação será lançada se chamada curta
                     Log.d("CallMonitorService", "No result for $number - overlay suppressed")
                 }
                 is ApiResult.Error -> {
+                    // Erro de rede — não notificar (não é culpa do número)
+                    overlayHadResult = true
                     Log.e("CallMonitorService", "API error: ${result.message}")
                 }
             }
@@ -127,6 +156,7 @@ class CallMonitorService : Service() {
         subcategory: String,
         contactName: String?
     ) {
+        // overlayShownAt e activeNumber já definidos em handleIncomingCall
         val overlayIntent = Intent(this, OverlayActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_NO_HISTORY or
@@ -156,6 +186,45 @@ class CallMonitorService : Service() {
             NotificationManager.IMPORTANCE_LOW
         ).apply { setShowBadge(false) }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+    }
+
+    private fun createSuggestChannel() {
+        val channel = NotificationChannel(
+            CHANNEL_SUGGEST_ID,
+            "Sugestões de comentário",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Sugestão para comentar chamadas rejeitadas rapidamente"
+            setShowBadge(true)
+        }
+        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+    }
+
+    private fun maybeSuggestComment(number: String) {
+        if (!OverlayPreferences.getSuggestComment(this)) return
+
+        // Abre a MainActivity com o número para navegar para AddCommentScreen
+        val openIntent = Intent(this, Class.forName("me.ligaram.app.MainActivity")).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("open_add_comment", number)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this, number.hashCode(), openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_SUGGEST_ID)
+            .setContentTitle("Chamada de $number")
+            .setContentText("Queres partilhar a tua experiência com a comunidade?")
+            .setSmallIcon(android.R.drawable.ic_menu_call)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        getSystemService(NotificationManager::class.java)
+            .notify(NOTIFICATION_SUGGEST_ID, notification)
+        Log.d("CallMonitorService", "Suggest comment notification sent for $number")
     }
 
     private fun buildNotification(): Notification =

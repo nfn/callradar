@@ -15,17 +15,29 @@ import me.ligaram.app.ui.theme.LigaramTheme
 
 class MainActivity : ComponentActivity() {
 
+    // Número recebido pela notificação — passado ao AppNavigation para navegar directamente
+    private var pendingAddComment: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        // Inicializar clientes com context para os headers de diagnóstico
         ApiClient.init(this)
         CommunityApi.init(this)
+        // Verificar se foi aberta pela notificação de sugestão de comentário
+        pendingAddComment = intent?.getStringExtra("open_add_comment")
         enableEdgeToEdge()
         setContent {
             LigaramTheme {
-                AppNavigation()
+                AppNavigation(initialAddComment = pendingAddComment)
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // App já estava aberta — a notificação envia onNewIntent
+        intent.getStringExtra("open_add_comment")?.let { number ->
+            pendingAddComment = number
         }
     }
 

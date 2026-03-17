@@ -1,7 +1,9 @@
 package me.ligaram.app.ui.screens
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.EaseIn
@@ -50,6 +52,7 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Visibility
@@ -81,7 +84,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -93,7 +99,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
+import me.ligaram.app.data.OverlayPreferences
 import me.ligaram.app.service.CallMonitorService
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
@@ -107,6 +117,7 @@ object Routes {
     const val PERM_OVERLAY     = "perm_overlay"
     const val HOME             = "home"
     const val ABOUT            = "about"
+    const val SETTINGS         = "settings"
     const val COMMUNITY_HOME   = "community_home"
     const val COMMUNITY_NUMBER = "community_number"
     const val ADD_COMMENT      = "add_comment"
@@ -138,8 +149,15 @@ private const val ANIM_DURATION = 280
 private const val SLIDE_OFFSET  = 0.30f   // 30% da largura — elimina a faixa lateral
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(initialAddComment: String? = null) {
     val navController = rememberNavController()
+
+    // Navegar para AddCommentScreen se a app foi aberta pela notificação de sugestão
+    androidx.compose.runtime.LaunchedEffect(initialAddComment) {
+        if (!initialAddComment.isNullOrBlank()) {
+            navController.navigate("${Routes.ADD_COMMENT}/$initialAddComment")
+        }
+    }
 
     // A app arranca sempre no HOME - as permissões são opcionais e activadas
     // a partir do status card da tab Proteção.
@@ -203,6 +221,17 @@ fun AppNavigation() {
                 slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
             }
         ) { AboutScreen(navController) }
+
+        composable(Routes.SETTINGS,
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) { (it * SLIDE_OFFSET).toInt() }
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) { -(it * SLIDE_OFFSET).toInt() }
+            }
+        ) { SettingsScreen(navController) }
 
         composable(Routes.OVERLAY_STYLE,
             enterTransition = {
@@ -295,9 +324,9 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
         }
     }
 
-    // Botão/gesto back quando estamos no tab Comunidade → volta ao tab Proteção
+    // Botão/gesto back quando estamos no tab Comunidade ou Definições → volta ao tab Proteção
     // Em qualquer tab → não sai da app (comportamento padrão do sistema)
-    androidx.activity.compose.BackHandler(enabled = selectedTab == 1) {
+    androidx.activity.compose.BackHandler(enabled = selectedTab == 1 || selectedTab == 2) {
         selectedTabState.intValue = 0
     }
 
@@ -334,29 +363,44 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                         unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick  = { selectedTabState.intValue = 2 },
+                    icon     = { Icon(Icons.Default.Settings, null) },
+                    label    = { Text("Definições") },
+                    colors   = NavigationBarItemDefaults.colors(
+                        selectedIconColor   = AccentBlue,
+                        selectedTextColor   = AccentBlue,
+                        indicatorColor      = AccentBlue.copy(alpha = 0.12f),
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
             }
         }
     ) { innerPadding ->
-        AnimatedContent(
-            targetState = selectedTab,
-            modifier    = Modifier.padding(innerPadding),
-            transitionSpec = {
-                val toRight = targetState > initialState
-                (fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
-                 slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) {
-                     if (toRight) (it * SLIDE_OFFSET).toInt() else -(it * SLIDE_OFFSET).toInt()
-                 }) togetherWith
-                (fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
-                 slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) {
-                     if (toRight) -(it * SLIDE_OFFSET).toInt() else (it * SLIDE_OFFSET).toInt()
-                 })
-            },
-            label = "tab_transition"
-        ) { tab ->
-            when (tab) {
-                0 -> HomeScreen(rootNav)
-                1 -> CommunityHomeScreen(rootNav)
-            }
+        // Box com 3 tabs sempre compostas — nunca destruídas ao trocar tab
+        // (preserva listState, scroll e dados sem recriar os composables)
+        // zIndex garante que só a tab activa fica no topo e recebe toques
+        Box(modifier = Modifier.padding(innerPadding)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(if (selectedTab == 0) 1f else 0f)
+                    .graphicsLayer { alpha = if (selectedTab == 0) 1f else 0f }
+            ) { HomeScreen(rootNav) }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(if (selectedTab == 1) 1f else 0f)
+                    .graphicsLayer { alpha = if (selectedTab == 1) 1f else 0f }
+            ) { CommunityHomeScreen(rootNav) }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(if (selectedTab == 2) 1f else 0f)
+                    .graphicsLayer { alpha = if (selectedTab == 2) 1f else 0f }
+            ) { SettingsScreen(rootNav) }
         }
     }
 }
@@ -683,40 +727,6 @@ fun HomeScreen(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedButton(
-                onClick  = {
-                    navController.navigate(Routes.OVERLAY_STYLE) {
-                        popUpTo(Routes.HOME) { inclusive = false }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape    = RoundedCornerShape(14.dp),
-                border   = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-            ) {
-                Icon(Icons.Default.Layers, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Estilo do overlay", color = TextSecondary)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedButton(
-                onClick  = {
-                    navController.navigate(Routes.ABOUT) {
-                        // Remove COMMUNITY_HOME do backstack se estiver lá,
-                        // garantindo que o back do AboutScreen vai sempre para HOME
-                        popUpTo(Routes.HOME) { inclusive = false }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape    = RoundedCornerShape(14.dp),
-                border   = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-            ) {
-                Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Sobre a aplicação", color = TextSecondary)
-            }
         }
     }
 }
@@ -874,6 +884,257 @@ fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
             Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 17.sp)
+        }
+    }
+}
+
+// ─── Settings Screen ─────────────────────────────────────────────────────────
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun SettingsScreen(navController: NavController) {
+    val context       = LocalContext.current
+    var suggestComment by remember {
+        mutableStateOf<Boolean>(OverlayPreferences.getSuggestComment(context))
+    }
+
+    // Permissão de notificação — necessária no Android 13+
+    val notifPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS) { granted ->
+            if (granted) {
+                // Utilizador concedeu — ligar o toggle
+                suggestComment = true
+                OverlayPreferences.setSuggestComment(context, true)
+            } else {
+                // Utilizador recusou — manter desligado
+                suggestComment = false
+                OverlayPreferences.setSuggestComment(context, false)
+            }
+        }
+    } else null
+
+    // Sincronizar toggle com estado real das notificações ao reentrar no ecrã
+    // (utilizador pode ter ido às definições do sistema e bloqueado manualmente)
+    val notifManager = context.getSystemService(NotificationManager::class.java)
+    val notifsEnabled = notifManager.areNotificationsEnabled()
+    androidx.compose.runtime.LaunchedEffect(notifsEnabled) {
+        if (!notifsEnabled && suggestComment) {
+            suggestComment = false
+            OverlayPreferences.setSuggestComment(context, false)
+        }
+    }
+
+    AppBackground {
+        Column(modifier = Modifier.fillMaxSize()) {
+
+            // ── Top bar ───────────────────────────────────────────────────────
+            Row(
+                modifier          = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 52.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Definições",
+                    color      = MaterialTheme.colorScheme.onBackground,
+                    fontSize   = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier   = Modifier.weight(1f)
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                // ── Secção Overlay ────────────────────────────────────────────
+                Text(
+                    "Overlay",
+                    color      = AccentBlue,
+                    fontSize   = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier   = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
+                )
+
+                SettingsRow(
+                    icon        = Icons.Default.Layers,
+                    title       = "Estilo do overlay",
+                    description = "Escolhe como o overlay é apresentado durante as chamadas",
+                    onClick     = {
+                        navController.navigate(Routes.OVERLAY_STYLE) {
+                            popUpTo(Routes.HOME) { inclusive = false }
+                        }
+                    }
+                )
+
+                // Toggle — sugerir comentário após chamada rejeitada
+                androidx.compose.material3.Card(
+                    shape     = RoundedCornerShape(14.dp),
+                    colors    = androidx.compose.material3.CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = androidx.compose.material3.CardDefaults.cardElevation(0.dp),
+                    modifier  = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier          = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Box(
+                            modifier         = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(AccentBlue.copy(alpha = 0.10f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Forum, null,
+                                tint     = AccentBlue,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Sugerir comentário",
+                                color      = MaterialTheme.colorScheme.onBackground,
+                                fontSize   = 15.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                "Notificação quando rejeitas uma chamada rapidamente",
+                                color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize   = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        }
+                        androidx.compose.material3.Switch(
+                            checked         = suggestComment,
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        when {
+                                            notifPermission?.status?.isGranted == true -> {
+                                                // Permissão já concedida
+                                                suggestComment = true
+                                                OverlayPreferences.setSuggestComment(context, true)
+                                            }
+                                            notifPermission?.status?.shouldShowRationale == true -> {
+                                                // Pode pedir — utilizador ainda não recusou definitivamente
+                                                notifPermission.launchPermissionRequest()
+                                            }
+                                            else -> {
+                                                // Permanentemente bloqueada — abrir definições do sistema
+                                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                                }
+                                                context.startActivity(intent)
+                                            }
+                                        }
+                                    } else {
+                                        // Android < 13 — sem permissão explícita necessária
+                                        suggestComment = true
+                                        OverlayPreferences.setSuggestComment(context, true)
+                                    }
+                                } else {
+                                    // Desligar — sempre permitido
+                                    suggestComment = false
+                                    OverlayPreferences.setSuggestComment(context, false)
+                                }
+                            },
+                            colors = androidx.compose.material3.SwitchDefaults.colors(
+                                checkedThumbColor   = androidx.compose.ui.graphics.Color.White,
+                                checkedTrackColor   = AccentBlue,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        )
+                    }
+                }
+
+                // ── Secção Aplicação ──────────────────────────────────────────
+                Text(
+                    "Aplicação",
+                    color      = AccentBlue,
+                    fontSize   = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier   = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 4.dp)
+                )
+
+                SettingsRow(
+                    icon        = Icons.Default.Info,
+                    title       = "Sobre a aplicação",
+                    description = "Versão, privacidade e informações do CallRadar",
+                    onClick     = {
+                        navController.navigate(Routes.ABOUT) {
+                            popUpTo(Routes.HOME) { inclusive = false }
+                        }
+                    }
+                )
+
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
+// ─── Linha de definição reutilizável ─────────────────────────────────────────
+@Composable
+fun SettingsRow(
+    icon:        ImageVector,
+    title:       String,
+    description: String,
+    onClick:     () -> Unit
+) {
+    androidx.compose.material3.Card(
+        onClick   = onClick,
+        shape     = RoundedCornerShape(14.dp),
+        colors    = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = androidx.compose.material3.CardDefaults.cardElevation(0.dp),
+        modifier  = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier              = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                modifier         = Modifier
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(AccentBlue.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, tint = AccentBlue, modifier = Modifier.size(20.dp))
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    color      = MaterialTheme.colorScheme.onBackground,
+                    fontSize   = 15.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    description,
+                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize   = 12.sp,
+                    lineHeight = 16.sp
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight, null,
+                tint     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
