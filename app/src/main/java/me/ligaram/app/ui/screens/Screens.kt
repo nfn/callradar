@@ -1022,10 +1022,11 @@ fun SettingsScreen(navController: NavController) {
 
     fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val perm = notifPermission ?: return
         when {
-            notifPermission?.status?.isGranted == true -> { }
-            notifPermission?.status?.shouldShowRationale == true ->
-                notifPermission?.launchPermissionRequest()
+            perm.status.isGranted -> { }
+            perm.status.shouldShowRationale ->
+                perm.launchPermissionRequest()
             else -> {
                 val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                     putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
@@ -1139,13 +1140,14 @@ fun SettingsScreen(navController: NavController) {
                                 }
                                 if (it) {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        val perm = notifPermission
                                         when {
-                                            notifPermission?.status?.isGranted == true -> {
+                                            perm?.status?.isGranted == true -> {
                                                 suggestComment = true
                                                 OverlayPreferences.setSuggestComment(context, true)
                                             }
-                                            notifPermission?.status?.shouldShowRationale == true ->
-                                                notifPermission?.launchPermissionRequest()
+                                            perm?.status?.shouldShowRationale == true ->
+                                                perm.launchPermissionRequest()
                                             else -> requestNotificationPermission()
                                         }
                                     } else {
