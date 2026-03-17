@@ -23,6 +23,7 @@ object OverlayPreferences {
     private const val PREFS_NAME  = "overlay_prefs"
     private const val KEY_STYLE   = "overlay_style"
     private const val KEY_SUGGEST = "suggest_comment"
+    private const val KEY_NOTIF_ASKED = "notif_permission_asked"
 
     fun getStyle(context: Context): OverlayStyle =
         OverlayStyle.fromId(
@@ -50,5 +51,14 @@ object OverlayPreferences {
     fun setSuggestComment(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit { putBoolean(KEY_SUGGEST, enabled) }
+    }
+
+    fun wasNotificationPermissionAsked(context: Context): Boolean =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_NOTIF_ASKED, false)
+
+    fun markNotificationPermissionAsked(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit { putBoolean(KEY_NOTIF_ASKED, true) }
     }
 }
