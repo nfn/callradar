@@ -153,13 +153,17 @@ private const val ANIM_DURATION = 280
 private const val SLIDE_OFFSET  = 0.30f   // 30% da largura — elimina a faixa lateral
 
 @Composable
-fun AppNavigation(initialAddComment: String? = null) {
+fun AppNavigation(
+    initialAddComment: String? = null,
+    onInitialAddCommentConsumed: () -> Unit = {}
+) {
     val navController = rememberNavController()
 
     // Navegar para AddCommentScreen se a app foi aberta pela notificação de sugestão
     androidx.compose.runtime.LaunchedEffect(initialAddComment) {
         if (!initialAddComment.isNullOrBlank()) {
             navController.navigate("${Routes.ADD_COMMENT}/$initialAddComment")
+            onInitialAddCommentConsumed()
         }
     }
 
