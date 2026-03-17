@@ -393,28 +393,27 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
             }
         }
     ) { innerPadding ->
-        // Box com 3 tabs sempre compostas — nunca destruídas ao trocar tab
-        // (preserva listState, scroll e dados sem recriar os composables)
-        // zIndex garante que só a tab activa fica no topo e recebe toques
-        Box(modifier = Modifier.padding(innerPadding)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(if (selectedTab == 0) 1f else 0f)
-                    .graphicsLayer { alpha = if (selectedTab == 0) 1f else 0f }
-            ) { HomeScreen(rootNav) }
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(if (selectedTab == 1) 1f else 0f)
-                    .graphicsLayer { alpha = if (selectedTab == 1) 1f else 0f }
-            ) { CommunityHomeScreen(rootNav) }
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(if (selectedTab == 2) 1f else 0f)
-                    .graphicsLayer { alpha = if (selectedTab == 2) 1f else 0f }
-            ) { SettingsScreen(rootNav) }
+        AnimatedContent(
+            targetState = selectedTab,
+            modifier    = Modifier.padding(innerPadding),
+            transitionSpec = {
+                val toRight = targetState > initialState
+                (fadeIn(tween(ANIM_DURATION, easing = EaseInOut)) +
+                    slideInHorizontally(tween(ANIM_DURATION, easing = EaseOut)) {
+                        if (toRight) (it * SLIDE_OFFSET).toInt() else -(it * SLIDE_OFFSET).toInt()
+                    }) togetherWith
+                (fadeOut(tween(ANIM_DURATION, easing = EaseInOut)) +
+                    slideOutHorizontally(tween(ANIM_DURATION, easing = EaseIn)) {
+                        if (toRight) -(it * SLIDE_OFFSET).toInt() else (it * SLIDE_OFFSET).toInt()
+                    })
+            },
+            label = "tab_transition"
+        ) { tab ->
+            when (tab) {
+                0 -> HomeScreen(rootNav)
+                1 -> CommunityHomeScreen(rootNav)
+                2 -> SettingsScreen(rootNav)
+            }
         }
     }
 }
