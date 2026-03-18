@@ -701,7 +701,7 @@ fun PermissionRow(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                if (granted) Icons.Default.CheckCircle else icon,
+                icon,
                 null,
                 tint     = if (granted) AccentGreen else AccentBlue,
                 modifier = Modifier.size(18.dp)
