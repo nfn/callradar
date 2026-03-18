@@ -192,7 +192,7 @@ fun CommunityHomeScreen(navController: NavController) {
 
     val restoreScrollInitial =
         currentEntry?.savedStateHandle?.get<Boolean>("restore_scroll_position") == true &&
-                currentEntry.savedStateHandle.get<Pair<Int, Int>?>("scroll_position") != null
+            currentEntry.savedStateHandle.get<Pair<Int, Int>?>("scroll_position") != null
 
     var items        by remember { mutableStateOf<List<HomeComment>>(emptyList()) }
     var isLoading    by remember { mutableStateOf(false) }
