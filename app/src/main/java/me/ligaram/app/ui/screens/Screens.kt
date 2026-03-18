@@ -67,6 +67,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -85,6 +87,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -428,7 +431,7 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
             label = "tab_transition"
         ) { tab ->
             when (tab) {
-                0 -> HomeScreen(rootNav, permissionUiState)
+                0 -> HomeScreen(permissionUiState)
                 1 -> CommunityHomeScreen(rootNav)
                 2 -> SettingsScreen(rootNav, permissionUiState)
             }
@@ -450,7 +453,6 @@ fun AppBackground(content: @Composable () -> Unit) {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun HomeScreen(
-    navController: NavController,
     permissionUiState: PermissionUiState = rememberPermissionUiState()
 ) {
     val context = LocalContext.current
@@ -602,9 +604,11 @@ fun PermissionDialog(
     val notifPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
     } else null
-    val hasNotificationPermission =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                (notifPermission?.status?.isGranted == true)
+    val hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        notifPermission?.status?.isGranted == true
+    } else {
+        true
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -628,7 +632,6 @@ fun PermissionDialog(
                     title   = "Acesso às chamadas",
                     desc    = "Detecta chamadas recebidas em tempo real",
                     granted = phoneGranted || phonePermissions.allPermissionsGranted,
-                    buttonLabel = "Ativar",
                     onAction    = { phonePermissions.launchMultiplePermissionRequest() }
                 )
 
@@ -638,7 +641,6 @@ fun PermissionDialog(
                     title   = "Mostrar sobre outras apps",
                     desc    = "Exibe informação durante a chamada",
                     granted = overlayGranted,
-                    buttonLabel = "Ativar",
                     onAction    = {
                         context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()))
                     }
@@ -651,7 +653,6 @@ fun PermissionDialog(
                         title   = "Notificações de comentário",
                         desc    = "Recebe notificação para comentar chamadas muito curtas de números desconhecidos.",
                         granted = hasNotificationPermission,
-                        buttonLabel = "Ativar",
                         onAction    = {
                             notifPermission?.let {
                                 requestNotificationPermissionOrOpenSettings(context, it)
@@ -677,7 +678,6 @@ fun PermissionRow(
     title: String,
     desc: String,
     granted: Boolean,
-    buttonLabel: String,
     onAction: () -> Unit
 ) {
     Row(
@@ -766,8 +766,11 @@ private fun SettingsScreen(
         }
     } else null
 
-    val hasNotificationPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-        (notifPermission?.status?.isGranted == true)
+    val hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        notifPermission?.status?.isGranted == true
+    } else {
+        true
+    }
     val isToggleInactive = suggestComment && !hasNotificationPermission
 
     fun requestNotificationPermission() {
@@ -823,12 +826,12 @@ private fun SettingsScreen(
 
                 // Toggle — notificações de comentário após chamada rejeitada
                 // Quando ON mas sem permissão: card clicável para pedir permissão; switch em ON mas inativo
-                androidx.compose.material3.Card(
+                Card(
                     shape     = RoundedCornerShape(14.dp),
-                    colors    = androidx.compose.material3.CardDefaults.cardColors(
+                    colors    = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     ),
-                    elevation = androidx.compose.material3.CardDefaults.cardElevation(0.dp),
+                    elevation = CardDefaults.cardElevation(0.dp),
                     modifier  = Modifier.fillMaxWidth(),
                     onClick   = { if (isToggleInactive) requestNotificationPermission() }
                 ) {
@@ -869,7 +872,7 @@ private fun SettingsScreen(
                                 lineHeight = 16.sp
                             )
                         }
-                        androidx.compose.material3.Switch(
+                        Switch(
                             checked         = suggestComment,
                             onCheckedChange = {
                                 if (isToggleInactive) {
@@ -878,12 +881,12 @@ private fun SettingsScreen(
                                 }
                                 if (it) {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        val perm = notifPermission
+                                        val perm = notifPermission ?: return@Switch
                                         when {
-                                            perm?.status?.isGranted == true -> {
+                                            perm.status.isGranted -> {
                                                 permissionUiState.updateSuggestComment(true)
                                             }
-                                            perm?.status?.shouldShowRationale == true ->
+                                            perm.status.shouldShowRationale ->
                                                 perm.launchPermissionRequest()
                                             else -> requestNotificationPermission()
                                         }
@@ -895,8 +898,8 @@ private fun SettingsScreen(
                                 }
                             },
                             enabled = !isToggleInactive,
-                            colors = androidx.compose.material3.SwitchDefaults.colors(
-                                checkedThumbColor   = androidx.compose.ui.graphics.Color.White,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor   = Color.White,
                                 checkedTrackColor   = AccentBlue,
                                 uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
@@ -937,13 +940,13 @@ fun SettingsRow(
     description: String,
     onClick:     () -> Unit
 ) {
-    androidx.compose.material3.Card(
+    Card(
         onClick   = onClick,
         shape     = RoundedCornerShape(14.dp),
-        colors    = androidx.compose.material3.CardDefaults.cardColors(
+        colors    = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = androidx.compose.material3.CardDefaults.cardElevation(0.dp),
+        elevation = CardDefaults.cardElevation(0.dp),
         modifier  = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -1181,7 +1184,7 @@ fun AboutScreen(navController: NavController) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(perm, color = AccentBlue, fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                    fontFamily = FontFamily.Monospace)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(desc, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 12.sp, lineHeight = 18.sp)
