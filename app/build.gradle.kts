@@ -15,8 +15,8 @@ android {
         applicationId = "me.ligaram.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.0-beta.4"
+        versionCode = 5
+        versionName = "1.0.0-beta.5"
     }
 
     buildTypes {

@@ -45,7 +45,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PhoneInTalk
-import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -81,7 +80,6 @@ import me.ligaram.app.ui.theme.RiskLow
 import me.ligaram.app.ui.theme.RiskMedium
 import me.ligaram.app.ui.theme.TextPrimary
 import me.ligaram.app.ui.theme.TextSecondary
-import kotlin.math.abs
 import kotlin.math.roundToInt
 import me.ligaram.app.data.OverlayStyle as OStyle
 
