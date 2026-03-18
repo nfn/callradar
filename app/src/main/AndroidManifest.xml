@@ -10,7 +10,6 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -53,14 +52,9 @@
             </intent-filter>
         </receiver>
 
-        <!-- Boot receiver to restart service -->
-        <receiver
-            android:name=".service.BootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
+        <!-- Boot receiver removed: Android 15+ restricts starting foreground services
+             of type 'phoneCall' from BOOT_COMPLETED. The service is started on demand
+             by PhoneStateReceiver when a call arrives, or by MainActivity when opened. -->
 
         <!-- Foreground service (phoneCall: monitora chamadas e mostra overlay) -->
         <service

@@ -3,21 +3,19 @@ package me.ligaram.app.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 
+// This receiver is NOT registered in AndroidManifest.xml.
+//
+// Android 15+ restricts starting foreground services of type 'phoneCall' (and other
+// restricted types) from BOOT_COMPLETED broadcast receivers. The previous implementation
+// sent ACTION_START which triggered promoteToForegroundSafe() → startForeground(phoneCall),
+// violating this restriction.
+//
+// The service is now started on demand:
+//   - By PhoneStateReceiver when a phone call arrives (ACTION_INCOMING_CALL via startService)
+//   - By MainActivity when the user opens the app (ACTION_START → promoted to foreground)
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            Log.d("BootReceiver", "Boot completed - starting CallMonitorService")
-            val serviceIntent = Intent(context, CallMonitorService::class.java).apply {
-                action = CallMonitorService.ACTION_START
-            }
-            // Use startService, NOT startForegroundService - we're in background after boot
-            try {
-                context.startService(serviceIntent)
-            } catch (e: Exception) {
-                Log.e("BootReceiver", "Failed: ${e.message}")
-            }
-        }
+        // No-op: receiver is not registered in the manifest.
     }
 }
