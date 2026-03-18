@@ -192,7 +192,7 @@ fun CommunityHomeScreen(navController: NavController) {
 
     val restoreScrollInitial =
         currentEntry?.savedStateHandle?.get<Boolean>("restore_scroll_position") == true &&
-            currentEntry.savedStateHandle.get<Pair<Int, Int>?>("scroll_position") != null
+                currentEntry.savedStateHandle.get<Pair<Int, Int>?>("scroll_position") != null
 
     var items        by remember { mutableStateOf<List<HomeComment>>(emptyList()) }
     var isLoading    by remember { mutableStateOf(false) }
@@ -515,7 +515,25 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
 
             // Row 3
             if (!item.comment.isNullOrBlank()) {
-                Text(item.comment, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, lineHeight = 19.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                var displayComment by remember(item.comment) { mutableStateOf(item.comment) }
+                var truncationDone by remember(item.comment) { mutableStateOf(false) }
+                Text(
+                    text = displayComment,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    onTextLayout = { layout ->
+                        if (!truncationDone && layout.hasVisualOverflow) {
+                            val lineEnd = layout.getLineEnd(layout.lineCount - 1, visibleEnd = true)
+                            val visible = item.comment.substring(0, lineEnd).trimEnd()
+                            val wordBoundary = visible.lastIndexOf(' ')
+                            displayComment = (if (wordBoundary > 0) item.comment.substring(0, wordBoundary) else visible) + "\u2026"
+                            truncationDone = true
+                        }
+                    }
+                )
                 Spacer(Modifier.height(10.dp))
             }
 
