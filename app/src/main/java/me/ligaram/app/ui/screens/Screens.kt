@@ -335,17 +335,22 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
         currentEntry.savedStateHandle.get<Boolean>("force_community_tab") == true
 
     // Usa a flag já no 1o frame para evitar ver o tab Home por baixo durante a pop transition.
-    val selectedTabState = rememberSaveable(startTab, forceCommunityInitial) {
-        mutableIntStateOf(if (forceCommunityInitial) 1 else startTab)
-    }
+    // Sem forceCommunityInitial como chave: evita o reset duplo quando a flag é lida (true)
+    // e logo limpa (false), causando dois rebuilds de rememberSaveable com selectedTab = 0.
+    val selectedTabState = rememberSaveable { mutableIntStateOf(startTab) }
+    // Rastreia o tab anterior para que o back regresse ao tab de onde o utilizador veio.
+    val previousTabState = rememberSaveable { mutableIntStateOf(startTab) }
     val selectedTab = selectedTabState.intValue
 
     val forceCommunityTabFlow = currentEntry
         .savedStateHandle
         .getStateFlow("force_community_tab", false)
 
-    LaunchedEffect(forceCommunityInitial) {
+    // LaunchedEffect(Unit) corre uma vez por entrada na composição e captura
+    // forceCommunityInitial via closure, sem causar re-key no rememberSaveable.
+    LaunchedEffect(Unit) {
         if (forceCommunityInitial) {
+            selectedTabState.intValue = 1
             currentEntry.savedStateHandle.set("force_community_tab", false)
         }
     }
@@ -359,10 +364,10 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
         }
     }
 
-    // Botão/gesto back quando estamos no tab Comunidade ou Definições → volta ao tab Proteção
-    // Em qualquer tab → não sai da app (comportamento padrão do sistema)
+    // Back quando estamos no tab Comunidade ou Definições → volta ao tab anterior.
     androidx.activity.compose.BackHandler(enabled = selectedTab == 1 || selectedTab == 2) {
-        selectedTabState.intValue = 0
+        selectedTabState.intValue = previousTabState.intValue
+        previousTabState.intValue = 0
     }
 
     Scaffold(
@@ -374,7 +379,12 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
             ) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
-                    onClick  = { selectedTabState.intValue = 0 },
+                        onClick  = {
+                            if (selectedTab != 0) {
+                                previousTabState.intValue = selectedTab
+                                selectedTabState.intValue = 0
+                            }
+                        },
                     icon     = { Icon(Icons.Default.Shield, null) },
                     label    = { Text("Proteção") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -387,7 +397,12 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick  = { selectedTabState.intValue = 1 },
+                        onClick  = {
+                            if (selectedTab != 1) {
+                                previousTabState.intValue = selectedTab
+                                selectedTabState.intValue = 1
+                            }
+                        },
                     icon     = { Icon(Icons.Default.Forum, null) },
                     label    = { Text("Comunidade") },
                     colors   = NavigationBarItemDefaults.colors(
@@ -400,7 +415,12 @@ fun MainShell(rootNav: NavController, startTab: Int = 0) {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2,
-                    onClick  = { selectedTabState.intValue = 2 },
+                        onClick  = {
+                            if (selectedTab != 2) {
+                                previousTabState.intValue = selectedTab
+                                selectedTabState.intValue = 2
+                            }
+                        },
                     icon     = { Icon(Icons.Default.Settings, null) },
                     label    = { Text("Definições") },
                     colors   = NavigationBarItemDefaults.colors(
