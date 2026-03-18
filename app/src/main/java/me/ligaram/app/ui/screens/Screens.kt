@@ -635,7 +635,7 @@ fun PermissionDialog(
                     title   = "Acesso às chamadas",
                     desc    = "Detecta chamadas recebidas em tempo real",
                     granted = phoneGranted || phonePermissions.allPermissionsGranted,
-                    buttonLabel = "Conceder",
+                    buttonLabel = "Ativar",
                     onAction    = { phonePermissions.launchMultiplePermissionRequest() }
                 )
 
@@ -695,6 +695,7 @@ fun PermissionRow(
                 if (granted) AccentGreen.copy(alpha = 0.08f)
                 else MaterialTheme.colorScheme.surfaceVariant
             )
+            .clickable(enabled = !granted, onClick = onAction)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -715,20 +716,12 @@ fun PermissionRow(
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(title, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-            Text(desc,  color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, lineHeight = 15.sp)
+            Text(desc,  color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 17.sp)
         }
-        if (!granted) {
-            Button(
-                onClick = onAction,
-                shape   = RoundedCornerShape(8.dp),
-                colors  = ButtonDefaults.buttonColors(containerColor = AccentBlue),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                modifier = Modifier.height(32.dp)
-            ) {
-                Text(buttonLabel, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            }
+        if (granted) {
+            Icon(Icons.Default.CheckCircle, null, tint = AccentGreen, modifier = Modifier.size(18.dp))
         } else {
-            Text("✓ Ativo", color = AccentGreen, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Icon(Icons.Default.ChevronRight, null, tint = AccentBlue, modifier = Modifier.size(20.dp))
         }
     }
 }
