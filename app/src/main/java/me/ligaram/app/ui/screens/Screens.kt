@@ -202,16 +202,16 @@ private const val SLIDE_OFFSET  = 0.30f   // 30% da largura — elimina a faixa 
 
 @Composable
 fun AppNavigation(
-    initialAddComment: String? = null,
-    onInitialAddCommentConsumed: () -> Unit = {}
+    initialCommunityNumber: String? = null,
+    onInitialCommunityNumberConsumed: () -> Unit = {}
 ) {
     val navController = rememberNavController()
 
-    // Navegar para AddCommentScreen se a app foi aberta pela notificação de sugestão
-    androidx.compose.runtime.LaunchedEffect(initialAddComment) {
-        if (!initialAddComment.isNullOrBlank()) {
-            navController.navigate("${Routes.ADD_COMMENT}/$initialAddComment")
-            onInitialAddCommentConsumed()
+    // Navegar para CommunityNumberScreen se a app foi aberta pela notificação
+    androidx.compose.runtime.LaunchedEffect(initialCommunityNumber) {
+        if (!initialCommunityNumber.isNullOrBlank()) {
+            navController.navigate("${Routes.COMMUNITY_NUMBER}/$initialCommunityNumber")
+            onInitialCommunityNumberConsumed()
         }
     }
 

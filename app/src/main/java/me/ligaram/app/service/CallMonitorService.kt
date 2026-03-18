@@ -23,14 +23,21 @@ import me.ligaram.app.data.ApiClient
 import me.ligaram.app.data.ApiResult
 import me.ligaram.app.data.OverlayPreferences
 import me.ligaram.app.ui.screens.OverlayActivity
+import me.ligaram.app.ui.screens.formatPhoneNumber
 
 class CallMonitorService : Service() {
 
     private data class ActiveCallState(
         val number: String = "",
-        val overlayShownAt: Long = 0L,
+        val ringingStartedAt: Long = 0L,
+        val answeredAt: Long = 0L,
         val overlayHadResult: Boolean = false
     )
+
+    private enum class SuggestReason {
+        PING_CALL,
+        SHORT_ANSWERED_CALL
+    }
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var currentJob: Job? = null
@@ -44,15 +51,19 @@ class CallMonitorService : Service() {
     companion object {
         const val ACTION_START         = "me.ligaram.app.START"
         const val ACTION_INCOMING_CALL = "me.ligaram.app.INCOMING_CALL"
+        const val ACTION_CALL_ANSWERED = "me.ligaram.app.CALL_ANSWERED"
         const val ACTION_CALL_ENDED    = "me.ligaram.app.CALL_ENDED"
+        const val EXTRA_OPEN_COMMUNITY_NUMBER = "open_community_number"
         const val EXTRA_NUMBER         = "extra_number"
         const val EXTRA_CONTACT_NAME   = "extra_contact_name"
         const val NOTIFICATION_ID      = 1001
         const val NOTIFICATION_SUGGEST_ID = 1002
         const val CHANNEL_ID           = "ligaram_channel"
         const val CHANNEL_SUGGEST_ID   = "ligaram_suggest"
-        /** Chamadas com duração inferior a este valor (ms) sugerem comentário. */
-        private const val SUGGEST_THRESHOLD_MS = 8_000L
+        /** Ping call: toque curto sem atender. */
+        private const val PING_CALL_THRESHOLD_MS = 6_000L
+        /** Chamada automática curta: atendida e termina em poucos segundos. */
+        private const val SHORT_ANSWERED_THRESHOLD_MS = 4_000L
     }
 
     override fun onCreate() {
@@ -72,25 +83,51 @@ class CallMonitorService : Service() {
                 val contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)
                 handleIncomingCall(number, contactName)
             }
+            ACTION_CALL_ANSWERED -> {
+                markCallAnswered()
+            }
             ACTION_CALL_ENDED -> {
+                val endedAt = System.currentTimeMillis()
                 val endedCallState = synchronized(callStateLock) {
                     latestRequestGeneration += 1
                     activeCallState.also { activeCallState = ActiveCallState() }
                 }
-                val duration = if (endedCallState.overlayShownAt > 0L) {
-                    System.currentTimeMillis() - endedCallState.overlayShownAt
+                val ringingDuration = if (endedCallState.ringingStartedAt > 0L) {
+                    endedAt - endedCallState.ringingStartedAt
+                } else {
+                    Long.MAX_VALUE
+                }
+                val talkDuration = if (endedCallState.answeredAt > 0L) {
+                    endedAt - endedCallState.answeredAt
                 } else {
                     Long.MAX_VALUE
                 }
                 dismissOverlay()
-                // Notifica apenas se: chamada curta + número activo + API não devolveu resultado
-                // Se houve resultado (overlay com dados) o utilizador já tinha informação suficiente
-                if (
-                    duration < SUGGEST_THRESHOLD_MS &&
-                    endedCallState.number.isNotBlank() &&
-                    !endedCallState.overlayHadResult
-                ) {
-                    maybeSuggestComment(endedCallState.number)
+                // Notifica apenas chamadas desconhecidas sem resultado de API.
+                // Regras:
+                // 1) Ping call: toca <= 6s e nunca foi atendida.
+                // 2) Chamada automática curta: atendida e termina <= 4s após atender.
+                if (endedCallState.number.isNotBlank() && !endedCallState.overlayHadResult) {
+                    val reason = when {
+                        endedCallState.answeredAt <= 0L && ringingDuration <= PING_CALL_THRESHOLD_MS -> {
+                            SuggestReason.PING_CALL
+                        }
+
+                        endedCallState.answeredAt > 0L && talkDuration <= SHORT_ANSWERED_THRESHOLD_MS -> {
+                            SuggestReason.SHORT_ANSWERED_CALL
+                        }
+
+                        else -> null
+                    }
+
+                    if (reason != null) {
+                        maybeSuggestComment(
+                            number = endedCallState.number,
+                            reason = reason,
+                            ringingDurationMs = ringingDuration,
+                            talkDurationMs = talkDuration
+                        )
+                    }
                 }
             }
             // Boot/background starts: don't call startForeground, just stay alive
@@ -130,7 +167,7 @@ class CallMonitorService : Service() {
                 number = number,
                 // Número nos contactos → nunca mostrar notificação de sugestão
                 overlayHadResult = contactName != null,
-                overlayShownAt = System.currentTimeMillis()
+                ringingStartedAt = System.currentTimeMillis()
             )
             latestRequestGeneration
         }
@@ -175,6 +212,15 @@ class CallMonitorService : Service() {
                 }
             }
         }
+    }
+
+    private fun markCallAnswered() {
+        synchronized(callStateLock) {
+            if (activeCallState.number.isBlank()) return
+            if (activeCallState.answeredAt > 0L) return
+            activeCallState = activeCallState.copy(answeredAt = System.currentTimeMillis())
+        }
+        Log.d("CallMonitorService", "Call answered - started talk duration timer")
     }
 
     private fun showOverlay(
@@ -229,22 +275,39 @@ class CallMonitorService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    private fun maybeSuggestComment(number: String) {
+    private fun maybeSuggestComment(
+        number: String,
+        reason: SuggestReason,
+        ringingDurationMs: Long,
+        talkDurationMs: Long
+    ) {
         if (!OverlayPreferences.getSuggestComment(this)) return
 
-        // Abre a MainActivity com o número para navegar para AddCommentScreen
+        // Abre a MainActivity com o número para navegar para CommunityNumberScreen
         val openIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("open_add_comment", number)
+            putExtra(EXTRA_OPEN_COMMUNITY_NUMBER, number)
         }
         val pendingIntent = PendingIntent.getActivity(
             this, number.hashCode(), openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val (title, text) = when (reason) {
+            SuggestReason.PING_CALL -> {
+                "Chamada suspeita" to
+                    "O número ${formatPhoneNumber(number)} tocou por breves segundos. Veja se há comentários."
+            }
+
+            SuggestReason.SHORT_ANSWERED_CALL -> {
+                "Chamada curta" to
+                    "A chamada de ${formatPhoneNumber(number)} desligou ao atender. Quer partilhar a experiência?"
+            }
+        }
+
         val notification = NotificationCompat.Builder(this, CHANNEL_SUGGEST_ID)
-            .setContentTitle("Chamada de $number")
-            .setContentText("Queres partilhar a tua experiência com a comunidade?")
+            .setContentTitle(title)
+            .setContentText(text)
             .setSmallIcon(R.drawable.ic_menu_call)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
@@ -253,7 +316,10 @@ class CallMonitorService : Service() {
 
         getSystemService(NotificationManager::class.java)
             .notify(NOTIFICATION_SUGGEST_ID, notification)
-        Log.d("CallMonitorService", "Suggest comment notification sent for $number")
+        Log.d(
+            "CallMonitorService",
+            "Suggest notification sent for $number, reason=$reason, ringingMs=$ringingDurationMs, talkMs=$talkDurationMs"
+        )
     }
 
     private fun buildNotification(): Notification =

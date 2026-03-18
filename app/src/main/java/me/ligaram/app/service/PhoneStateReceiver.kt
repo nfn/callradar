@@ -70,7 +70,7 @@ class PhoneStateReceiver : BroadcastReceiver() {
                 if (lastState == TelephonyManager.EXTRA_STATE_OFFHOOK) return
                 lastState = state
                 lastRingingNumber = null
-                sendToService(context, CallMonitorService.ACTION_CALL_ENDED)
+                sendToService(context, CallMonitorService.ACTION_CALL_ANSWERED)
             }
         }
     }

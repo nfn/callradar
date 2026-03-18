@@ -16,22 +16,28 @@ import me.ligaram.app.ui.theme.LigaramTheme
 
 class MainActivity : ComponentActivity() {
 
-    // Número recebido pela notificação — observado pelo Compose para navegar para AddComment.
-    private val pendingAddComment = mutableStateOf<String?>(null)
+    // Número recebido pela notificação — observado pelo Compose para navegar para CommunityNumber.
+    private val pendingCommunityNumber = mutableStateOf<String?>(null)
+
+    private fun extractCommunityNumber(intent: Intent?): String? {
+        if (intent == null) return null
+        return intent.getStringExtra(CallMonitorService.EXTRA_OPEN_COMMUNITY_NUMBER)
+            ?: intent.getStringExtra("open_add_comment")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         ApiClient.init(this)
         CommunityApi.init(this)
-        // Verificar se foi aberta pela notificação de sugestão de comentário
-        pendingAddComment.value = intent?.getStringExtra("open_add_comment")
+        // Verificar se foi aberta pela notificação para abrir detalhe de número
+        pendingCommunityNumber.value = extractCommunityNumber(intent)
         enableEdgeToEdge()
         setContent {
             LigaramTheme {
                 AppNavigation(
-                    initialAddComment = pendingAddComment.value,
-                    onInitialAddCommentConsumed = { pendingAddComment.value = null }
+                    initialCommunityNumber = pendingCommunityNumber.value,
+                    onInitialCommunityNumberConsumed = { pendingCommunityNumber.value = null }
                 )
             }
         }
@@ -41,10 +47,10 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         // App já estava aberta — a notificação envia onNewIntent
-        intent.getStringExtra("open_add_comment")?.let { number ->
+        extractCommunityNumber(intent)?.let { number ->
             // Força transição de estado mesmo se o número for igual ao anterior.
-            pendingAddComment.value = null
-            pendingAddComment.value = number
+            pendingCommunityNumber.value = null
+            pendingCommunityNumber.value = number
         }
     }
 
