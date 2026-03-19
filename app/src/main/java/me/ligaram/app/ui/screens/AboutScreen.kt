@@ -61,7 +61,6 @@ import me.ligaram.app.ui.components.AppBackground
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
 import me.ligaram.app.ui.theme.AccentOrange
-import me.ligaram.app.ui.theme.TextSecondary
 
 @Composable
 fun AboutScreen(navController: NavController) {
@@ -92,7 +91,7 @@ fun AboutScreen(navController: NavController) {
                         onClick  = { navController.popBackStack() },
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = TextSecondary)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Box(

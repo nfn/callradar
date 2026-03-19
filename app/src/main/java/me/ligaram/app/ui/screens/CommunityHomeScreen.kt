@@ -84,6 +84,7 @@ import me.ligaram.app.data.LikeCache
 import me.ligaram.app.ui.components.AppBackground
 import me.ligaram.app.ui.navigation.Routes
 import me.ligaram.app.ui.theme.AccentBlue
+import me.ligaram.app.ui.theme.AccentGreen
 import me.ligaram.app.ui.theme.AccentOrange
 import me.ligaram.app.ui.theme.RiskHigh
 import me.ligaram.app.ui.theme.RiskLow
@@ -116,18 +117,18 @@ fun timeAgo(isoDate: String): String {
 fun classificationColor(c: String?): Color = when (c) {
     "Perigoso" -> RiskHigh
     "Suspeito" -> AccentOrange
-    "Incómodo" -> Color(0xFFF59E0B)
+    "Incómodo" -> AccentOrange
     "Seguro"   -> RiskLow
     "Neutro"   -> Color(0xFF94A3B8)
     else       -> Color(0xFF94A3B8)
 }
 
 fun starColor(rating: Int): Color = when (rating) {
-    1    -> Color(0xFFEF4444)
+    1    -> RiskHigh
     2    -> Color(0xFFF97316)
-    3    -> Color(0xFFF59E0B)
+    3    -> AccentOrange
     4    -> Color(0xFF84CC16)
-    5    -> Color(0xFF10B981)
+    5    -> AccentGreen
     else -> Color(0xFF94A3B8)
 }
 

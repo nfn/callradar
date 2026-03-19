@@ -420,8 +420,7 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
         "Risco Alto"        -> RiskHigh
         "Risco Médio"       -> AccentOrange
         "Risco Baixo"       -> RiskLow
-        "Risco Desconhecido" -> Color(0xFF94A3B8)
-        else                -> Color(0xFF94A3B8)
+        else                -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Card(

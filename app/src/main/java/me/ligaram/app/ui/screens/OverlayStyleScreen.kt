@@ -53,8 +53,6 @@ import me.ligaram.app.data.OverlayStyle
 import me.ligaram.app.ui.components.AppBackground
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
-import me.ligaram.app.ui.theme.NavyLight
-import me.ligaram.app.ui.theme.NavyMid
 import me.ligaram.app.ui.theme.RiskHigh
 
 // Dados fictícios para o preview
@@ -111,15 +109,12 @@ fun OverlayStyleScreen(navController: NavController) {
                     .height(300.dp)
                     .clip(RectangleShape)
                     .background(
-                        if (isSystemInDarkTheme())
-                            Brush.verticalGradient(listOf(NavyMid, NavyLight))
-                        else
-                            Brush.verticalGradient(
-                                listOf(
-                                    androidx.compose.ui.graphics.Color(0xFFCBD5E1),
-                                    androidx.compose.ui.graphics.Color(0xFFE2E8F0)
-                                )
+                        Brush.verticalGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                MaterialTheme.colorScheme.surface
                             )
+                        )
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -153,7 +148,7 @@ fun OverlayStyleScreen(navController: NavController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
 
