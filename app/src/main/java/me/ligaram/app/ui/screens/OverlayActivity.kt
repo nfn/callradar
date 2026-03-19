@@ -198,6 +198,7 @@ fun OverlayScreen(
     val context = LocalContext.current
     val style   = remember { OverlayPreferences.getStyle(context) }
     val color   = riskColor(risk)
+    val formattedNumber = remember(number) { formatPhoneNumber(number) }
 
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
@@ -240,15 +241,15 @@ fun OverlayScreen(
                         )
                 ) {
                     when (style) {
-                        OStyle.PILL        -> StylePill(number, risk, color, category, subcategory, contactName, onDismiss)
-                        OStyle.BANNER      -> StyleBanner(number, risk, color, category, subcategory, contactName, onDismiss)
-                        OStyle.BANNER_FULL -> StyleBannerFull(number, risk, color, category, subcategory, contactName, onDismiss)
-                        OStyle.CARD        -> StyleCard(number, risk, color, category, subcategory, contactName, onDismiss)
-                        OStyle.SPLIT       -> StyleSplit(number, risk, color, category, subcategory, contactName, onDismiss)
-                        OStyle.SCORE       -> StyleScore(number, risk, color, category, subcategory, contactName, onDismiss)
-                        OStyle.FLOATING    -> StyleFloatingChip(number, risk, color, category, subcategory, contactName, onDismiss)
-                        OStyle.MINIMAL     -> StyleMinimal(number, risk, color, category, subcategory, contactName, onDismiss)
-                        OStyle.BANNER_TOP  -> StyleBannerTop(number, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.PILL        -> StylePill(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.BANNER      -> StyleBanner(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.BANNER_FULL -> StyleBannerFull(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.CARD        -> StyleCard(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.SPLIT       -> StyleSplit(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.SCORE       -> StyleScore(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.FLOATING    -> StyleFloatingChip(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.MINIMAL     -> StyleMinimal(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
+                        OStyle.BANNER_TOP  -> StyleBannerTop(formattedNumber, risk, color, category, subcategory, contactName, onDismiss)
                     }
                 }
             }
