@@ -108,6 +108,9 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import me.ligaram.app.data.OverlayPreferences
 import me.ligaram.app.service.CallMonitorService
+import me.ligaram.app.ui.permissions.PermissionUiState
+import me.ligaram.app.ui.permissions.rememberPermissionUiState
+import me.ligaram.app.ui.permissions.requestNotificationPermissionOrOpenSettings
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
 import me.ligaram.app.ui.theme.AccentOrange
@@ -123,75 +126,6 @@ object Routes {
     const val COMMUNITY_NUMBER = "community_number"
     const val ADD_COMMENT      = "add_comment"
     const val OVERLAY_STYLE    = "overlay_style"
-}
-
-// ─── Permission helpers ───────────────────────────────────────────────────────
-fun hasPhonePermissions(context: android.content.Context): Boolean {
-    val perms = listOf(
-        Manifest.permission.READ_PHONE_STATE,
-        Manifest.permission.READ_CALL_LOG,
-        Manifest.permission.READ_CONTACTS
-    )
-    return perms.all {
-        context.checkSelfPermission(it) == android.content.pm.PackageManager.PERMISSION_GRANTED
-    }
-}
-
-fun hasOverlayPermission(context: android.content.Context): Boolean =
-    Settings.canDrawOverlays(context)
-
-fun allPermissionsGranted(context: android.content.Context): Boolean =
-    hasPhonePermissions(context) && hasOverlayPermission(context)
-
-class PermissionUiState(
-    private val context: android.content.Context
-) {
-    var phoneGranted by mutableStateOf(hasPhonePermissions(context))
-        private set
-    var overlayGranted by mutableStateOf(hasOverlayPermission(context))
-        private set
-    var suggestComment by mutableStateOf(OverlayPreferences.getSuggestComment(context))
-        private set
-
-    val allCoreGranted: Boolean
-        get() = phoneGranted && overlayGranted
-
-    fun refreshCorePermissions() {
-        phoneGranted = hasPhonePermissions(context)
-        overlayGranted = hasOverlayPermission(context)
-    }
-
-    fun updateSuggestComment(enabled: Boolean) {
-        suggestComment = enabled
-        OverlayPreferences.setSuggestComment(context, enabled)
-    }
-}
-
-@Composable
-fun rememberPermissionUiState(): PermissionUiState {
-    val context = LocalContext.current
-    return remember(context) { PermissionUiState(context) }
-}
-
-@OptIn(ExperimentalPermissionsApi::class)
-fun requestNotificationPermissionOrOpenSettings(
-    context: android.content.Context,
-    permissionState: PermissionState
-) {
-    if (permissionState.status.isGranted) return
-
-    val askedBefore = OverlayPreferences.wasNotificationPermissionAsked(context)
-    val shouldShowRationale = permissionState.status.shouldShowRationale
-    if (!askedBefore || shouldShowRationale) {
-        OverlayPreferences.markNotificationPermissionAsked(context)
-        permissionState.launchPermissionRequest()
-    } else {
-        // Já foi pedido antes e não há rationale: provavelmente bloqueado em definições.
-        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-        }
-        context.startActivity(intent)
-    }
 }
 
 // ─── Main Nav Host ────────────────────────────────────────────────────────────
