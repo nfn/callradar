@@ -46,6 +46,8 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import me.ligaram.app.ui.components.AppBackground
+import me.ligaram.app.ui.components.SettingsRow
 import me.ligaram.app.ui.permissions.PermissionUiState
 import me.ligaram.app.ui.permissions.rememberPermissionUiState
 import me.ligaram.app.ui.permissions.requestNotificationPermissionOrOpenSettings
@@ -236,57 +238,3 @@ fun SettingsScreen(
     }
 }
 
-@Composable
-fun SettingsRow(
-    icon:        ImageVector,
-    title:       String,
-    description: String,
-    onClick:     () -> Unit
-) {
-    Card(
-        onClick   = onClick,
-        shape     = RoundedCornerShape(14.dp),
-        colors    = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(0.dp),
-        modifier  = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier              = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Box(
-                modifier         = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(AccentBlue.copy(alpha = 0.10f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, null, tint = AccentBlue, modifier = Modifier.size(20.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    title,
-                    color      = MaterialTheme.colorScheme.onBackground,
-                    fontSize   = 15.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    description,
-                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize   = 12.sp,
-                    lineHeight = 16.sp
-                )
-            }
-            Icon(
-                Icons.Default.ChevronRight, null,
-                tint     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}

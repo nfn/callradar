@@ -81,6 +81,7 @@ import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.HomeComment
 import me.ligaram.app.data.LikeCache
+import me.ligaram.app.ui.components.AppBackground
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentOrange
 import me.ligaram.app.ui.theme.RiskHigh

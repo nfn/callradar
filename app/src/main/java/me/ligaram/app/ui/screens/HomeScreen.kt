@@ -52,6 +52,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.content.Intent
 import me.ligaram.app.service.CallMonitorService
+import me.ligaram.app.ui.components.AppBackground
+import me.ligaram.app.ui.components.HowItWorksStep
+import me.ligaram.app.ui.components.PermissionDialog
 import me.ligaram.app.ui.permissions.PermissionUiState
 import me.ligaram.app.ui.permissions.rememberPermissionUiState
 import me.ligaram.app.ui.theme.AccentBlue
@@ -189,29 +192,3 @@ fun HomeScreen(
     }
 }
 
-@Composable
-fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(AccentBlue.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, null, tint = AccentBlue, modifier = Modifier.size(22.dp))
-        }
-        Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 17.sp)
-        }
-    }
-}

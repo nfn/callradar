@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
+import me.ligaram.app.ui.components.AboutSection
+import me.ligaram.app.ui.components.AppBackground
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
 import me.ligaram.app.ui.theme.AccentOrange
@@ -395,11 +397,3 @@ fun AboutScreen(navController: NavController) {
     }
 }
 
-@Composable
-fun AboutSection(title: String, content: String) {
-    Column {
-        Text(title, color = MaterialTheme.colorScheme.onBackground, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(content, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 22.sp)
-    }
-}

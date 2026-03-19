@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import me.ligaram.app.data.OverlayPreferences
+import me.ligaram.app.ui.components.AppBackground
 import me.ligaram.app.data.OverlayStyle
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
