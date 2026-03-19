@@ -53,7 +53,7 @@ fun PermissionDialog(
 
     // Permissão opcional de notificações (Android 13+)
     val notifPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
+        rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
     } else null
     val hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         notifPermission?.status?.isGranted == true
@@ -68,13 +68,13 @@ fun PermissionDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Default.Shield, null, tint = AccentBlue, modifier = Modifier.size(24.dp))
-                Text("Ativar Proteção", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                Text("Permissões para Proteção", fontWeight = FontWeight.Bold, fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onBackground)
             }
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Ativa as permissões necessárias para que a app funcione corretamente:",
+                Text("Estas são as permissões necessárias para que a aplicação funcione corretamente.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
 
                 // ── Permissão 1: Chamadas ─────────────────────────────────────
@@ -101,8 +101,8 @@ fun PermissionDialog(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     PermissionRow(
                         icon    = Icons.Default.Notifications,
-                        title   = "Notificações de comentário",
-                        desc    = "Recebe notificação para comentar chamadas muito curtas de números desconhecidos.",
+                        title   = "Notificações de chamadas",
+                        desc    = "Notifica chamadas curtas e suspeitas",
                         granted = hasNotificationPermission,
                         onAction    = {
                             notifPermission?.let {

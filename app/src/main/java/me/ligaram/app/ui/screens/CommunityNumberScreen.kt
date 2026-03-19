@@ -71,7 +71,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.roundToInt
 import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.LikeCache
@@ -83,6 +82,7 @@ import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentOrange
 import me.ligaram.app.ui.theme.RiskHigh
 import me.ligaram.app.ui.theme.RiskLow
+import kotlin.math.roundToInt
 
 // PRÉ-PRODUÇÃO - [Bug] - popBackStack() em vez de navigate(COMMUNITY_HOME):
 // volta ao entry COMMUNITY_HOME já existente no backstack — o MainShell
@@ -222,7 +222,9 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 
             // ── Top bar ───────────────────────────────────────────────────────
             Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 48.dp, bottom = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 4.dp, end = 12.dp, top = 48.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { backToCommunityWithRestore() }) {
@@ -246,13 +248,18 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 
             // ── Número header card ────────────────────────────────────────────
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = RoundedCornerShape(16.dp),
                 colors   = CardDefaults.cardColors(containerColor = AccentBlue.copy(alpha = 0.08f))
             ) {
                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(
-                        modifier = Modifier.size(44.dp).clip(CircleShape).background(AccentBlue.copy(alpha = 0.15f)),
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(AccentBlue.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) { Icon(Icons.Default.Phone, null, tint = AccentBlue, modifier = Modifier.size(22.dp)) }
                     Spacer(Modifier.width(14.dp))
@@ -337,7 +344,9 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                 if (comments.isNotEmpty()) {
                                     item(key = "comments_header") {
                                         Row(
-                                            modifier          = Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 2.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 6.dp, bottom = 2.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                                         ) {
@@ -383,7 +392,9 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                     when {
                                         errorMsg != null && comments.isNotEmpty() -> {
                                             Row(
-                                                modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 12.dp),
                                                 verticalAlignment     = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
@@ -399,12 +410,22 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                             }
                                         }
                                         isLoading -> {
-                                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                            Box(
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
                                                 CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AccentBlue, strokeWidth = 2.dp)
                                             }
                                         }
                                         !hasMore -> {
-                                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                            Box(
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
                                                 Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                                             }
                                         }
@@ -418,7 +439,9 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                 // FAB sobre a lista
                 FloatingActionButton(
                     onClick        = { navController.navigate("${Routes.ADD_COMMENT}/$number") },
-                    modifier       = Modifier.align(Alignment.BottomEnd).padding(20.dp),
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(20.dp),
                     containerColor = AccentBlue,
                     contentColor   = Color.White,
                     shape          = RoundedCornerShape(16.dp)
@@ -658,7 +681,10 @@ fun NumberCommentCard(
                     modifier              = Modifier.weight(1f)
                 ) {
                     Box(
-                        modifier         = Modifier.size(36.dp).clip(CircleShape).background(classColor.copy(alpha = 0.15f)),
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(classColor.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         val initial = comment.name?.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
