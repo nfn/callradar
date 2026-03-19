@@ -71,6 +71,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.LikeCache
@@ -136,6 +137,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     var comments     by remember { mutableStateOf<List<NumberComment>>(emptyList()) }
     var analysis     by remember { mutableStateOf<NumberAnalysis?>(null) }
     var numberRating by remember { mutableStateOf<String?>(null) }
+    var numberViews  by remember { mutableStateOf<String?>(null) }
     var isLoading    by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var hasMore      by remember { mutableStateOf(true) }
@@ -151,6 +153,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
             comments     = emptyList()
             analysis     = null
             numberRating = null
+            numberViews  = null
             hasMore      = true
             nextCursor   = null
             notFound     = false
@@ -164,6 +167,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                 is CommunityResult.Success -> {
                     val page = result.data
                     numberRating = page.numberRating
+                    numberViews  = page.views
                     analysis     = page.analysis
                     comments     = if (cursor == null) page.data else comments + page.data
                     hasMore      = page.pagination.hasMore
@@ -262,10 +266,23 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                         )
                     }
                     if (!numberRating.isNullOrBlank() && numberRating != "null") {
+                        val ratingColor = numberRating
+                            ?.toFloatOrNull()
+                            ?.roundToInt()
+                            ?.coerceIn(1, 5)
+                            ?.let { starColor(it) }
+                            ?: MaterialTheme.colorScheme.onSurfaceVariant
+                        val viewsCount = numberViews?.toIntOrNull() ?: 0
+                        val viewsLabel = if (viewsCount == 1) "1 visita" else "$viewsCount visitas"
+
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("★ $numberRating", color = AccentOrange,
+                            Text("★ $numberRating", color = ratingColor,
                                 fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
-                            Text("avaliação", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                            Text(
+                                viewsLabel,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 12.sp
+                            )
                         }
                     }
                 }

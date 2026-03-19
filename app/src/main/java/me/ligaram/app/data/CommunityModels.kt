@@ -52,6 +52,7 @@ data class NumberComment(
 data class CommentsResponse(
     @SerializedName("number")        val number: String,
     @SerializedName("number_rating") val numberRating: String?,
+    @SerializedName("views")         val views: String?,
     @SerializedName("analysis")      val analysis: NumberAnalysis?,
     @SerializedName("data")          val data: List<NumberComment>,
     @SerializedName("pagination")    val pagination: Pagination
