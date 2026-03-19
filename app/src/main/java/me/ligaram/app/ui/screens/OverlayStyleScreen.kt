@@ -82,7 +82,7 @@ fun OverlayStyleScreen(navController: NavController) {
             Row(
                 modifier          = Modifier
                     .fillMaxWidth()
-                    .padding(start = 4.dp, end = 12.dp, top = 48.dp, bottom = 4.dp),
+                    .padding(start = 4.dp, end = 12.dp, top = 60.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.popBackStack() }) {
@@ -99,6 +99,8 @@ fun OverlayStyleScreen(navController: NavController) {
                         fontSize = 12.sp)
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
 
@@ -150,6 +152,8 @@ fun OverlayStyleScreen(navController: NavController) {
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
 

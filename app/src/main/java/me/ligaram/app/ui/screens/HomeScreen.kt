@@ -179,7 +179,7 @@ fun HomeScreen(
                 if (idx < 4) Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
