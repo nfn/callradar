@@ -10,8 +10,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import me.ligaram.app.data.ApiClient
 import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.service.CallMonitorService
+import me.ligaram.app.ui.navigation.AppNavigation
 import me.ligaram.app.ui.permissions.allPermissionsGranted
-import me.ligaram.app.ui.screens.AppNavigation
 import me.ligaram.app.ui.theme.LigaramTheme
 
 class MainActivity : ComponentActivity() {

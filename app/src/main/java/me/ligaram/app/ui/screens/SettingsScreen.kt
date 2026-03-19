@@ -48,6 +48,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import me.ligaram.app.ui.components.AppBackground
 import me.ligaram.app.ui.components.SettingsRow
+import me.ligaram.app.ui.navigation.Routes
 import me.ligaram.app.ui.permissions.PermissionUiState
 import me.ligaram.app.ui.permissions.rememberPermissionUiState
 import me.ligaram.app.ui.permissions.requestNotificationPermissionOrOpenSettings
