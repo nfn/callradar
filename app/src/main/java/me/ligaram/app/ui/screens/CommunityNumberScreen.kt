@@ -231,6 +231,8 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     modifier = Modifier.weight(1f))
             }
 
+            Spacer(modifier = Modifier.height(3.dp))
+
             // ── Search bar ────────────────────────────────────────────────────
             PhoneSearchBar(onSearch = { n ->
                 navController.navigate("${Routes.COMMUNITY_NUMBER}/$n") {
