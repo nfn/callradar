@@ -806,13 +806,13 @@ private fun SettingsScreen(
             Row(
                 modifier          = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 52.dp, bottom = 8.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 27.dp, bottom = 19.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     "Definições",
                     color      = MaterialTheme.colorScheme.onBackground,
-                    fontSize   = 26.sp,
+                    fontSize   = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     modifier   = Modifier.weight(1f)
                 )
@@ -832,7 +832,7 @@ private fun SettingsScreen(
                     color      = AccentBlue,
                     fontSize   = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier   = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
+                    modifier   = Modifier.padding(start = 4.dp, top = 0.dp, bottom = 4.dp)
                 )
 
                 SettingsRow(
