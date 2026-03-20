@@ -87,7 +87,7 @@ fun OverlayStyleScreen(navController: NavController) {
                         tint = MaterialTheme.colorScheme.onBackground)
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Estilo do overlay",
+                    Text("Estilo do aviso sobre chamadas",
                         color      = MaterialTheme.colorScheme.onBackground,
                         fontSize   = 20.sp,
                         fontWeight = FontWeight.Bold)

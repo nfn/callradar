@@ -201,7 +201,7 @@ fun AboutScreen(navController: NavController) {
                     Icons.Default.Bolt       to "Identificação em tempo real",
                     Icons.Default.Shield     to "Base de dados comunitária",
                     Icons.Default.Forum      to "Comunidade de reporte",
-                    Icons.Default.Visibility to "Overlay não intrusivo",
+                    Icons.Default.Visibility to "Aviso sobre chamadas não intrusivo",
                     Icons.Default.Notifications to "Notificação após chamada curta",
                     Icons.Default.BatteryFull to "Baixo consumo de bateria",
                     Icons.Default.Lock       to "Sem armazenamento de dados pessoais",
@@ -232,11 +232,11 @@ fun AboutScreen(navController: NavController) {
                     Triple(Icons.Default.History, "READ_CALL_LOG",
                         "Permite ler o número de telefone da chamada recebida. Este número é enviado à API do ligaram.me apenas para consulta de risco - nunca é armazenado localmente."),
                     Triple(Icons.Default.Contacts, "READ_CONTACTS",
-                        "Utilizado para mostrar o nome do contacto no overlay, caso o número já exista na agenda. Nenhum dado de contacto é transmitido ou armazenado."),
+                        "Utilizado para mostrar o nome do contacto no aviso sobre chamadas, caso o número já exista na agenda. Nenhum dado de contacto é transmitido ou armazenado."),
                     Triple(Icons.Default.Notifications, "POST_NOTIFICATIONS",
                         "Permite apresentar notificações com sugestão de comentário após chamadas curtas de números sem dados na base de dados. Esta permissão é opcional e pode ser desativada nas Definições da app."),
                     Triple(Icons.Default.Layers, "SYSTEM_ALERT_WINDOW",
-                        "Necessário para apresentar o overlay de identificação sobre a interface de chamada do sistema. Sem esta permissão, a informação de risco não pode ser exibida durante a chamada.")
+                        "Necessário para apresentar o aviso de identificação sobre a interface de chamada do sistema. Sem esta permissão, a informação de risco não pode ser exibida durante a chamada.")
                 ).forEach { (icon, perm, desc) ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),

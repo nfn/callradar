@@ -171,7 +171,7 @@ fun HomeScreen(
             listOf(
                 Triple(Icons.Default.PhoneInTalk, "Chamada recebida",        "A app deteta automaticamente quem está a ligar"),
                 Triple(Icons.Default.Search,       "Consulta a base de dados","O número é verificado em tempo real no ligaram.me"),
-                Triple(Icons.Default.Layers,       "Overlay apresentado",     "Se houver resultado, mostramos risco e categoria sobre o ecrã"),
+                Triple(Icons.Default.Layers,       "Aviso sobre chamadas apresentado",     "Se houver resultado, mostramos risco e categoria sobre o ecrã"),
                 Triple(Icons.Default.Block,        "Proteja-se",              "Decida com informação se atende ou rejeita a chamada"),
                 Triple(Icons.Default.Notifications,"Notificação de comentário",  "Após chamadas curtas de números desconhecidos, convidamos a partilhar a experiência")
             ).forEachIndexed { idx, (icon, title, desc) ->

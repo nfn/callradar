@@ -107,9 +107,9 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
 
-                // ── Secção Overlay ────────────────────────────────────────────
+                // ── Secção Sobreposição ───────────────────────────────────────
                 Text(
-                    "Overlay",
+                    "Sobreposição",
                     color      = AccentBlue,
                     fontSize   = 12.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -118,8 +118,8 @@ fun SettingsScreen(
 
                 SettingsRow(
                     icon        = Icons.Default.Layers,
-                    title       = "Estilo do overlay",
-                    description = "Escolhe como o overlay é apresentado durante as chamadas",
+                    title       = "Estilo do aviso sobre chamadas",
+                    description = "Escolhe como o aviso sobre chamadas é apresentado durante as chamadas",
                     onClick     = {
                         navController.navigate(Routes.OVERLAY_STYLE)
                     }
