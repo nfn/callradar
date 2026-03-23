@@ -13,14 +13,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import me.ligaram.app.data.OverlayPreferences
 import me.ligaram.app.ui.screens.AboutScreen
 import me.ligaram.app.ui.screens.AddCommentScreen
 import me.ligaram.app.ui.screens.CommunityNumberScreen
 import me.ligaram.app.ui.screens.OverlayStyleScreen
 import me.ligaram.app.ui.screens.SettingsScreen
+import me.ligaram.app.ui.screens.WalkthroughScreen
 
 @Composable
 fun AppNavigation(
@@ -28,6 +31,9 @@ fun AppNavigation(
     onInitialCommunityNumberConsumed: () -> Unit = {}
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val shouldShowWalkthrough =
+        !OverlayPreferences.wasWalkthroughSeen(context) && initialCommunityNumber.isNullOrBlank()
 
     // Navegar para CommunityNumberScreen se a app foi aberta pela notificação
     LaunchedEffect(initialCommunityNumber) {
@@ -37,13 +43,32 @@ fun AppNavigation(
         }
     }
 
-    // A app arranca sempre no HOME - as permissões são opcionais e activadas
-    // a partir do status card da tab Proteção.
+    // Arranca no walkthrough apenas na primeira instalação. Se abriu por
+    // notificação, mantém o fluxo direto para não bloquear a navegação de detalhe.
     NavHost(
         navController    = navController,
-        startDestination = Routes.HOME,
+        startDestination = if (shouldShowWalkthrough) Routes.WALKTHROUGH else Routes.HOME,
         modifier         = Modifier.background(MaterialTheme.colorScheme.background)
     ) {
+        composable(Routes.WALKTHROUGH,
+            enterTransition = {
+                fadeIn(tween(ANIM_DURATION, easing = EaseInOut))
+            },
+            exitTransition = {
+                fadeOut(tween(ANIM_DURATION, easing = EaseInOut))
+            }
+        ) {
+            WalkthroughScreen(
+                onFinish = {
+                    OverlayPreferences.markWalkthroughSeen(context)
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.WALKTHROUGH) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
         // HOME e COMMUNITY_HOME são o mesmo shell - apenas diferem no tab inicial
         composable(Routes.HOME,
             enterTransition = {

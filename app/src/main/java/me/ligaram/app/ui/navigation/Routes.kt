@@ -3,6 +3,7 @@ package me.ligaram.app.ui.navigation
 // ─── Navigation Routes ────────────────────────────────────────────────────────
 object Routes {
     const val HOME             = "home"
+    const val WALKTHROUGH      = "walkthrough"
     const val ABOUT            = "about"
     const val SETTINGS         = "settings"
     const val COMMUNITY_HOME   = "community_home"

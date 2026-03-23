@@ -24,6 +24,7 @@ object OverlayPreferences {
     private const val KEY_STYLE   = "overlay_style"
     private const val KEY_SUGGEST = "suggest_comment"
     private const val KEY_NOTIF_ASKED = "notif_permission_asked"
+    private const val KEY_WALKTHROUGH_SEEN = "walkthrough_seen"
 
     fun getStyle(context: Context): OverlayStyle =
         OverlayStyle.fromId(
@@ -60,5 +61,14 @@ object OverlayPreferences {
     fun markNotificationPermissionAsked(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit { putBoolean(KEY_NOTIF_ASKED, true) }
+    }
+
+    fun wasWalkthroughSeen(context: Context): Boolean =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_WALKTHROUGH_SEEN, false)
+
+    fun markWalkthroughSeen(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit { putBoolean(KEY_WALKTHROUGH_SEEN, true) }
     }
 }
