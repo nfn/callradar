@@ -333,7 +333,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                                         ) {
                                             Icon(Icons.Default.Business, null,
-                                                tint     = AccentBlue,
+                                                tint     = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier.size(16.dp))
                                             Text(item.entity,
                                                 color    = MaterialTheme.colorScheme.onBackground,
