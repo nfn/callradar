@@ -100,10 +100,10 @@ fun AboutScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(14.dp))
                     Text("CallRadar",
                         color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                        style = MaterialTheme.typography.headlineMedium)
                     Text("por ligaram.me",
                         color = AccentBlue,
-                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(4.dp))
                     // PRÉ-PRODUÇÃO - [Melhoria] - versão lida dinamicamente do manifesto
                     val versionName = remember {
@@ -112,7 +112,7 @@ fun AboutScreen(navController: NavController) {
                     }
                     Text("v$versionName",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp)
+                        style = MaterialTheme.typography.labelMedium)
                     Spacer(modifier = Modifier.height(12.dp))
                     // Link para o site
                     OutlinedButton(
@@ -163,13 +163,13 @@ fun AboutScreen(navController: NavController) {
                             Spacer(Modifier.width(8.dp))
                             Text("Comunidade ligaram.me",
                                 color = AccentBlue,
-                                fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                style = MaterialTheme.typography.titleSmall)
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             "O CallRadar é também a aplicação oficial da comunidade de visitantes do ligaram.me. Pesquise números, consulte comentários de outros utilizadores, reporte chamadas suspeitas e ajude a proteger mais pessoas.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 13.sp, lineHeight = 20.sp
+                            style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(
@@ -190,7 +190,7 @@ fun AboutScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Features
-                Text("Funcionalidades", color = MaterialTheme.colorScheme.onBackground, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text("Funcionalidades", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(10.dp))
                 listOf(
                     Icons.Default.Bolt       to "Identificação em tempo real",
@@ -210,7 +210,7 @@ fun AboutScreen(navController: NavController) {
                     ) {
                         Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
 
@@ -218,7 +218,7 @@ fun AboutScreen(navController: NavController) {
 
                 // ── Permissões ────────────────────────────────────────────────
                 Text("Permissões utilizadas", color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(10.dp))
 
                 listOf(
@@ -250,12 +250,13 @@ fun AboutScreen(navController: NavController) {
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(perm, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp,
+                                Text(perm, color = MaterialTheme.colorScheme.onSurface,
+                                    style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
                                     fontFamily = FontFamily.Monospace)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(desc, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 12.sp, lineHeight = 18.sp)
+                                    style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -277,14 +278,14 @@ fun AboutScreen(navController: NavController) {
                                 modifier = Modifier.size(22.dp))
                             Spacer(Modifier.width(8.dp))
                             Text("Funcionamento em segundo plano",
-                                color      = AccentOrange,
-                                fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                color = AccentOrange,
+                                style = MaterialTheme.typography.titleSmall)
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             "Para garantir que o CallRadar funciona corretamente em todas as chamadas, recomendamos duas configurações no Android:",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 13.sp, lineHeight = 20.sp
+                            style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         // Item 1
@@ -302,12 +303,12 @@ fun AboutScreen(navController: NavController) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Desativar otimização de bateria",
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                 Spacer(Modifier.height(2.dp))
                                 Text(
                                     "Aceda a Definições → Bateria → Otimização de bateria e exclua o CallRadar. Alguns fabricantes (Xiaomi, Samsung, Huawei) podem encerrar o serviço de deteção de chamadas se esta opção estiver ativa.",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 12.sp, lineHeight = 18.sp
+                                    style = MaterialTheme.typography.bodySmall
                                 )
                             }
                         }
@@ -327,12 +328,12 @@ fun AboutScreen(navController: NavController) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Excluir da lista de apps não utilizadas",
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                 Spacer(Modifier.height(2.dp))
                                 Text(
                                     "Alguns sistemas Android desativam automaticamente apps que não são abertas com frequência. Aceda a Definições → Apps → CallRadar e desative a opção \"Pausar app se não usada\" ou equivalente.",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 12.sp, lineHeight = 18.sp
+                                    style = MaterialTheme.typography.bodySmall
                                 )
                             }
                         }
@@ -351,12 +352,12 @@ fun AboutScreen(navController: NavController) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.PrivacyTip, null, tint = AccentGreen, modifier = Modifier.size(22.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Privacidade", color = AccentGreen, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text("Privacidade", color = AccentGreen, style = MaterialTheme.typography.titleSmall)
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             "A aplicação envia apenas o número da chamada recebida à API do ligaram.me para consulta. Nenhum dado pessoal, histórico de chamadas ou informação de contacto é armazenado ou transmitido.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, lineHeight = 20.sp
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
@@ -381,7 +382,7 @@ fun AboutScreen(navController: NavController) {
                     Text(
                         "© 2026 · ligaram.me · Todos os direitos reservados",
                         color     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                        fontSize  = 11.sp,
+                        style     = MaterialTheme.typography.labelMedium,
                         textAlign = TextAlign.Center
                     )
                 }

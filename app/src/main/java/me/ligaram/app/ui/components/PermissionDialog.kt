@@ -71,14 +71,14 @@ fun PermissionDialog(
                 Icon(Icons.Default.Shield, null,
                     tint     = if (phoneGranted && overlayGranted) AccentGreen else AccentOrange,
                     modifier = Modifier.size(24.dp))
-                Text("Permissões para Proteção", fontWeight = FontWeight.Bold, fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onBackground)
+                Text("Permissões para Proteção", color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.titleMedium)
             }
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Estas são as permissões necessárias para que a aplicação funcione corretamente.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
 
                 // ── Permissão 1: Chamadas ─────────────────────────────────────
                 PermissionRow(

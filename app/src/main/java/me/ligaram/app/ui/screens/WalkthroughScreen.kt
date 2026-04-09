@@ -178,11 +178,10 @@ fun WalkthroughScreen(
                         Spacer(modifier = Modifier.height(22.dp))
 
                         Text(
-                            text       = page.title,
-                            color      = MaterialTheme.colorScheme.onSurface,
-                            fontSize   = 22.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            textAlign  = TextAlign.Center
+                            text      = page.title,
+                            color     = MaterialTheme.colorScheme.onSurface,
+                            style     = MaterialTheme.typography.titleLarge,
+                            textAlign = TextAlign.Center
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -190,8 +189,7 @@ fun WalkthroughScreen(
                         Text(
                             text      = page.description,
                             color     = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize  = 14.sp,
-                            lineHeight = 20.sp,
+                            style     = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center
                         )
 
@@ -223,10 +221,9 @@ fun WalkthroughScreen(
                                         )
                                     }
                                     Text(
-                                        text     = text,
-                                        color    = MaterialTheme.colorScheme.onSurface,
-                                        fontSize = 14.sp,
-                                        lineHeight = 18.sp
+                                        text  = text,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        style = MaterialTheme.typography.bodyLarge
                                     )
                                 }
                             }

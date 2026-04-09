@@ -109,10 +109,10 @@ fun HomeScreen(
         ) {
             LigaramLogo(size = 72.dp)
             Spacer(modifier = Modifier.height(20.dp))
-            Text("CallRadar", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-            Text("por ligaram.me", color = AccentBlue, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text("CallRadar", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineMedium)
+            Text("por ligaram.me", color = AccentBlue, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Proteção contra chamadas indesejadas", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, textAlign = TextAlign.Center)
+            Text("Proteção contra chamadas indesejadas", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
 
             Spacer(modifier = Modifier.height(36.dp))
 
@@ -140,16 +140,16 @@ fun HomeScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             if (allGood) "Proteção ativa" else "Proteção inativa",
-                            color      = if (allGood) AccentGreen else AccentOrange,
-                            fontWeight = FontWeight.Bold, fontSize = 15.sp
+                            color = if (allGood) AccentGreen else AccentOrange,
+                            style = MaterialTheme.typography.titleSmall
                         )
                         Text(
                             if (allGood)
                                 "Chamadas recebidas serão identificadas automaticamente · Toca para rever as permissões"
                             else
                                 "Toque aqui para ativar a identificação de chamadas",
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 13.sp
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                     if (!allGood) {
@@ -164,7 +164,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text("Como funciona", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+            Text("Como funciona", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(14.dp))
 

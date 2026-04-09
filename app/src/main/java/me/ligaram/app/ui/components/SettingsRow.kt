@@ -21,9 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 @Composable
 fun SettingsRow(
     icon:        ImageVector,
@@ -59,15 +57,13 @@ fun SettingsRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     title,
-                    color      = MaterialTheme.colorScheme.onBackground,
-                    fontSize   = 15.sp,
-                    fontWeight = FontWeight.SemiBold
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.titleSmall
                 )
                 Text(
                     description,
-                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize   = 12.sp,
-                    lineHeight = 16.sp
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
             Icon(

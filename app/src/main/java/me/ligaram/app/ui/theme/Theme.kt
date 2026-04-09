@@ -107,6 +107,6 @@ fun LigaramTheme(
     val colorScheme   = if (darkTheme) DarkColorScheme   else LightColorScheme
 
     CompositionLocalProvider(LocalLigaramColors provides ligaramColors) {
-        MaterialTheme(colorScheme = colorScheme, content = content)
+        MaterialTheme(colorScheme = colorScheme, typography = LigaramTypography, content = content)
     }
 }

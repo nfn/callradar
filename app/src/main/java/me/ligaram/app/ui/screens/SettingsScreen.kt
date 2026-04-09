@@ -110,10 +110,9 @@ fun SettingsScreen(
                 // ── Secção Sobreposição ───────────────────────────────────────
                 Text(
                     "Sobreposição",
-                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize   = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier   = Modifier.padding(start = 4.dp, top = 0.dp, bottom = 4.dp)
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style    = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(start = 4.dp, top = 0.dp, bottom = 4.dp)
                 )
 
                 SettingsRow(
@@ -159,18 +158,16 @@ fun SettingsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 "Notificações de comentário",
-                                color      = MaterialTheme.colorScheme.onBackground,
-                                fontSize   = 15.sp,
-                                fontWeight = FontWeight.SemiBold
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.titleSmall
                             )
                             Text(
                                 if (isToggleInactive)
                                     "As notificações estão desativadas no sistema. Toque para ativar."
                                 else
                                     "Notificação após chamada curta, que pode ser sinal de spam",
-                                color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize   = 12.sp,
-                                lineHeight = 16.sp
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                         Switch(
@@ -212,10 +209,9 @@ fun SettingsScreen(
                 // ── Secção Aplicação ──────────────────────────────────────────
                 Text(
                     "Aplicação",
-                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize   = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier   = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 4.dp)
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style    = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 4.dp)
                 )
 
                 SettingsRow(
