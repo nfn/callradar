@@ -63,7 +63,7 @@ fun WalkthroughScreen(
                     Icon(
                         imageVector = Icons.Default.PhoneInTalk,
                         contentDescription = null,
-                        tint = AccentBlue,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(52.dp)
                     )
                 }
@@ -80,7 +80,7 @@ fun WalkthroughScreen(
                     Icon(
                         imageVector = Icons.Default.Notifications,
                         contentDescription = null,
-                        tint = AccentBlue,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(52.dp)
                     )
                 }
@@ -97,7 +97,7 @@ fun WalkthroughScreen(
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = AccentBlue,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(52.dp)
                     )
                 }

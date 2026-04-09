@@ -208,7 +208,7 @@ fun AboutScreen(navController: NavController) {
                             .padding(vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(icon, null, tint = AccentBlue, modifier = Modifier.size(20.dp))
+                        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                     }
@@ -243,14 +243,14 @@ fun AboutScreen(navController: NavController) {
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(AccentBlue.copy(alpha = 0.12f)),
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(icon, null, tint = AccentBlue, modifier = Modifier.size(18.dp))
+                                Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(perm, color = AccentBlue, fontSize = 12.sp,
+                                Text(perm, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     fontFamily = FontFamily.Monospace)
                                 Spacer(modifier = Modifier.height(4.dp))

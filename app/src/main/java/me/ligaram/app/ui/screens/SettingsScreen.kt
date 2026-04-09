@@ -110,7 +110,7 @@ fun SettingsScreen(
                 // ── Secção Sobreposição ───────────────────────────────────────
                 Text(
                     "Sobreposição",
-                    color      = AccentBlue,
+                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize   = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier   = Modifier.padding(start = 4.dp, top = 0.dp, bottom = 4.dp)
@@ -212,7 +212,7 @@ fun SettingsScreen(
                 // ── Secção Aplicação ──────────────────────────────────────────
                 Text(
                     "Aplicação",
-                    color      = AccentBlue,
+                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize   = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier   = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 4.dp)
