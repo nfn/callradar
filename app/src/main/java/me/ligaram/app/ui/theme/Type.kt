@@ -14,24 +14,24 @@ import me.ligaram.app.R
 // Um único ficheiro TTF cobre todos os pesos via FontVariation
 
 @OptIn(ExperimentalTextApi::class)
-val InterFontFamily = FontFamily(
+val DMSansFontFamily = FontFamily(
     Font(
-        resId = R.font.inter_variable,
+        resId = R.font.dm_sans_variable,
         weight = FontWeight.Normal,
         variationSettings = FontVariation.Settings(FontVariation.weight(400))
     ),
     Font(
-        resId = R.font.inter_variable,
+        resId = R.font.dm_sans_variable,
         weight = FontWeight.SemiBold,
         variationSettings = FontVariation.Settings(FontVariation.weight(600))
     ),
     Font(
-        resId = R.font.inter_variable,
+        resId = R.font.dm_sans_variable,
         weight = FontWeight.Bold,
         variationSettings = FontVariation.Settings(FontVariation.weight(700))
     ),
     Font(
-        resId = R.font.inter_variable,
+        resId = R.font.dm_sans_variable,
         weight = FontWeight.ExtraBold,
         variationSettings = FontVariation.Settings(FontVariation.weight(800))
     ),
@@ -39,18 +39,18 @@ val InterFontFamily = FontFamily(
 
 // ── Ponto de troca único ──────────────────────────────────────────────────────
 // Para mudar de fonte ou reverter para o sistema, alterar apenas esta linha:
-//   Inter:   private val AppFontFamily = InterFontFamily
+//   Inter:   private val AppFontFamily = DMSansFontFamily
 //   Sistema: private val AppFontFamily = FontFamily.Default
 @OptIn(ExperimentalTextApi::class)
-private val AppFontFamily = InterFontFamily
+private val AppFontFamily = DMSansFontFamily
 
 // ── Escala tipográfica ────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalTextApi::class)
 internal fun buildTypography(f: FontFamily) = Typography(
-    headlineMedium = TextStyle(fontFamily = f, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold),
-    headlineSmall  = TextStyle(fontFamily = f, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold),
-    titleLarge     = TextStyle(fontFamily = f, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold),
+    headlineMedium = TextStyle(fontFamily = f, fontSize = 28.sp, fontWeight = FontWeight.Bold),
+    headlineSmall  = TextStyle(fontFamily = f, fontSize = 20.sp, fontWeight = FontWeight.Bold),
+    titleLarge     = TextStyle(fontFamily = f, fontSize = 22.sp, fontWeight = FontWeight.Bold),
     titleMedium    = TextStyle(fontFamily = f, fontSize = 18.sp, fontWeight = FontWeight.Bold),
     titleSmall     = TextStyle(fontFamily = f, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
     bodyLarge      = TextStyle(fontFamily = f, fontSize = 14.sp, fontWeight = FontWeight.Normal, lineHeight = 20.sp),
