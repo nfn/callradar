@@ -71,12 +71,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.ligaram.app.BuildConfig
 import me.ligaram.app.data.CommunityApi
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.LikeCache
 import me.ligaram.app.data.NumberAnalysis
 import me.ligaram.app.data.NumberComment
+import me.ligaram.app.data.NumberFeedItem
+import me.ligaram.app.data.withAdSlots
 import me.ligaram.app.ui.components.AppBackground
+import me.ligaram.app.ui.components.NativeAdCard
 import me.ligaram.app.ui.navigation.Routes
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentOrange
@@ -135,6 +139,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     BackHandler { backToCommunityWithRestore() }
 
     var comments     by remember { mutableStateOf<List<NumberComment>>(emptyList()) }
+    val feedItems    by remember { derivedStateOf { comments.withAdSlots(every = 4) } }
     var analysis     by remember { mutableStateOf<NumberAnalysis?>(null) }
     var numberRating by remember { mutableStateOf<String?>(null) }
     var numberViews  by remember { mutableStateOf<String?>(null) }
@@ -365,27 +370,33 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                     }
                                 }
 
-                                items(comments, key = { it.id }) { comment ->
-                                    NumberCommentCard(
-                                        comment        = comment,
-                                        number         = number,
-                                        onLikeToggled  = { id, isLiked, newCount ->
-                                            // Actualiza o estado local desta screen
-                                            comments = comments.map {
-                                                if (it.id == id) it.copy(likes = newCount) else it
-                                            }
-                                            // PRÉ-PRODUÇÃO - [Melhoria] - escreve no LikeCache partilhado
-                                            // O CommunityHomeScreen lê directamente deste cache via
-                                            // LikeCache.getLikes() — sem savedStateHandle, sem re-navegação
-                                            LikeCache.update(id, isLiked, newCount)
-                                            // também avisamos o HomeScreen para trocar o número quando
-                                            // regressar, caso o cache não seja suficiente ou a lista seja
-                                            // recriada
-                                            navController.previousBackStackEntry
-                                                ?.savedStateHandle
-                                                ?.set("likes_update", id to newCount)
+                                items(feedItems, key = { feedItem ->
+                                    when (feedItem) {
+                                        is NumberFeedItem.Comment -> "c_${feedItem.data.id}"
+                                        is NumberFeedItem.AdSlot  -> "ad_${feedItem.slotIndex}"
+                                    }
+                                }) { feedItem ->
+                                    when (feedItem) {
+                                        is NumberFeedItem.AdSlot -> NativeAdCard(
+                                            adUnitId = BuildConfig.ADMOB_NATIVE_AD_UNIT_ID
+                                        )
+                                        is NumberFeedItem.Comment -> {
+                                            val comment = feedItem.data
+                                            NumberCommentCard(
+                                                comment        = comment,
+                                                number         = number,
+                                                onLikeToggled  = { id, isLiked, newCount ->
+                                                    comments = comments.map {
+                                                        if (it.id == id) it.copy(likes = newCount) else it
+                                                    }
+                                                    LikeCache.update(id, isLiked, newCount)
+                                                    navController.previousBackStackEntry
+                                                        ?.savedStateHandle
+                                                        ?.set("likes_update", id to newCount)
+                                                }
+                                            )
                                         }
-                                    )
+                                    }
                                 }
 
                                 item {

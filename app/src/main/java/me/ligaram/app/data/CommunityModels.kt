@@ -87,18 +87,45 @@ data class LikeResponse(
     @SerializedName("likes") val likes: Int        // contagem actual
 )
 
+// ── Number screen feed items (comentários de número + anúncios) ───────────────
+sealed class NumberFeedItem {
+    data class Comment(val data: NumberComment) : NumberFeedItem()
+    data class AdSlot(val slotIndex: Int) : NumberFeedItem()
+}
+
+@JvmName("withAdSlotsNumber")
+fun List<NumberComment>.withAdSlots(every: Int = 4): List<NumberFeedItem> {
+    val result = mutableListOf<NumberFeedItem>()
+    var slotIndex = 0
+    if (isNotEmpty()) {
+        // 1º ad antes do 1º comentário
+        result.add(NumberFeedItem.AdSlot(slotIndex = slotIndex++))
+    }
+    forEachIndexed { index, comment ->
+        result.add(NumberFeedItem.Comment(comment))
+        // Depois de 'every' em 'every'
+        if ((index + 1) % every == 0) {
+            result.add(NumberFeedItem.AdSlot(slotIndex = slotIndex++))
+        }
+    }
+    return result
+}
+
 // ── Community feed items (comentários intercalados com anúncios) ──────────────
 sealed class CommunityFeedItem {
     data class Comment(val data: HomeComment) : CommunityFeedItem()
     data class AdSlot(val slotIndex: Int) : CommunityFeedItem()
 }
 
+@JvmName("withAdSlotsHome")
 fun List<HomeComment>.withAdSlots(every: Int = 4): List<CommunityFeedItem> {
     val result = mutableListOf<CommunityFeedItem>()
+    var slotIndex = 0
     forEachIndexed { index, comment ->
         result.add(CommunityFeedItem.Comment(comment))
-        if ((index + 1) % every == 0) {
-            result.add(CommunityFeedItem.AdSlot(slotIndex = index / every))
+        // 1º ad após o 1º comentário (index 0), depois de 'every' em 'every'
+        if (index == 0 || (index > 0 && index % every == 0)) {
+            result.add(CommunityFeedItem.AdSlot(slotIndex = slotIndex++))
         }
     }
     return result
