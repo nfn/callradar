@@ -31,6 +31,8 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
+import me.ligaram.app.ui.theme.AccentGreen
+import me.ligaram.app.ui.theme.AccentOrange
 import me.ligaram.app.ui.permissions.requestNotificationPermissionOrOpenSettings
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -66,7 +68,9 @@ fun PermissionDialog(
         containerColor   = MaterialTheme.colorScheme.surface,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(Icons.Default.Shield, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+                Icon(Icons.Default.Shield, null,
+                    tint     = if (phoneGranted && overlayGranted) AccentGreen else AccentOrange,
+                    modifier = Modifier.size(24.dp))
                 Text("Permissões para Proteção", fontWeight = FontWeight.Bold, fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onBackground)
             }
