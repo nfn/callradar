@@ -147,12 +147,12 @@ fun SettingsScreen(
                             modifier         = Modifier
                                 .size(38.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(AccentBlue.copy(alpha = 0.10f)),
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Default.Notifications, null,
-                                tint     = AccentBlue,
+                                tint     = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                         }

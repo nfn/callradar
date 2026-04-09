@@ -22,8 +22,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.ligaram.app.ui.theme.AccentBlue
-
 @Composable
 fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
     Row(
@@ -38,10 +36,10 @@ fun HowItWorksStep(icon: ImageVector, title: String, description: String) {
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(AccentBlue.copy(alpha = 0.15f)),
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, null, tint = AccentBlue, modifier = Modifier.size(22.dp))
+            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
         }
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
