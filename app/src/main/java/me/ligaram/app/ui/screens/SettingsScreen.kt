@@ -144,7 +144,7 @@ fun SettingsScreen(
                     ) {
                         Box(
                             modifier         = Modifier
-                                .size(38.dp)
+                                .size(40.dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center

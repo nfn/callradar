@@ -49,7 +49,7 @@ fun PermissionRow(
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(if (granted) AccentGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
@@ -58,7 +58,7 @@ fun PermissionRow(
                 icon,
                 null,
                 tint     = if (granted) AccentGreen else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
         Column(modifier = Modifier.weight(1f)) {
