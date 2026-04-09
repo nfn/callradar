@@ -87,6 +87,23 @@ data class LikeResponse(
     @SerializedName("likes") val likes: Int        // contagem actual
 )
 
+// ── Community feed items (comentários intercalados com anúncios) ──────────────
+sealed class CommunityFeedItem {
+    data class Comment(val data: HomeComment) : CommunityFeedItem()
+    data class AdSlot(val slotIndex: Int) : CommunityFeedItem()
+}
+
+fun List<HomeComment>.withAdSlots(every: Int = 4): List<CommunityFeedItem> {
+    val result = mutableListOf<CommunityFeedItem>()
+    forEachIndexed { index, comment ->
+        result.add(CommunityFeedItem.Comment(comment))
+        if ((index + 1) % every == 0) {
+            result.add(CommunityFeedItem.AdSlot(slotIndex = index / every))
+        }
+    }
+    return result
+}
+
 // ── Generic result ────────────────────────────────────────────────────────────
 sealed class CommunityResult<out T> {
     data class Success<T>(val data: T) : CommunityResult<T>()

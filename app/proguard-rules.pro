@@ -5,13 +5,15 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserva linha e ficheiro de origem para crash reports legíveis no Crashlytics
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Firebase Crashlytics — preserva exceções personalizadas
+-keep public class * extends java.lang.Exception
+
+# Google Mobile Ads SDK
+-keep class com.google.android.gms.ads.** { *; }
 
 # ── Gson ──────────────────────────────────────────────────────────────────────
 # O Gson usa reflexão para deserializar JSON — sem estas regras o R8 renomeia

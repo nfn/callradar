@@ -77,11 +77,15 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.ligaram.app.BuildConfig
 import me.ligaram.app.data.CommunityApi
+import me.ligaram.app.data.CommunityFeedItem
 import me.ligaram.app.data.CommunityResult
 import me.ligaram.app.data.HomeComment
 import me.ligaram.app.data.LikeCache
+import me.ligaram.app.data.withAdSlots
 import me.ligaram.app.ui.components.AppBackground
+import me.ligaram.app.ui.components.NativeAdCard
 import me.ligaram.app.ui.navigation.Routes
 import me.ligaram.app.ui.theme.AccentBlue
 import me.ligaram.app.ui.theme.AccentGreen
@@ -204,6 +208,7 @@ fun CommunityHomeScreen(navController: NavController) {
     var nextCursor   by remember { mutableStateOf<Int?>(null) }
     var errorMsg     by remember { mutableStateOf<String?>(null) }
     var isRestoringScroll by remember(restoreScrollInitial) { mutableStateOf(restoreScrollInitial) }
+    val feedItems by remember { derivedStateOf { items.withAdSlots(every = 4) } }
 
     // flows coming from NumberScreen via SavedStateHandle
     val restoreScrollFlow = currentEntry
@@ -305,14 +310,14 @@ fun CommunityHomeScreen(navController: NavController) {
             // Se já voltou numa posição válida, evita um segundo scroll visível.
             val alreadyPositioned =
                 listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
-            if (items.isNotEmpty() && alreadyPositioned) {
+            if (feedItems.isNotEmpty() && alreadyPositioned) {
                 entry.savedStateHandle.set("scroll_position", null)
                 entry.savedStateHandle.set("restore_scroll_position", false)
                 isRestoringScroll = false
                 return@collect
             }
 
-            if (index < items.size) {
+            if (index < feedItems.size) {
                 listState.scrollToItem(index, -offset)
             } else {
                 // Se ja ha carregamento em curso, espera terminar antes de paginar manualmente.
@@ -322,7 +327,7 @@ fun CommunityHomeScreen(navController: NavController) {
                         .first()
                 }
 
-                while (index >= items.size) {
+                while (index >= feedItems.size) {
                     val cursor = nextCursor
                     if (!hasMore || cursor == null) break
 
@@ -331,7 +336,7 @@ fun CommunityHomeScreen(navController: NavController) {
                         .filter { loading -> !loading }
                         .first()
                 }
-                if (index < items.size) listState.scrollToItem(index, -offset)
+                if (index < feedItems.size) listState.scrollToItem(index, -offset)
             }
 
             // Garante um frame com posição final antes de mostrar novamente a lista.
@@ -396,35 +401,48 @@ fun CommunityHomeScreen(navController: NavController) {
                             contentPadding      = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            items(items, key = { it.id }) { item ->
-                                HomeCommentCard(item = item, onClick = {
-                                    // guarda o índice do item clicado e o seu offset visual no viewport
-                                    // offset de visibleItemsInfo é positivo se item está abaixo do topo,
-                                    // negativo se está parcialmente fora de vista acima
-                                    val clickedIndex = items.indexOfFirst { it.id == item.id }
-                                    val visibleInfo = listState.layoutInfo.visibleItemsInfo
-                                    val clickedOffset = visibleInfo
-                                        .firstOrNull { it.index == clickedIndex }
-                                        ?.offset
+                            items(feedItems, key = { feedItem ->
+                                when (feedItem) {
+                                    is CommunityFeedItem.Comment -> "c_${feedItem.data.id}"
+                                    is CommunityFeedItem.AdSlot  -> "ad_${feedItem.slotIndex}"
+                                }
+                            }) { feedItem ->
+                                when (feedItem) {
+                                    is CommunityFeedItem.AdSlot -> NativeAdCard(adUnitId = BuildConfig.ADMOB_NATIVE_AD_UNIT_ID)
+                                    is CommunityFeedItem.Comment -> {
+                                        val item = feedItem.data
+                                        HomeCommentCard(item = item, onClick = {
+                                            // guarda o índice do item clicado (em feedItems) e o seu offset visual no viewport
+                                            // offset de visibleItemsInfo é positivo se item está abaixo do topo,
+                                            // negativo se está parcialmente fora de vista acima
+                                            val clickedIndex = feedItems.indexOfFirst {
+                                                it is CommunityFeedItem.Comment && it.data.id == item.id
+                                            }
+                                            val visibleInfo = listState.layoutInfo.visibleItemsInfo
+                                            val clickedOffset = visibleInfo
+                                                .firstOrNull { it.index == clickedIndex }
+                                                ?.offset
 
-                                    // fallback robusto: se por timing de layout o item clicado não estiver
-                                    // em visibleItemsInfo, usa a âncora real atual da lista em vez de 0.
-                                    val anchorIndex: Int
-                                    val anchorOffset: Int
-                                    if (clickedIndex >= 0 && clickedOffset != null) {
-                                        anchorIndex = clickedIndex
-                                        anchorOffset = clickedOffset
-                                    } else {
-                                        anchorIndex = listState.firstVisibleItemIndex
-                                        anchorOffset = -listState.firstVisibleItemScrollOffset
+                                            // fallback robusto: se por timing de layout o item clicado não estiver
+                                            // em visibleItemsInfo, usa a âncora real atual da lista em vez de 0.
+                                            val anchorIndex: Int
+                                            val anchorOffset: Int
+                                            if (clickedIndex >= 0 && clickedOffset != null) {
+                                                anchorIndex = clickedIndex
+                                                anchorOffset = clickedOffset
+                                            } else {
+                                                anchorIndex = listState.firstVisibleItemIndex
+                                                anchorOffset = -listState.firstVisibleItemScrollOffset
+                                            }
+
+                                            navController.currentBackStackEntry?.savedStateHandle?.set(
+                                                "scroll_position",
+                                                anchorIndex to anchorOffset
+                                            )
+                                            navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}")
+                                        })
                                     }
-
-                                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                                        "scroll_position",
-                                        anchorIndex to anchorOffset
-                                    )
-                                    navController.navigate("${Routes.COMMUNITY_NUMBER}/${item.number}")
-                                })
+                                }
                             }
                             item {
                                 when {

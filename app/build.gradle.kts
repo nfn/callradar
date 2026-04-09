@@ -5,6 +5,8 @@ import java.time.format.DateTimeFormatter
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -15,16 +17,20 @@ android {
         applicationId = "me.ligaram.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.0.0-beta.9"
+        versionCode = 10000
+        versionName = "1.0.0"
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "ADMOB_NATIVE_AD_UNIT_ID", "\"ca-app-pub-3940256099942544/2247696110\"") // ID de teste Google
+        }
         release {
             // isMinifyEnabled = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            buildConfigField("String", "ADMOB_NATIVE_AD_UNIT_ID", "\"ca-app-pub-5751026474053499/4297086853\"") // TODO: substituir pelo Ad Unit ID real
         }
     }
     compileOptions {
@@ -33,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -57,6 +64,10 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.gson)
     implementation(libs.androidx.splashscreen)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
+    implementation(libs.play.services.ads)
     debugImplementation(libs.androidx.ui.tooling)
 }
 
