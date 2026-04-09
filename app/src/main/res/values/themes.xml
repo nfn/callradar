@@ -3,7 +3,7 @@
     <style name="Theme.LigaramApp" parent="android:Theme.Material.Light.NoActionBar" />
 
     <style name="Theme.LigaramApp.SplashScreen" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#0F172A</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.LigaramApp</item>
     </style>
