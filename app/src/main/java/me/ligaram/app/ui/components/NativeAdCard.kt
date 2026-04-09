@@ -16,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -58,7 +57,7 @@ fun NativeAdCard(adUnitId: String) {
             Surface(
                 modifier = Modifier.fillMaxWidth().height(80.dp),
                 shape = RoundedCornerShape(16.dp),
-                color = Color(0x221E293B)
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.13f)
             ) {
                 Box(Modifier.fillMaxWidth())
             }

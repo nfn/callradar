@@ -92,6 +92,9 @@ import me.ligaram.app.ui.theme.AccentGreen
 import me.ligaram.app.ui.theme.AccentOrange
 import me.ligaram.app.ui.theme.RiskHigh
 import me.ligaram.app.ui.theme.RiskLow
+import me.ligaram.app.ui.theme.StarRating2
+import me.ligaram.app.ui.theme.StarRating4
+import me.ligaram.app.ui.theme.TextSecondary
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -123,17 +126,16 @@ fun classificationColor(c: String?): Color = when (c) {
     "Suspeito" -> AccentOrange
     "Incómodo" -> AccentOrange
     "Seguro"   -> RiskLow
-    "Neutro"   -> Color(0xFF94A3B8)
-    else       -> Color(0xFF94A3B8)
+    else       -> TextSecondary
 }
 
 fun starColor(rating: Int): Color = when (rating) {
     1    -> RiskHigh
-    2    -> Color(0xFFF97316)
+    2    -> StarRating2
     3    -> AccentOrange
-    4    -> Color(0xFF84CC16)
+    4    -> StarRating4
     5    -> AccentGreen
-    else -> Color(0xFF94A3B8)
+    else -> TextSecondary
 }
 
 // Formatar número PT nacional (9 dígitos) → XXX XXX XXX
