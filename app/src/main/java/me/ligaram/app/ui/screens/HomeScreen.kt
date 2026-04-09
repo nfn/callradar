@@ -39,7 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -145,7 +145,7 @@ fun HomeScreen(
                         )
                         Text(
                             if (allGood)
-                                "Chamadas recebidas serão identificadas automaticamente · Toca para rever as permissões"
+                                "Chamadas recebidas são identificadas automaticamente"
                             else
                                 "Toque aqui para ativar a identificação de chamadas",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -179,8 +179,6 @@ fun HomeScreen(
                 HowItWorksStep(icon = icon, title = title, description = desc, accentColor = color)
                 if (idx < 4) Spacer(modifier = Modifier.height(8.dp))
             }
-
-            // Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
