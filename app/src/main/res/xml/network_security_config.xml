@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Production -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">ligaram.me</domain>
-    </domain-config>
-    <!-- ngrok dev tunnels (HTTPS, but needs to be explicitly trusted) -->
-    <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">ngrok-free.app</domain>
-        <domain includeSubdomains="true">ngrok-free.dev</domain>
-        <domain includeSubdomains="true">ngrok.io</domain>
     </domain-config>
 </network-security-config>

@@ -1,6 +1,15 @@
 // Estes dois imports foram incluidos por mim para gerar o nome do ficheiro da build
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Properties
+
+// ── Ler local.properties (nunca entra em git) ─────────────────────────────────
+val localProps = Properties()
+val localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) localProps.load(localPropsFile.inputStream())
+
+fun localProp(key: String): String =
+    localProps.getProperty(key) ?: System.getenv(key.uppercase().replace('.', '_')) ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,6 +28,18 @@ android {
         targetSdk = 36
         versionCode = 10000
         versionName = "1.0.0"
+
+        // Token da API — lido de local.properties (nunca hardcoded no código-fonte)
+        buildConfigField("String", "API_TOKEN", "\"${localProp("api.token")}\"")
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile     = file(localProp("keystore.path").ifEmpty { "keystore/ligaram_me_keystore.jks" })
+            storePassword = localProp("keystore.password")
+            keyAlias      = localProp("keystore.alias")
+            keyPassword   = localProp("keystore.key.password")
+        }
     }
 
     buildTypes {
@@ -26,11 +47,11 @@ android {
             buildConfigField("String", "ADMOB_NATIVE_AD_UNIT_ID", "\"ca-app-pub-3940256099942544/2247696110\"") // ID de teste Google
         }
         release {
-            // isMinifyEnabled = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            buildConfigField("String", "ADMOB_NATIVE_AD_UNIT_ID", "\"ca-app-pub-5751026474053499/4297086853\"") // TODO: substituir pelo Ad Unit ID real
+            signingConfig = signingConfigs.getByName("release")
+            buildConfigField("String", "ADMOB_NATIVE_AD_UNIT_ID", "\"ca-app-pub-5751026474053499/4297086853\"")
         }
     }
     compileOptions {

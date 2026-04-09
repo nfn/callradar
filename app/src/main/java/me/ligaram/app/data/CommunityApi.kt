@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import me.ligaram.app.BuildConfig
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -21,7 +22,7 @@ object CommunityApi {
     private val JSON = "application/json; charset=utf-8".toMediaType()
 
     private const val BASE  = "https://api.ligaram.me/api/v1"
-    private const val TOKEN = "lUDf9WGHuW7OMbeNvQmZ8vIAwJLvTUo5HiwcCY9cPn7"
+    private val TOKEN get() = BuildConfig.API_TOKEN
 
     // Context guardado na primeira chamada a init() - chamada na MainActivity
     private var appContext: Context? = null
@@ -60,7 +61,7 @@ object CommunityApi {
                 append("$BASE/home?limit=$limit")
                 if (cursor != null) append("&cursor=$cursor")
             }
-            Log.d("CommunityApi", "GET $url")
+            if (BuildConfig.DEBUG) Log.d("CommunityApi", "GET $url")
             val resp = get(url)
             val body = resp.body.string()
             if (resp.isSuccessful) {
@@ -70,7 +71,7 @@ object CommunityApi {
                 CommunityResult.Error("Erro ${resp.code}")
             }
         } catch (e: Exception) {
-            Log.e("CommunityApi", "fetchHome: ${e.message}")
+            if (BuildConfig.DEBUG) Log.e("CommunityApi", "fetchHome: ${e.message}")
             CommunityResult.Error(e.message ?: "Erro de rede")
         }
     }
@@ -82,7 +83,7 @@ object CommunityApi {
                 append("$BASE/comments/$number?limit=$limit")
                 if (cursor != null) append("&cursor=$cursor")
             }
-            Log.d("CommunityApi", "GET $url")
+            if (BuildConfig.DEBUG) Log.d("CommunityApi", "GET $url")
             val resp = get(url)
             val body = resp.body.string()
             if (resp.isSuccessful) {
@@ -92,7 +93,7 @@ object CommunityApi {
                 CommunityResult.Error("Erro ${resp.code}")
             }
         } catch (e: Exception) {
-            Log.e("CommunityApi", "fetchComments: ${e.message}")
+            if (BuildConfig.DEBUG) Log.e("CommunityApi", "fetchComments: ${e.message}")
             CommunityResult.Error(e.message ?: "Erro de rede")
         }
     }
@@ -101,7 +102,7 @@ object CommunityApi {
     fun postComment(req: PostCommentRequest): CommunityResult<PostCommentResponse> {
         return try {
             val url = "$BASE/comments/${req.number}/store"
-            Log.d("CommunityApi", "POST $url")
+            if (BuildConfig.DEBUG) Log.d("CommunityApi", "POST $url")
             val body = mapOf(
                 "name"           to req.name,
                 "comment"        to req.comment,
@@ -124,7 +125,7 @@ object CommunityApi {
                 }
             }
         } catch (e: Exception) {
-            Log.e("CommunityApi", "postComment: ${e.message}")
+            if (BuildConfig.DEBUG) Log.e("CommunityApi", "postComment: ${e.message}")
             CommunityResult.Error(e.message ?: "Erro de rede")
         }
     }
@@ -135,7 +136,7 @@ object CommunityApi {
     fun toggleLike(commentId: Int): CommunityResult<LikeResponse> {
         return try {
             val url = "$BASE/comments/$commentId/like"
-            Log.d("CommunityApi", "POST $url")
+            if (BuildConfig.DEBUG) Log.d("CommunityApi", "POST $url")
             val resp = post(url, emptyMap<String, Any>())
             val body = resp.body.string()
             if (resp.isSuccessful) {
@@ -145,7 +146,7 @@ object CommunityApi {
                 CommunityResult.Error("Erro ${resp.code}")
             }
         } catch (e: Exception) {
-            Log.e("CommunityApi", "toggleLike: ${e.message}")
+            if (BuildConfig.DEBUG) Log.e("CommunityApi", "toggleLike: ${e.message}")
             CommunityResult.Error(e.message ?: "Erro de rede")
         }
     }
@@ -154,7 +155,7 @@ object CommunityApi {
     fun reportComment(number: String, commentId: Int, message: String): CommunityResult<Unit> {
         return try {
             val url = "$BASE/report"
-            Log.d("CommunityApi", "POST $url")
+            if (BuildConfig.DEBUG) Log.d("CommunityApi", "POST $url")
             val resp = post(url, mapOf(
                 "number"     to number,
                 "comment_id" to commentId,
@@ -166,7 +167,7 @@ object CommunityApi {
                 CommunityResult.Error("Erro ${resp.code}")
             }
         } catch (e: Exception) {
-            Log.e("CommunityApi", "reportComment: ${e.message}")
+            if (BuildConfig.DEBUG) Log.e("CommunityApi", "reportComment: ${e.message}")
             CommunityResult.Error(e.message ?: "Erro de rede")
         }
     }
@@ -178,7 +179,7 @@ object CommunityApi {
         return try {
             val encoded = java.net.URLEncoder.encode(query.trim(), "UTF-8")
             val url = "$BASE/entities?q=$encoded"
-            Log.d("CommunityApi", "GET $url")
+            if (BuildConfig.DEBUG) Log.d("CommunityApi", "GET $url")
             val resp = get(url)
             val body = resp.body.string()
             if (resp.isSuccessful) {
@@ -189,7 +190,7 @@ object CommunityApi {
                 CommunityResult.Success(emptyList())
             }
         } catch (e: Exception) {
-            Log.e("CommunityApi", "searchEntities: ${e.message}")
+            if (BuildConfig.DEBUG) Log.e("CommunityApi", "searchEntities: ${e.message}")
             CommunityResult.Success(emptyList())
         }
     }
