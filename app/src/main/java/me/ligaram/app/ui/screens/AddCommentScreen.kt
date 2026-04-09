@@ -68,12 +68,10 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -190,9 +188,8 @@ fun AddCommentScreen(navController: NavController, number: String) {
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Novo comentário - ${formatPhoneNumber(number)}",
-                        color      = MaterialTheme.colorScheme.onBackground,
-                        fontSize   = 20.sp,
-                        fontWeight = FontWeight.Bold)
+                        color  = MaterialTheme.colorScheme.onBackground,
+                        style  = MaterialTheme.typography.headlineSmall)
                 }
             }
 
@@ -220,7 +217,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                         value           = name,
                         onValueChange   = { name = it.take(128) },
                         modifier        = Modifier.fillMaxWidth(),
-                        placeholder     = { Text("O teu nome ou alcunha", fontSize = 13.sp) },
+                        placeholder     = { Text("O teu nome ou alcunha", style = MaterialTheme.typography.bodyMedium) },
                         leadingIcon     = {
                             Icon(Icons.Default.Person, null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -262,7 +259,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                             },
                             modifier    = Modifier.fillMaxWidth(),
                             placeholder = { Text("NOS, EDP... (ou escreve livremente)",
-                                fontSize = 13.sp) },
+                                style = MaterialTheme.typography.bodyMedium) },
                             leadingIcon  = {
                                 Icon(Icons.Default.Business, null,
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -336,8 +333,8 @@ fun AddCommentScreen(navController: NavController, number: String) {
                                                 tint     = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier.size(16.dp))
                                             Text(item.entity,
-                                                color    = MaterialTheme.colorScheme.onBackground,
-                                                fontSize = 14.sp)
+                                                color = MaterialTheme.colorScheme.onBackground,
+                                                style = MaterialTheme.typography.bodyLarge)
                                         }
                                         if (idx < snapshot.lastIndex) {
                                             HorizontalDivider(
@@ -357,7 +354,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                         onValueChange  = { commentText = it.take(2000) },
                         modifier       = Modifier.fillMaxWidth().heightIn(min = 88.dp),
                         placeholder    = { Text("Descreve a tua experiência com este número…",
-                            fontSize = 13.sp) },
+                            style = MaterialTheme.typography.bodyMedium) },
                         shape          = RoundedCornerShape(12.dp),
                         colors         = sheetFieldColors(),
                         keyboardOptions = KeyboardOptions(
@@ -367,7 +364,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                         supportingText = {
                             Text("${commentText.length}/2000",
                                 color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp)
+                                style = MaterialTheme.typography.labelSmall)
                         }
                     )
                 }
@@ -384,7 +381,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                             androidx.compose.material3.FilterChip(
                                 selected = selected,
                                 onClick  = { classification = cls },
-                                label    = { Text(cls, fontSize = 13.sp) },
+                                label    = { Text(cls, style = MaterialTheme.typography.bodyMedium) },
                                 leadingIcon = {
                                     Icon(ADD_CLASS_ICONS[cls] ?: Icons.Default.Circle, null,
                                         modifier = Modifier.size(15.dp))
@@ -434,7 +431,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                                 1 -> "Muito mau"; 2 -> "Mau"; 3 -> "Neutro"
                                 4 -> "Bom";       else -> "Excelente"
                             }, color = starColor(rating),
-                                fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -452,7 +449,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                             Icon(Icons.Default.Error, null, tint = RiskHigh,
                                 modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text(errorMsg!!, color = RiskHigh, fontSize = 13.sp,
+                            Text(errorMsg!!, color = RiskHigh, style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.weight(1f))
                         }
                     }
@@ -489,7 +486,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
                             modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                         Text("Enviar comentário",
-                            fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            style = MaterialTheme.typography.titleSmall)
                     }
                 }
             }
@@ -500,7 +497,7 @@ fun AddCommentScreen(navController: NavController, number: String) {
 fun SheetSection(title: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(title, color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            style = MaterialTheme.typography.bodyMedium)
         content()
     }
 }

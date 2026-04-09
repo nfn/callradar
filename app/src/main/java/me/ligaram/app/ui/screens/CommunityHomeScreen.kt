@@ -64,13 +64,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
@@ -158,7 +156,7 @@ fun PhoneSearchBar(onSearch: (String) -> Unit, modifier: Modifier = Modifier) {
         modifier      = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         placeholder   = {
             Text("Pesquisar número",
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), fontSize = 14.sp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), style = MaterialTheme.typography.bodyLarge)
         },
         leadingIcon  = {
             Icon(Icons.Default.Search, null,
@@ -372,8 +370,8 @@ fun CommunityHomeScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Comentários",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 20.sp, fontWeight = FontWeight.ExtraBold,
+                    color    = MaterialTheme.colorScheme.onBackground,
+                    style    = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.weight(1f))
             }
 
@@ -455,13 +453,13 @@ fun CommunityHomeScreen(navController: NavController) {
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
                                             Text("Erro ao carregar mais",
-                                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                fontSize = 12.sp)
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                style = MaterialTheme.typography.bodySmall)
                                             androidx.compose.material3.TextButton(onClick = {
                                                 errorMsg = null
                                                 loadPage(nextCursor)
                                             }) {
-                                                Text("Tentar", color = AccentBlue, fontSize = 12.sp)
+                                                Text("Tentar", color = AccentBlue, style = MaterialTheme.typography.bodySmall)
                                             }
                                         }
                                     }
@@ -472,7 +470,7 @@ fun CommunityHomeScreen(navController: NavController) {
                                     }
                                     !hasMore && items.isNotEmpty() -> {
                                         Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                            Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                            Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                         }
                                     }
                                 }
@@ -521,12 +519,12 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
                             null, tint = classColor, modifier = Modifier.size(18.dp)
                         )
                     }
-                    Text(formatPhoneNumber(item.number), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(formatPhoneNumber(item.number), color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleSmall)
                 }
                 if (item.rating != null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         Icon(Icons.Default.Star, null, tint = ratingColor, modifier = Modifier.size(14.dp))
-                        Text("%.1f".format(item.rating.toFloat()), color = ratingColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("%.1f".format(item.rating.toFloat()), color = ratingColor, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -543,8 +541,7 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
                 Text(
                     text = displayComment,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                     onTextLayout = { layout ->
@@ -563,20 +560,20 @@ fun HomeCommentCard(item: HomeComment, onClick: () -> Unit) {
             // Row 4
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text(timeAgo(item.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                    Text(timeAgo(item.createdAt), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
                     if (!item.name.isNullOrBlank()) {
-                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), fontSize = 16.sp)
-                        Text(item.name, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), style = MaterialTheme.typography.labelMedium)
+                        Text(item.name, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     if (!item.classification.isNullOrBlank()) {
-                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), fontSize = 16.sp)
-                        Text(item.classification, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), style = MaterialTheme.typography.labelMedium)
+                        Text(item.classification, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
                 Spacer(Modifier.width(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Default.ThumbUp, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
-                    Text("$likes", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    Text("$likes", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -602,12 +599,12 @@ fun CommunityErrorState(message: String, onRetry: () -> Unit) {
             Spacer(Modifier.height(16.dp))
             Text(
                 if (isNetwork) "Sem ligação à internet" else "Não foi possível carregar",
-                color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center
+                color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(6.dp))
             Text(
                 if (isNetwork) "Verifica a tua ligação e tenta novamente." else "O servidor pode estar temporariamente indisponível.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 19.sp
+                color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(24.dp))
             Button(onClick = onRetry, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)) {

@@ -11,7 +11,7 @@ val Neutral30  = Color(0xFF334155) // surfaceVariant dark / outline
 val Neutral50  = Color(0xFF64748B) // onSurfaceVariant light
 val Neutral60  = Color(0xFF94A3B8) // onSurfaceVariant dark
 val Neutral90  = Color(0xFFE2E8F0) // surfaceVariant light / outline light
-val Neutral95  = Color(0xFFEFF6FF) // bgSecondary light (fundo gradiente)
+val Neutral95  = Color(0xFFF1F5F9) // bgSecondary light (fundo gradiente)
 val Neutral99  = Color(0xFFF8FAFC) // background light / onBackground dark
 val Neutral100 = Color(0xFFFFFFFF) // surface light (branco puro)
 

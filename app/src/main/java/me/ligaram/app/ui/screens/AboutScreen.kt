@@ -47,11 +47,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import me.ligaram.app.ui.components.AboutSection
@@ -103,7 +100,7 @@ fun AboutScreen(navController: NavController) {
                         style = MaterialTheme.typography.headlineMedium)
                     Text("por ligaram.me",
                         color = AccentBlue,
-                        style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(4.dp))
                     // PRÉ-PRODUÇÃO - [Melhoria] - versão lida dinamicamente do manifesto
                     val versionName = remember {
@@ -125,7 +122,7 @@ fun AboutScreen(navController: NavController) {
                             modifier = Modifier.size(15.dp))
                         Spacer(Modifier.width(6.dp))
                         Text("ligaram.me", color = AccentBlue,
-                            fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -178,8 +175,7 @@ fun AboutScreen(navController: NavController) {
                         ) {
                             Text("Visitar ligaram.me",
                                 color      = AccentBlue,
-                                fontSize   = 13.sp,
-                                fontWeight = FontWeight.SemiBold)
+                                style = MaterialTheme.typography.bodyMedium)
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, null,
                                 tint     = AccentBlue,
                                 modifier = Modifier.size(14.dp))
@@ -251,9 +247,7 @@ fun AboutScreen(navController: NavController) {
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(perm, color = MaterialTheme.colorScheme.onSurface,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace)
+                                    style = MaterialTheme.typography.labelLarge)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(desc, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodySmall)
@@ -297,13 +291,13 @@ fun AboutScreen(navController: NavController) {
                                     .background(AccentOrange.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("1", color = AccentOrange, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("1", color = AccentOrange, style = MaterialTheme.typography.labelLarge)
                             }
                             Spacer(Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Desativar otimização de bateria",
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                    style = MaterialTheme.typography.bodyMedium)
                                 Spacer(Modifier.height(2.dp))
                                 Text(
                                     "Aceda a Definições → Bateria → Otimização de bateria e exclua o CallRadar. Alguns fabricantes (Xiaomi, Samsung, Huawei) podem encerrar o serviço de deteção de chamadas se esta opção estiver ativa.",
@@ -322,13 +316,13 @@ fun AboutScreen(navController: NavController) {
                                     .background(AccentOrange.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("2", color = AccentOrange, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("2", color = AccentOrange, style = MaterialTheme.typography.labelLarge)
                             }
                             Spacer(Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Excluir da lista de apps não utilizadas",
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                    style = MaterialTheme.typography.bodyMedium)
                                 Spacer(Modifier.height(2.dp))
                                 Text(
                                     "Alguns sistemas Android desativam automaticamente apps que não são abertas com frequência. Aceda a Definições → Apps → CallRadar e desative a opção \"Pausar app se não usada\" ou equivalente.",
@@ -369,16 +363,6 @@ fun AboutScreen(navController: NavController) {
                     modifier            = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    /*
-                    // Remoção do link no rodapé
-
-                    TextButton(onClick = ::openSite) {
-                        Text("ligaram.me",
-                            color      = AccentBlue,
-                            fontSize   = 13.sp,
-                            fontWeight = FontWeight.SemiBold)
-                    }
-                     */
                     Text(
                         "© 2026 · ligaram.me · Todos os direitos reservados",
                         color     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),

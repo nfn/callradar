@@ -43,9 +43,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import me.ligaram.app.data.OverlayPreferences
 import me.ligaram.app.data.OverlayStyle
@@ -88,12 +86,11 @@ fun OverlayStyleScreen(navController: NavController) {
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Estilo do aviso sobre chamadas",
-                        color      = MaterialTheme.colorScheme.onBackground,
-                        fontSize   = 20.sp,
-                        fontWeight = FontWeight.Bold)
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.headlineSmall)
                     Text("Toque fora para fechar em todos os estilos",
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall)
                 }
             }
 
@@ -120,8 +117,8 @@ fun OverlayStyleScreen(navController: NavController) {
                 // Label "Pré-visualização"
                 Text(
                     "Pré-visualização",
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
-                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(10.dp)
@@ -190,13 +187,10 @@ fun OverlayStyleScreen(navController: NavController) {
                             ) {
                                 Text(
                                     style.label,
-                                    color      = if (isSelected) AccentBlue
-                                                 else MaterialTheme.colorScheme.onBackground,
-                                    fontSize   = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold
-                                                 else FontWeight.SemiBold,
-                                    maxLines   = 2,
-                                    lineHeight = 15.sp,
+                                    color    = if (isSelected) AccentBlue
+                                               else MaterialTheme.colorScheme.onBackground,
+                                    style    = MaterialTheme.typography.labelLarge,
+                                    maxLines = 2,
                                     modifier   = Modifier.weight(1f)
                                 )
                                 if (isSelected) {
@@ -208,9 +202,8 @@ fun OverlayStyleScreen(navController: NavController) {
                             Text(
                                 style.description,
                                 color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp,
-                                maxLines = 2,
-                                lineHeight = 13.sp
+                                style    = MaterialTheme.typography.labelSmall,
+                                maxLines = 2
                             )
                         }
                     }
@@ -227,15 +220,14 @@ fun OverlayStyleScreen(navController: NavController) {
             ) {
                 Text(
                     selected.label,
-                    color      = MaterialTheme.colorScheme.onBackground,
-                    fontSize   = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.titleSmall
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     selected.description,
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }

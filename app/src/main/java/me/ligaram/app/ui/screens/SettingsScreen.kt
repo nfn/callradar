@@ -32,9 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+
 import androidx.navigation.NavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -92,10 +92,9 @@ fun SettingsScreen(
             ) {
                 Text(
                     "Definições",
-                    color      = MaterialTheme.colorScheme.onBackground,
-                    fontSize   = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    modifier   = Modifier.weight(1f)
+                    color    = MaterialTheme.colorScheme.onBackground,
+                    style    = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.weight(1f)
                 )
             }
 

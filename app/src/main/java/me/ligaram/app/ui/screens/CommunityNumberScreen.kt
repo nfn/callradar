@@ -61,7 +61,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -238,7 +237,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                 }
                 Text("Número - ${formatPhoneNumber(number)}",
                     color    = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 20.sp, fontWeight = FontWeight.Bold,
+                    style    = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.weight(1f))
             }
 
@@ -270,11 +269,11 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                     Spacer(Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(formatPhoneNumber(number), color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                            style = MaterialTheme.typography.titleMedium)
                         Text(
                             if (isLoading && comments.isEmpty()) "\u00A0"
                             else "${comments.size} comentário${if (comments.size != 1) "s" else ""}",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall
                         )
                     }
                     if (!numberRating.isNullOrBlank() && numberRating != "null") {
@@ -289,11 +288,11 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("★ $numberRating", color = ratingColor,
-                                fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                                style = MaterialTheme.typography.titleMedium)
                             Text(
                                 viewsLabel,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 12.sp
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     }
@@ -358,8 +357,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                             Text(
                                                 "Comentários",
                                                 color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                fontSize   = 12.sp,
-                                                fontWeight = FontWeight.SemiBold,
+                                                style      = MaterialTheme.typography.labelLarge,
                                                 letterSpacing = 0.8.sp
                                             )
                                             HorizontalDivider(
@@ -410,13 +408,13 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
                                                 Text("Erro ao carregar mais",
-                                                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    fontSize = 12.sp)
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    style = MaterialTheme.typography.bodySmall)
                                                 TextButton(onClick = {
                                                     errorMsg = null
                                                     loadPage(nextCursor)
                                                 }) {
-                                                    Text("Tentar", color = AccentBlue, fontSize = 12.sp)
+                                                    Text("Tentar", color = AccentBlue, style = MaterialTheme.typography.bodySmall)
                                                 }
                                             }
                                         }
@@ -437,7 +435,7 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                                     .padding(16.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                                                Text("Não há mais comentários", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                             }
                                         }
                                     }
@@ -506,9 +504,8 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                             modifier = Modifier.size(16.dp))
                     }
                     Text("Análise",
-                        color      = MaterialTheme.colorScheme.onBackground,
-                        fontSize   = 14.sp,
-                        fontWeight = FontWeight.Bold)
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.bodyLarge)
                 }
 
                 // Direita - badge de risco pill + chevron
@@ -533,9 +530,8 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                                         .background(riskColor)
                                 )
                                 Text(analysis.riskLevel,
-                                    color      = riskColor,
-                                    fontSize   = 12.sp,
-                                    fontWeight = FontWeight.Bold)
+                                    color  = riskColor,
+                                    style  = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
@@ -560,20 +556,17 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                     if (hasCat) {
                         Text(analysis.category,
                             color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize   = 12.sp,
-                            fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.labelLarge)
                     }
                     if (hasCat && hasSubCat) {
                         Text("·",
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelLarge)
                     }
                     if (hasSubCat) {
                         Text(analysis.subcategory,
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
@@ -588,9 +581,8 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                     if (!analysis.seoSummary.isNullOrBlank()) {
                         Spacer(Modifier.height(12.dp))
                         Text(analysis.seoSummary,
-                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize   = 13.sp,
-                            lineHeight  = 19.sp)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium)
                     }
 
                     // Recomendação - advice
@@ -613,16 +605,13 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
                                         modifier = Modifier.size(12.dp))
                                     Text("RECOMENDAÇÃO",
                                         color         = riskColor,
-                                        fontSize      = 10.sp,
-                                        fontWeight    = FontWeight.Bold,
+                                        style         = MaterialTheme.typography.labelSmall,
                                         letterSpacing = 0.6.sp)
                                 }
                                 Spacer(Modifier.height(5.dp))
                                 Text(analysis.advice,
                                     color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize   = 13.sp,
-                                    lineHeight  = 19.sp,
-                                    fontWeight = FontWeight.Medium)
+                                    style      = MaterialTheme.typography.bodyMedium)
                             }
                         }
                         Spacer(Modifier.height(2.dp))
@@ -634,8 +623,8 @@ fun NumberAnalysisCard(analysis: NumberAnalysis) {
             if (!expanded.value) {
                 Spacer(Modifier.height(6.dp))
                 Text("Toque para ver a análise completa",
-                    color    = riskColor.copy(alpha = 0.6f),
-                    fontSize = 11.sp)
+                    color = riskColor.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -699,22 +688,20 @@ fun NumberCommentCard(
                         contentAlignment = Alignment.Center
                     ) {
                         val initial = comment.name?.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
-                        Text(initial, color = classColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(initial, color = classColor, style = MaterialTheme.typography.bodyLarge)
                     }
                     Text(
                         comment.name?.ifBlank { "Anónimo" } ?: "Anónimo",
-                        color      = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize   = 14.sp
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
                 if (!comment.classification.isNullOrBlank()) {
                     Surface(shape = RoundedCornerShape(8.dp), color = classColor.copy(alpha = 0.12f)) {
                         Text(
                             comment.classification,
-                            color      = classColor,
-                            fontSize   = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            color    = classColor,
+                            style    = MaterialTheme.typography.labelMedium,
                             modifier   = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
@@ -730,9 +717,8 @@ fun NumberCommentCard(
             if (!comment.comment.isNullOrBlank()) {
                 Text(
                     comment.comment,
-                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize   = 14.sp,
-                    lineHeight = 20.sp
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 Spacer(Modifier.height(10.dp))
             }
@@ -745,8 +731,8 @@ fun NumberCommentCard(
             ) {
                 Text(
                     timeAgo(comment.createdAt),
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium
                 )
                 Row(
                     verticalAlignment     = Alignment.CenterVertically,
@@ -800,9 +786,8 @@ fun NumberCommentCard(
                     }
                     Text(
                         "$localLikes",
-                        color      = if (localLiked) AccentBlue else MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize   = 12.sp,
-                        fontWeight = if (localLiked) FontWeight.SemiBold else FontWeight.Normal
+                        color = if (localLiked) AccentBlue else MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -818,10 +803,10 @@ fun EmptyCommentsState(number: String, onAdd: () -> Unit) {
             Icon(Icons.Default.Forum, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(56.dp))
             Spacer(Modifier.height(16.dp))
             Text("Sem comentários para $number", color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold, fontSize = 16.sp, textAlign = TextAlign.Center)
+                style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
             Spacer(Modifier.height(8.dp))
             Text("Sê o primeiro a partilhar a tua experiência com este número.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, textAlign = TextAlign.Center)
+                color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
             Spacer(Modifier.height(20.dp))
             Button(onClick = onAdd, shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)) {
@@ -869,14 +854,13 @@ fun ReportDialog(
                         Spacer(Modifier.height(4.dp))
                         Text(
                             "Comentário reportado",
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 16.sp,
-                            color      = MaterialTheme.colorScheme.onSurface
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
                             "O relatório foi enviado para moderação. Obrigado pela contribuição.",
-                            fontSize  = 14.sp,
+                            style     = MaterialTheme.typography.bodyLarge,
                             color     = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
@@ -886,21 +870,20 @@ fun ReportDialog(
                     // Formulário
                     Text(
                         "Reportar comentário",
-                        fontWeight = FontWeight.Bold,
-                        fontSize   = 16.sp,
-                        color      = MaterialTheme.colorScheme.onSurface
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         "Descreve o motivo do relatório para ajudar a moderação.",
-                        fontSize = 13.sp,
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(16.dp))
                     OutlinedTextField(
                         value         = message,
                         onValueChange = { if (it.length <= 500) message = it },
-                        placeholder   = { Text("Motivo do relatório...", fontSize = 14.sp) },
+                        placeholder   = { Text("Motivo do relatório...", style = MaterialTheme.typography.bodyLarge) },
                         minLines      = 3,
                         maxLines      = 5,
                         modifier      = Modifier.fillMaxWidth(),
@@ -914,7 +897,7 @@ fun ReportDialog(
                                 "${message.length}/500",
                                 modifier  = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.End,
-                                fontSize  = 11.sp,
+                                style     = MaterialTheme.typography.labelMedium,
                                 color     = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -923,8 +906,8 @@ fun ReportDialog(
                         Spacer(Modifier.height(4.dp))
                         Text(
                             error!!,
-                            color    = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                     Spacer(Modifier.height(20.dp))
