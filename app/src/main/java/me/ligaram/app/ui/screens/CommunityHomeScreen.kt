@@ -208,7 +208,8 @@ fun CommunityHomeScreen(navController: NavController) {
     var nextCursor   by remember { mutableStateOf<Int?>(null) }
     var errorMsg     by remember { mutableStateOf<String?>(null) }
     var isRestoringScroll by remember(restoreScrollInitial) { mutableStateOf(restoreScrollInitial) }
-    val feedItems by remember { derivedStateOf { items.withAdSlots(every = 4) } }
+    var failedAdSlots by remember { mutableStateOf(emptySet<Int>()) }
+    val feedItems by remember { derivedStateOf { items.withAdSlots(every = 4, failedSlots = failedAdSlots) } }
 
     // flows coming from NumberScreen via SavedStateHandle
     val restoreScrollFlow = currentEntry
@@ -408,7 +409,11 @@ fun CommunityHomeScreen(navController: NavController) {
                                 }
                             }) { feedItem ->
                                 when (feedItem) {
-                                    is CommunityFeedItem.AdSlot -> NativeAdCard(adUnitId = BuildConfig.ADMOB_NATIVE_AD_UNIT_ID)
+                                    is CommunityFeedItem.AdSlot -> NativeAdCard(
+                                        adUnitId    = BuildConfig.ADMOB_NATIVE_AD_UNIT_ID,
+                                        slotIndex   = feedItem.slotIndex,
+                                        onAdFailed  = { failedAdSlots = failedAdSlots + it }
+                                    )
                                     is CommunityFeedItem.Comment -> {
                                         val item = feedItem.data
                                         HomeCommentCard(item = item, onClick = {

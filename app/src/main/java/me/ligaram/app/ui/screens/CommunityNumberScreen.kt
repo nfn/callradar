@@ -137,8 +137,9 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
     // Intercepta o gesto/botao fisico de back -> vai sempre para community home
     BackHandler { backToCommunityWithRestore() }
 
-    var comments     by remember { mutableStateOf<List<NumberComment>>(emptyList()) }
-    val feedItems    by remember { derivedStateOf { comments.withAdSlots(every = 4) } }
+    var comments      by remember { mutableStateOf<List<NumberComment>>(emptyList()) }
+    var failedAdSlots by remember { mutableStateOf(emptySet<Int>()) }
+    val feedItems     by remember { derivedStateOf { comments.withAdSlots(every = 4, failedSlots = failedAdSlots) } }
     var analysis     by remember { mutableStateOf<NumberAnalysis?>(null) }
     var numberRating by remember { mutableStateOf<String?>(null) }
     var numberViews  by remember { mutableStateOf<String?>(null) }
@@ -376,7 +377,9 @@ fun CommunityNumberScreen(navController: NavController, number: String) {
                                 }) { feedItem ->
                                     when (feedItem) {
                                         is NumberFeedItem.AdSlot -> NativeAdCard(
-                                            adUnitId = BuildConfig.ADMOB_NATIVE_AD_UNIT_ID
+                                            adUnitId   = BuildConfig.ADMOB_NATIVE_AD_UNIT_ID,
+                                            slotIndex  = feedItem.slotIndex,
+                                            onAdFailed = { failedAdSlots = failedAdSlots + it }
                                         )
                                         is NumberFeedItem.Comment -> {
                                             val comment = feedItem.data

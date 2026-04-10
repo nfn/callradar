@@ -94,18 +94,23 @@ sealed class NumberFeedItem {
 }
 
 @JvmName("withAdSlotsNumber")
-fun List<NumberComment>.withAdSlots(every: Int = 4): List<NumberFeedItem> {
+fun List<NumberComment>.withAdSlots(
+    every: Int = 4,
+    failedSlots: Set<Int> = emptySet()
+): List<NumberFeedItem> {
     val result = mutableListOf<NumberFeedItem>()
     var slotIndex = 0
     if (isNotEmpty()) {
         // 1º ad antes do 1º comentário
-        result.add(NumberFeedItem.AdSlot(slotIndex = slotIndex++))
+        if (slotIndex !in failedSlots) result.add(NumberFeedItem.AdSlot(slotIndex = slotIndex))
+        slotIndex++
     }
     forEachIndexed { index, comment ->
         result.add(NumberFeedItem.Comment(comment))
         // Depois de 'every' em 'every'
         if ((index + 1) % every == 0) {
-            result.add(NumberFeedItem.AdSlot(slotIndex = slotIndex++))
+            if (slotIndex !in failedSlots) result.add(NumberFeedItem.AdSlot(slotIndex = slotIndex))
+            slotIndex++
         }
     }
     return result
@@ -118,14 +123,18 @@ sealed class CommunityFeedItem {
 }
 
 @JvmName("withAdSlotsHome")
-fun List<HomeComment>.withAdSlots(every: Int = 4): List<CommunityFeedItem> {
+fun List<HomeComment>.withAdSlots(
+    every: Int = 4,
+    failedSlots: Set<Int> = emptySet()
+): List<CommunityFeedItem> {
     val result = mutableListOf<CommunityFeedItem>()
     var slotIndex = 0
     forEachIndexed { index, comment ->
         result.add(CommunityFeedItem.Comment(comment))
         // 1º ad após o 1º comentário (index 0), depois de 'every' em 'every'
         if (index == 0 || (index > 0 && index % every == 0)) {
-            result.add(CommunityFeedItem.AdSlot(slotIndex = slotIndex++))
+            if (slotIndex !in failedSlots) result.add(CommunityFeedItem.AdSlot(slotIndex = slotIndex))
+            slotIndex++
         }
     }
     return result
