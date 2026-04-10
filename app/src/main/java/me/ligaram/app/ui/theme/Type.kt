@@ -3,57 +3,57 @@ package me.ligaram.app.ui.theme
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
+// import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontVariation
+// import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import me.ligaram.app.R
+// import me.ligaram.app.R
 
 // ── Fonte Outfit (variável) ───────────────────────────────────────────────────
 // Um único ficheiro TTF cobre todos os pesos via FontVariation
-
+/*
 @OptIn(ExperimentalTextApi::class)
 val OutfitFontFamily = FontFamily(
     Font(
-        resId = R.font.outfit_variable,
+        resId = R.font.cabin_variable,
         weight = FontWeight.Light,
         variationSettings = FontVariation.Settings(FontVariation.weight(300))
     ),
     Font(
-        resId = R.font.outfit_variable,
+        resId = R.font.cabin_variable,
         weight = FontWeight.Normal,
         variationSettings = FontVariation.Settings(FontVariation.weight(400))
     ),
     Font(
-        resId = R.font.outfit_variable,
+        resId = R.font.cabin_variable,
         weight = FontWeight.Medium,
         variationSettings = FontVariation.Settings(FontVariation.weight(500))
     ),
     Font(
-        resId = R.font.outfit_variable,
+        resId = R.font.cabin_variable,
         weight = FontWeight.SemiBold,
         variationSettings = FontVariation.Settings(FontVariation.weight(600))
     ),
     Font(
-        resId = R.font.outfit_variable,
+        resId = R.font.cabin_variable,
         weight = FontWeight.Bold,
         variationSettings = FontVariation.Settings(FontVariation.weight(700))
     ),
 )
-
+*/
 // ── Ponto de troca único ──────────────────────────────────────────────────────
 // Para mudar de fonte ou reverter para o sistema, alterar apenas esta linha:
 //   Outfit:  private val AppFontFamily = OutfitFontFamily
 //   Sistema: private val AppFontFamily = FontFamily.Default
-@OptIn(ExperimentalTextApi::class)
-private val AppFontFamily = OutfitFontFamily
+// @OptIn(ExperimentalTextApi::class)
+private val AppFontFamily = FontFamily.Default
 
 // ── Escala tipográfica ────────────────────────────────────────────────────────
 // Estratégia: pesos descendentes — títulos maiores mais leves, menores mais pesados.
 // Cria hierarquia visual natural sem exigir grandes diferenças de tamanho.
 
-@OptIn(ExperimentalTextApi::class)
+// @OptIn(ExperimentalTextApi::class)
 internal fun buildTypography(f: FontFamily) = Typography(
     headlineMedium = TextStyle(fontFamily = f, fontSize = 28.sp, fontWeight = FontWeight.Light),
     headlineSmall  = TextStyle(fontFamily = f, fontSize = 20.sp, fontWeight = FontWeight.Light),
@@ -68,5 +68,5 @@ internal fun buildTypography(f: FontFamily) = Typography(
     labelSmall     = TextStyle(fontFamily = f, fontSize = 10.sp, fontWeight = FontWeight.Normal),
 )
 
-@OptIn(ExperimentalTextApi::class)
+// @OptIn(ExperimentalTextApi::class)
 val LigaramTypography = buildTypography(AppFontFamily)
