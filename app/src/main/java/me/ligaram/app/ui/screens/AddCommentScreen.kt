@@ -213,28 +213,32 @@ fun AddCommentScreen(navController: NavController, number: String) {
 
                 // Nome (opcional)
                 SheetSection("Nome (opcional)") {
-                    OutlinedTextField(
-                        value           = name,
-                        onValueChange   = { name = it.take(128) },
-                        modifier        = Modifier.fillMaxWidth(),
-                        placeholder     = { Text("O teu nome ou alcunha", style = MaterialTheme.typography.bodyMedium) },
-                        leadingIcon     = {
-                            Icon(Icons.Default.Person, null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        },
-                        singleLine      = true,
-                        shape           = RoundedCornerShape(12.dp),
-                        colors          = sheetFieldColors(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType   = KeyboardType.Text,
-                            capitalization = KeyboardCapitalization.Words
+                    Column {
+                        Spacer(Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value           = name,
+                            onValueChange   = { name = it.take(128) },
+                            modifier        = Modifier.fillMaxWidth(),
+                            placeholder     = { Text("O teu nome ou alcunha", style = MaterialTheme.typography.bodyMedium) },
+                            leadingIcon     = {
+                                Icon(Icons.Default.Person, null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            },
+                            singleLine      = true,
+                            shape           = RoundedCornerShape(12.dp),
+                            colors          = sheetFieldColors(),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType   = KeyboardType.Text,
+                                capitalization = KeyboardCapitalization.Words
+                            )
                         )
-                    )
+                    }
                 }
 
                 // Entidade (autocomplete)
                 SheetSection("Entidade (opcional)") {
                     Column(modifier = Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.height(4.dp))
                         OutlinedTextField(
                             value         = entity,
                             onValueChange = { value ->
@@ -349,24 +353,27 @@ fun AddCommentScreen(navController: NavController, number: String) {
 
                 // Comentário *
                 SheetSection("Comentário *") {
-                    OutlinedTextField(
-                        value          = commentText,
-                        onValueChange  = { commentText = it.take(2000) },
-                        modifier       = Modifier.fillMaxWidth().heightIn(min = 88.dp),
-                        placeholder    = { Text("Descreve a tua experiência com este número…",
-                            style = MaterialTheme.typography.bodyMedium) },
-                        shape          = RoundedCornerShape(12.dp),
-                        colors         = sheetFieldColors(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType   = KeyboardType.Text,
-                            capitalization = KeyboardCapitalization.Sentences
-                        ),
-                        supportingText = {
-                            Text("${commentText.length}/2000",
-                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.labelSmall)
-                        }
-                    )
+                    Column {
+                        Spacer(Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value          = commentText,
+                            onValueChange  = { commentText = it.take(2000) },
+                            modifier       = Modifier.fillMaxWidth().heightIn(min = 88.dp),
+                            placeholder    = { Text("Descreve a tua experiência com este número…",
+                                style = MaterialTheme.typography.bodyMedium) },
+                            shape          = RoundedCornerShape(12.dp),
+                            colors         = sheetFieldColors(),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType   = KeyboardType.Text,
+                                capitalization = KeyboardCapitalization.Sentences
+                            ),
+                            supportingText = {
+                                Text("${commentText.length}/2000",
+                                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.labelSmall)
+                            }
+                        )
+                    }
                 }
 
                 // Classificação *
