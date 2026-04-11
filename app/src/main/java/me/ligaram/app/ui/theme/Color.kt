@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 // ── Neutral palette (Slate) ───────────────────────────────────────────────────
 // Tons 0 (preto) → 100 (branco), seguindo a convenção M3
 val Neutral6   = Color(0xFF0A1628) // bgSecondary dark (fundo gradiente)
-val Neutral10  = Color(0xFF0F172A) // background dark
+val Neutral10  = Color(0xFF111111) // background dark
 val Neutral20  = Color(0xFF1E293B) // surface dark
 val Neutral30  = Color(0xFF334155) // surfaceVariant dark / outline
 val Neutral50  = Color(0xFF64748B) // onSurfaceVariant light
