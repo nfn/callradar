@@ -42,7 +42,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
+import me.ligaram.app.BuildConfig
 import me.ligaram.app.ui.components.AboutSection
 import me.ligaram.app.ui.components.AppBackground
 import me.ligaram.app.ui.theme.AccentBlue
@@ -102,12 +102,7 @@ fun AboutScreen(navController: NavController) {
                         color = AccentBlue,
                         style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(4.dp))
-                    // PRÉ-PRODUÇÃO - [Melhoria] - versão lida dinamicamente do manifesto
-                    val versionName = remember {
-                        try { context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.0" }
-                        catch (_: Exception) { "1.0.0" }
-                    }
-                    Text("v$versionName",
+                    Text("v${BuildConfig.VERSION_NAME}",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelMedium)
                     Spacer(modifier = Modifier.height(12.dp))
